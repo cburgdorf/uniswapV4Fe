@@ -1,0 +1,23 @@
+{
+  "compiler_sha256": "be208062c6dd982b2428828036434bd92b0b8347c93c7c135ff09310797629fe",
+  "patch_sha256": "47dbd72a950019d5195333b8ea629b7cc361ea9d6f48aa0ac97f281a595e31f7",
+  "core_abi_sha256": "f3d6b7850a63f6531cc16e0bd4137f6799bf8c08e5107d2805b5698c015307aa",
+  "fixtures": {
+    "crates/fe/tests/fixtures/fe_test/abi_array_overflow_revert.fe": "024f9fc102c8d724de2b8d7e7c86de161159f18454c2389b1c35a7123eb94c03",
+    "crates/fe/tests/fixtures/fe_test/abi_nested_msg_decode_bounds.fe": "ae9f73e379795e1cb440c1184a4926f3a524069b1c6ee77865f73f8d71cbd869",
+    "crates/fe/tests/fixtures/fe_test/abi_dynamic_payload.fe": "2d859070141060422015313c7fe434248128847a9d971de3718568e4c9e3ba11",
+    "crates/fe/tests/fixtures/fe_test/dyn_array_get.fe": "f575c0945f98d0be84cb24885a8be19732162e4990c48feba780f78a606a451b",
+    "crates/fe/tests/fixtures/fe_test/mem_vec.fe": "f296ad1799758488b3eea8244e5e5a7351c6b26c7cc66b27c1f47a24c2672e34",
+    "crates/fe/tests/fixtures/fe_test/mem_vec_edge_cases.fe": "9c9768237c9c15b65221d6484c556c342491132376685f6704bcf5e53a1c7311"
+  },
+  "runs": [
+    {
+      "optimization": "1",
+      "exit_code": 0
+    },
+    {
+      "optimization": "2",
+      "exit_code": 0
+    }
+  ]
+}

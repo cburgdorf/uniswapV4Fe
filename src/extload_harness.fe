@@ -1,0 +1,50 @@
+// SPDX-License-Identifier: MIT
+use std::abi::{Bytes32, DynArray, sol}
+use std::evm::{RawStorage, RawOps}
+use super::extload
+msg ExtloadMsg {
+    #[selector = sol("extsload(bytes32)")]
+    Sload { slot: Bytes32 } -> Bytes32,
+    #[selector = sol("extsload(bytes32,uint256)")]
+    SloadRange { startSlot: Bytes32, nSlots: u256 } -> DynArray<Bytes32>,
+    #[selector = sol("extsload(bytes32[])")]
+    SloadSparse { slots: DynArray<Bytes32> } -> DynArray<Bytes32>,
+    #[selector = sol("exttload(bytes32)")]
+    Tload { slot: Bytes32 } -> Bytes32,
+    #[selector = sol("exttload(bytes32[])")]
+    TloadSparse { slots: DynArray<Bytes32> } -> DynArray<Bytes32>,
+    #[selector = sol("write(bytes32,bytes32,bool)")]
+    Write { slot: Bytes32, value: Bytes32, transient: bool },
+}
+pub contract ExtloadHarness {
+    recv ExtloadMsg {
+        Sload { slot } -> Bytes32 uses (storage: RawStorage) {
+            extload::sload(slot)
+        }
+        SloadRange { startSlot, nSlots } -> DynArray<Bytes32>
+        uses (ops: RawOps)
+        {
+            extload::return_sload_range(startSlot, nSlots)
+        }
+        SloadSparse { slots } -> DynArray<Bytes32>
+        uses (storage: RawStorage)
+        {
+            extload::sload_sparse(slots)
+        }
+        Tload { slot } -> Bytes32 uses (ops: RawOps) {
+            extload::tload(slot)
+        }
+        TloadSparse { slots } -> DynArray<Bytes32>
+        uses (ops: RawOps)
+        {
+            extload::tload_sparse(slots)
+        }
+        Write { slot, value, transient } uses (ops: mut RawOps) {
+            if transient {
+                ops.tstor_ptr<u256>(slot.val).write(value.val)
+            } else {
+                ops.sstore(slot: slot.val, value: value.val)
+            }
+        }
+    }
+}

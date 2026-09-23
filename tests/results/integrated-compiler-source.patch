@@ -1,0 +1,15 @@
+diff --git a/crates/fe/src/abi.rs b/crates/fe/src/abi.rs
+index c5f48e2b2..a7915fa83 100644
+--- a/crates/fe/src/abi.rs
++++ b/crates/fe/src/abi.rs
+@@ -449,7 +449,9 @@ fn instantiate_callable_typed_body<'db>(
+     target: &VisitedFuncBody<'db>,
+ ) -> hir::analysis::ty::ty_check::TypedBody<'db> {
+     let mut typed_body = hir::analysis::semantic::instantiate_with_generic_args(
+-        db, typed_body, &target.generic_args,
++        db,
++        typed_body,
++        &target.generic_args,
+     );
+     if let Some(trait_inst) = target.trait_inst {
+         let mut subst = AssocTySubst::new(trait_inst);

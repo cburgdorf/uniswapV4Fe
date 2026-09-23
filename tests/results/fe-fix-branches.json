@@ -1,0 +1,336 @@
+{
+  "repository": "/home/cburgdorf/Documents/hacking/fe/fe",
+  "branches": [
+    {
+      "branch": "fix/uniswap-bounded-staticcall",
+      "revision": "3a34aa76bc34da0d7f93e892909684d689b9d7c0",
+      "base": "e2fa7e53c8bb5710c79afbf6c8450a194640dbd8",
+      "worktree": "/tmp/fe-fix-branches/bounded-staticcall",
+      "files": [
+        "crates/fe/src/abi.rs",
+        "crates/fe/tests/fixtures/fe_test/precompile_wrappers.fe",
+        "ingots/std/src/evm/effects.fe",
+        "newsfragments/+bounded-staticcall.bugfix.md"
+      ],
+      "individual_validation": {
+        "branch": "fix/uniswap-bounded-staticcall",
+        "revision": "073245cc157644f5d7a42c46e51e1bd0240e1032",
+        "base": "e2fa7e53c8bb5710c79afbf6c8450a194640dbd8",
+        "worktree": "/tmp/fe-fix-branches/bounded-staticcall",
+        "files": [
+          "crates/fe/src/abi.rs",
+          "crates/fe/tests/fixtures/fe_test/precompile_wrappers.fe",
+          "ingots/std/src/evm/effects.fe"
+        ],
+        "build_exit_code": 0,
+        "fixtures": [
+          {
+            "path": "crates/fe/tests/fixtures/fe_test/precompile_wrappers.fe",
+            "exit_code": 0,
+            "log": "/tmp/fe-fix-branches/validation/uniswap-bounded-staticcall/precompile_wrappers-o1.log"
+          }
+        ],
+        "compiler_sha256": "70bba5fa28427fe86aa6b8c3bc55f0c1792020ca91d60f7324dfae265b2c518b",
+        "compiler_version": "fe 26.3.0 (3eb8488bf)",
+        "result": "passed"
+      },
+      "rust_format_check": "passed",
+      "before_newsfragment_revision": "073245cc157644f5d7a42c46e51e1bd0240e1032",
+      "open_pr_audit": {
+        "branch": "fix/uniswap-bounded-staticcall",
+        "status": "no_matching_open_pr",
+        "pr": null,
+        "notes": "No matching open PR found. #1427 changes typed calls, not the bounded read-only raw_staticcall method."
+      },
+      "newsfragments": [
+        "newsfragments/+bounded-staticcall.bugfix.md"
+      ],
+      "validation_revision_note": "Newsfragment-only amendment; validation retains the source revision recorded by the build job.",
+      "published": true,
+      "remote": "upstream",
+      "url": "https://github.com/argotorg/fe/tree/fix/uniswap-bounded-staticcall",
+      "before_author_amendment_revision": "9521ce370813c0d50526579e8935c301edca9f11"
+    },
+    {
+      "branch": "fix/uniswap-record-literal-borrows",
+      "revision": "dd323ca04a658c6f18a91fafd31906a9aee92996",
+      "base": "e2fa7e53c8bb5710c79afbf6c8450a194640dbd8",
+      "worktree": "/tmp/fe-fix-branches/record-literal-borrows",
+      "files": [
+        "crates/fe/tests/fixtures/fe_test/record_literal_implicit_borrow.fe",
+        "crates/hir/src/analysis/semantic/lower/body.rs",
+        "crates/hir/src/analysis/ty/ty_check/mod.rs",
+        "newsfragments/+record-literal-borrow-panic.bugfix.md"
+      ],
+      "individual_validation": {
+        "branch": "fix/uniswap-record-literal-borrows",
+        "revision": "dd323ca04a658c6f18a91fafd31906a9aee92996",
+        "base": "e2fa7e53c8bb5710c79afbf6c8450a194640dbd8",
+        "worktree": "/tmp/fe-fix-branches/record-literal-borrows",
+        "files": [
+          "crates/fe/tests/fixtures/fe_test/record_literal_implicit_borrow.fe",
+          "crates/hir/src/analysis/semantic/lower/body.rs",
+          "crates/hir/src/analysis/ty/ty_check/mod.rs",
+          "newsfragments/+record-literal-borrow-panic.bugfix.md"
+        ],
+        "build_exit_code": 0,
+        "fixtures": [
+          {
+            "path": "crates/fe/tests/fixtures/fe_test/record_literal_implicit_borrow.fe",
+            "exit_code": 0,
+            "log": "/tmp/fe-fix-branches/validation/uniswap-record-literal-borrows/record_literal_implicit_borrow-o1.log"
+          }
+        ],
+        "compiler_sha256": "9d992afd1cf4dd5a5d02d0c3f0bbacbdbf9218c8d7c2b41231eec99ffb492c98",
+        "compiler_version": "fe 26.3.0 (3eb8488bf)",
+        "result": "passed"
+      },
+      "rust_format_check": "passed",
+      "open_pr_audit": {
+        "branch": "fix/uniswap-record-literal-borrows",
+        "status": "identical_patch",
+        "pr": 1586,
+        "notes": "Identical stable git patch-id, including regression fixture and newsfragment.",
+        "stable_patch_id": "ebf6292c42e5149eaecf745b60e76479712ac730"
+      },
+      "newsfragments": [
+        "newsfragments/+record-literal-borrow-panic.bugfix.md"
+      ],
+      "published": false
+    },
+    {
+      "branch": "fix/uniswap-unpadded-abi-payloads",
+      "revision": "107c823cb6bfe178a023a6faf9bae2009bcb54f1",
+      "base": "e2fa7e53c8bb5710c79afbf6c8450a194640dbd8",
+      "worktree": "/tmp/fe-fix-branches/unpadded-abi-payloads",
+      "files": [
+        "crates/contract-harness/src/lib.rs",
+        "crates/fe/tests/differential_deposit/gas_report.snap",
+        "crates/fe/tests/fixtures/fe_test/abi_unpadded_dynamic_payload.fe",
+        "crates/uitest/fixtures/ty_check/error_unsupported_field_type.snap",
+        "ingots/core/src/abi.fe",
+        "newsfragments/1587.bugfix.md"
+      ],
+      "individual_validation": {
+        "branch": "fix/uniswap-unpadded-abi-payloads",
+        "revision": "107c823cb6bfe178a023a6faf9bae2009bcb54f1",
+        "base": "e2fa7e53c8bb5710c79afbf6c8450a194640dbd8",
+        "worktree": "/tmp/fe-fix-branches/unpadded-abi-payloads",
+        "files": [
+          "crates/contract-harness/src/lib.rs",
+          "crates/fe/tests/differential_deposit/gas_report.snap",
+          "crates/fe/tests/fixtures/fe_test/abi_unpadded_dynamic_payload.fe",
+          "crates/uitest/fixtures/ty_check/error_unsupported_field_type.snap",
+          "ingots/core/src/abi.fe",
+          "newsfragments/1587.bugfix.md"
+        ],
+        "build_exit_code": 0,
+        "fixtures": [
+          {
+            "path": "crates/fe/tests/fixtures/fe_test/abi_unpadded_dynamic_payload.fe",
+            "exit_code": 0,
+            "log": "/tmp/fe-fix-branches/validation/uniswap-unpadded-abi-payloads/abi_unpadded_dynamic_payload-o1.log"
+          }
+        ],
+        "compiler_sha256": "2b050054f379c0fc7c6bae2345c2087bb316f834bc84ccb3009ee899c792c712",
+        "compiler_version": "fe 26.3.0 (107c823cb)",
+        "result": "passed"
+      },
+      "rust_format_check": "passed",
+      "open_pr_audit": {
+        "branch": "fix/uniswap-unpadded-abi-payloads",
+        "status": "identical_patch",
+        "pr": 1587,
+        "notes": "Identical stable git patch-id, including tests and newsfragment.",
+        "stable_patch_id": "e00af4bba1da69c028553fe504328d8379946dfb"
+      },
+      "newsfragments": [
+        "newsfragments/1587.bugfix.md"
+      ],
+      "published": false
+    },
+    {
+      "branch": "fix/uniswap-composed-decoder-borrows",
+      "revision": "40bc9b5b5e309e18d9bc358800e1fb9c312e7b4d",
+      "base": "e2fa7e53c8bb5710c79afbf6c8450a194640dbd8",
+      "worktree": "/tmp/fe-fix-branches/composed-decoder-borrows",
+      "files": [
+        "crates/fe/tests/fixtures/fe_test/composed_abi_decoder.fe",
+        "crates/hir/src/analysis/semantic/borrowck/inventory.rs",
+        "crates/hir/src/analysis/semantic/borrowck/summary.rs",
+        "newsfragments/1575.bugfix.md"
+      ],
+      "individual_validation": {
+        "branch": "fix/uniswap-composed-decoder-borrows",
+        "revision": "40bc9b5b5e309e18d9bc358800e1fb9c312e7b4d",
+        "base": "e2fa7e53c8bb5710c79afbf6c8450a194640dbd8",
+        "worktree": "/tmp/fe-fix-branches/composed-decoder-borrows",
+        "files": [
+          "crates/fe/tests/fixtures/fe_test/composed_abi_decoder.fe",
+          "crates/hir/src/analysis/semantic/borrowck/inventory.rs",
+          "crates/hir/src/analysis/semantic/borrowck/summary.rs",
+          "newsfragments/1575.bugfix.md"
+        ],
+        "build_exit_code": 0,
+        "fixtures": [
+          {
+            "path": "crates/fe/tests/fixtures/fe_test/composed_abi_decoder.fe",
+            "exit_code": 0,
+            "log": "/tmp/fe-fix-branches/validation/uniswap-composed-decoder-borrows/composed_abi_decoder-o1.log"
+          }
+        ],
+        "compiler_sha256": "1cba32861109ecd4a6c5876caaf4e90ccc67e9e1da93cdb5e2c08b62db265f37",
+        "compiler_version": "fe 26.3.0 (107c823cb)",
+        "result": "passed"
+      },
+      "rust_format_check": "passed",
+      "open_pr_audit": {
+        "branch": "fix/uniswap-composed-decoder-borrows",
+        "status": "identical_patch",
+        "pr": 1575,
+        "notes": "Identical stable git patch-id, including tests and newsfragment.",
+        "stable_patch_id": "7e2034d66bfb97b06d3140b8937bf17ebc3a698a"
+      },
+      "newsfragments": [
+        "newsfragments/1575.bugfix.md"
+      ],
+      "published": false
+    },
+    {
+      "branch": "fix/uniswap-payable-return-verifier",
+      "revision": "a5516a52a5a78db2ce527caa407edbef494ed465",
+      "base": "e2fa7e53c8bb5710c79afbf6c8450a194640dbd8",
+      "worktree": "/tmp/fe-fix-branches/payable-return-verifier",
+      "files": [
+        "crates/fe/tests/cli_output.rs",
+        "crates/fe/tests/fixtures/fe_test/payable_return.fe",
+        "crates/mir/src/verify/package.rs",
+        "newsfragments/1567.bugfix.md"
+      ],
+      "individual_validation": {
+        "branch": "fix/uniswap-payable-return-verifier",
+        "revision": "c273b654259320658c655944e55ffdbcf5403ee7",
+        "base": "e2fa7e53c8bb5710c79afbf6c8450a194640dbd8",
+        "worktree": "/tmp/fe-fix-branches/payable-return-verifier",
+        "files": [
+          "crates/fe/tests/cli_output.rs",
+          "crates/fe/tests/fixtures/fe_test/payable_return.fe",
+          "crates/mir/src/verify/package.rs"
+        ],
+        "build_exit_code": 0,
+        "fixtures": [
+          {
+            "path": "crates/fe/tests/fixtures/fe_test/payable_return.fe",
+            "exit_code": 0,
+            "log": "/tmp/fe-fix-branches/validation/uniswap-payable-return-verifier/payable_return-o1.log"
+          }
+        ],
+        "compiler_sha256": "7c67553fc8ca2daa5dd3839ca51a9d5fc596cda2ba31d910603694e26e205091",
+        "compiler_version": "fe 26.3.0 (107c823cb)",
+        "result": "passed"
+      },
+      "rust_format_check": "passed",
+      "before_newsfragment_revision": "c273b654259320658c655944e55ffdbcf5403ee7",
+      "open_pr_audit": {
+        "branch": "fix/uniswap-payable-return-verifier",
+        "status": "superseded_by_open_pr",
+        "pr": 1567,
+        "notes": "Same bug and identical runtime fixture/CLI tests. PR additionally validates the planned semantic return helper and generic specialization, with negative verifier tests. Prefer the existing PR; local branch is an older implementation."
+      },
+      "newsfragments": [
+        "newsfragments/1567.bugfix.md"
+      ],
+      "validation_revision_note": "Newsfragment-only amendment; validation retains the source revision recorded by the build job.",
+      "published": false
+    },
+    {
+      "branch": "fix/uniswap-long-error-event-names",
+      "revision": "04baed1a6b2e24e3a70fda5cfb0a9d781ae743e4",
+      "base": "e2fa7e53c8bb5710c79afbf6c8450a194640dbd8",
+      "worktree": "/tmp/fe-fix-branches/long-error-event-names",
+      "files": [
+        "crates/fe/tests/fixtures/fe_test/long_error_event_names.fe",
+        "crates/hir/src/core/lower/error.rs",
+        "crates/hir/src/core/lower/event.rs",
+        "crates/hir/src/core/lower/mod.rs",
+        "newsfragments/+long-error-event-names.bugfix.md"
+      ],
+      "individual_validation": {
+        "result": "pending"
+      },
+      "rust_format_check": "passed",
+      "before_newsfragment_revision": "12e0bdca21a685f378e71b7c879d732801815c2c",
+      "open_pr_audit": {
+        "branch": "fix/uniswap-long-error-event-names",
+        "status": "partial_overlap",
+        "pr": 1589,
+        "notes": "PR shares event/error signature lowering and nests error signature tuples, overlapping the tuple-arity part. Its current shared builder still uses the full struct name as one string literal. UTF-8-safe name chunks remain a separate fix; adapt them to the shared builder if #1589 lands first."
+      },
+      "newsfragments": [
+        "newsfragments/+long-error-event-names.bugfix.md"
+      ],
+      "validation_revision_note": "Newsfragment-only amendment; validation retains the source revision recorded by the build job.",
+      "published": true,
+      "remote": "upstream",
+      "url": "https://github.com/argotorg/fe/tree/fix/uniswap-long-error-event-names"
+    },
+    {
+      "branch": "fix/uniswap-abi-offset-overflow",
+      "revision": "01ae70d036f784bd00216d8909b12933bd667ad9",
+      "base": "e2fa7e53c8bb5710c79afbf6c8450a194640dbd8",
+      "worktree": "/tmp/fe-fix-branches/abi-offset-overflow",
+      "files": [
+        "crates/fe/tests/fixtures/fe_test/dynamic_offset_overflow.fe",
+        "ingots/core/src/abi.fe",
+        "newsfragments/+abi-offset-overflow.bugfix.md"
+      ],
+      "individual_validation": {
+        "branch": "fix/uniswap-abi-offset-overflow",
+        "revision": "01ae70d036f784bd00216d8909b12933bd667ad9",
+        "base": "e2fa7e53c8bb5710c79afbf6c8450a194640dbd8",
+        "worktree": "/tmp/fe-fix-branches/abi-offset-overflow",
+        "files": [
+          "crates/fe/tests/fixtures/fe_test/dynamic_offset_overflow.fe",
+          "ingots/core/src/abi.fe",
+          "newsfragments/+abi-offset-overflow.bugfix.md"
+        ],
+        "build_exit_code": 0,
+        "fixtures": [
+          {
+            "path": "crates/fe/tests/fixtures/fe_test/dynamic_offset_overflow.fe",
+            "exit_code": 0,
+            "log": "/tmp/fe-offset-independent-o1.log"
+          }
+        ],
+        "compiler_sha256": "51373cb90ee643dbf8d76f5bd89abbffd72831d5c6b05fc1f890f02695a0f860",
+        "compiler_version": "fe 26.3.0 (3eb8488bf)",
+        "result": "passed",
+        "compiler_built_from_revision": "3eb8488bf4160c32644a8e586118cf2da3636cde",
+        "fixture_sha256": "81f487950ce58ba0a6d00b7ab37ef0c4f67ba449b3c99b6d2536932c6d5afe32",
+        "notes": "Compiler sources unchanged from build; isolated fixture amended to avoid dependency on composed-decoder borrow fix."
+      },
+      "rust_format_check": "passed",
+      "open_pr_audit": {
+        "branch": "fix/uniswap-abi-offset-overflow",
+        "status": "no_matching_open_pr",
+        "pr": null,
+        "notes": "No matching open PR found. #1587 changes unpadded payload copying; #1589 changes record layouts; neither adds the checked offset/length-head arithmetic in this fix."
+      },
+      "newsfragments": [
+        "newsfragments/+abi-offset-overflow.bugfix.md"
+      ],
+      "published": true,
+      "remote": "upstream",
+      "url": "https://github.com/argotorg/fe/tree/fix/uniswap-abi-offset-overflow"
+    }
+  ],
+  "published": true,
+  "validation_log": "/tmp/fe-fix-branches-validation.log",
+  "validation_in_progress": true,
+  "validation_provenance_note": "Builds share a Cargo target directory; embedded --version git SHA can be cached and is not authoritative per-branch provenance. Recorded worktree/revision and binary SHA identify each build. Newsfragment amendments do not change compiler sources.",
+  "published_branches": [
+    "fix/uniswap-abi-offset-overflow",
+    "fix/uniswap-bounded-staticcall",
+    "fix/uniswap-long-error-event-names"
+  ]
+}

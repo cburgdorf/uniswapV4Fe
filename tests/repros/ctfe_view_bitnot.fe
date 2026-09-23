@@ -1,0 +1,9 @@
+// Fe master f00132a97: CTFE panics folding `!(0 as T)` for unsigned T.
+fn is_max(_ x: u256) -> bool {
+    x == !(0 as u256)
+}
+
+#[test]
+fn not_zero_is_max() {
+    assert(is_max(115792089237316195423570985008687907853269984665640564039457584007913129639935))
+}

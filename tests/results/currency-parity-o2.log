@@ -1,0 +1,28 @@
+Compiling 4 files with Solc 0.8.30
+Solc 0.8.30 finished in 185.53ms
+Compiler run successful with warnings:
+Warning (3628): This contract has a payable fallback function, but no receive ether function. Consider adding a receive ether function.
+  --> test/CurrencyParity.t.sol:47:1:
+   |
+47 | contract NativeRecipient {
+   | ^ (Relevant source part starts here and spans across multiple lines).
+Note: The payable fallback function is defined here.
+  --> test/CurrencyParity.t.sol:53:5:
+   |
+53 |     fallback() external payable {
+   |     ^ (Relevant source part starts here and spans across multiple lines).
+
+
+Ran 9 tests for test/CurrencyParity.t.sol:CurrencyParityTest
+[PASS] testFuzz_erc20Transfer(address,uint256,uint256,uint8,bool) (runs: 10000, μ: 232206, ~: 199733)
+[PASS] testFuzz_identity(uint256,address) (runs: 10000, μ: 13588, ~: 13585)
+[PASS] testFuzz_nativeBalances(uint128,uint128) (runs: 10000, μ: 13665, ~: 13665)
+[PASS] testFuzz_nativeTransfer(uint128,uint128,uint8,bool) (runs: 10000, μ: 152918, ~: 137042)
+[PASS] testFuzz_tokenBalance(address,uint256,uint8,bool) (runs: 10000, μ: 120732, ~: 81912)
+[PASS] test_balanceEntrypointsAllowStaticcall() (gas: 75043)
+[PASS] test_codelessAndStaticBalance() (gas: 2042541)
+[PASS] test_largeErrorPayload() (gas: 3660112)
+[PASS] test_transferReturnBoundaries() (gas: 2304846)
+Suite result: ok. 9 passed; 0 failed; 0 skipped; finished in 663.67ms (2.07s CPU time)
+
+Ran 1 test suite in 664.48ms (663.67ms CPU time): 9 tests passed, 0 failed, 0 skipped (9 total tests)

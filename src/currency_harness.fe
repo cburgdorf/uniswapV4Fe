@@ -1,0 +1,33 @@
+// SPDX-License-Identifier: MIT
+use core::ops::{Eq, Ord}
+use std::abi::sol
+use std::evm::{Address, Call, Ctx, RawMem}
+use super::currency::Currency
+msg CurrencyMsg {
+    #[selector = sol("transfer(address,address,uint256)")]
+    Transfer { currency: Address, to: Address, amount: u256 },
+    #[selector = sol("balanceOf(address,address)")]
+    BalanceOf { currency: Address, owner: Address } -> u256,
+    #[selector = sol("balanceOfSelf(address)")]
+    BalanceOfSelf { currency: Address } -> u256,
+    #[selector = sol("identity(uint256,address)")]
+    Identity { id: u256, other: Address } -> (Address, u256, bool, bool, bool, bool, bool),
+}
+pub contract CurrencyHarness uses (ctx: Ctx, call: mut Call, mem: mut RawMem) {
+    recv CurrencyMsg {
+        Transfer { currency, to, amount } uses (ctx, mut call, mut mem) {
+            Currency { address: currency }.transfer(to, amount)
+        }
+        BalanceOf { currency, owner } -> u256 uses (ctx, mut call, mut mem) {
+            Currency { address: currency }.balance_of(owner)
+        }
+        BalanceOfSelf { currency } -> u256 uses (ctx, mut call, mut mem) {
+            Currency { address: currency }.balance_of_self()
+        }
+        Identity { id, other } -> (Address, u256, bool, bool, bool, bool, bool) {
+            let a = Currency::from_id(id)
+            let b = Currency { address: other }
+            (a.address, a.to_id(), a.is_address_zero(), (a == b), (a < b), (a > b), (a >= b))
+        }
+    }
+}

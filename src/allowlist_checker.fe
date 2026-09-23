@@ -1,0 +1,12 @@
+// SPDX-License-Identifier: MIT
+// BaseAllowlistChecker's shared ERC165 behavior; concrete checkers define policy.
+use std::abi::{Bytes2, Bytes4, sol}
+use std::evm::Address
+
+pub msg AllowlistMsg {
+    #[selector = sol("checkAllowlist(address,address)")]
+    CheckAllowlist { account: Address, tokenAddress: Address } -> Bytes2,
+}
+pub fn supports_interface(_ id: Bytes4) -> bool {
+    id.val == 0x01ffc9a7 || id.val == (sol("checkAllowlist(address,address)") as u256)
+}

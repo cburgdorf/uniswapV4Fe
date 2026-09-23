@@ -1,0 +1,31 @@
+Parity artifacts: /tmp/fe-descriptor-current-final-o1
+Compiler: fe 26.3.0 (fd5f11847); sha256=04c432b07ad088f2c5c3d39d2dc0ea68a81acba9aadc4e057df4a70188afd30b
+Compiling 33 files with Solc 0.8.26
+Solc 0.8.26 finished in 1.50s
+Compiler run successful!
+
+Ran 5 tests for test/DescriptorParity.t.sol:DescriptorParityTest
+[PASS] testFuzz_arbitrary((uint256,address,address,string,string,uint8,uint8,bool,int24,int24,int24,int24,uint24,address,address)) (runs: 10000, μ: 8399478, ~: 13334787)
+[PASS] testFuzz_circle(uint256,uint256,uint256) (runs: 10000, μ: 14802, ~: 14804)
+[PASS] testFuzz_prices(int24,int24,uint16,uint8,bool) (runs: 10000, μ: 13065433, ~: 13048505)
+[FAIL: reference must succeed; counterexample: calldata=0x715096c40000000000000000000000000000000000000000000000000000000000000000000000000000000000000000872a66756c8f5203ae266556168c817c6e26a3ed000000000000000000000000c80dce06e6c4083b4f4081747e1c8c7fad21afc00000000000000000000000007783b65e64899f5eb60cb9697c1519ed02708a68ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe30000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000001200000000000000000000000000000000000000000000000000000000000000180000000000000000000000000000000000000000000000000000000000000003f73f09f8381e1bd9d604f55eaa088ce8cf0aa9cb46027d1a8333f4e42c2a5f09fa8982fc8baefbfbde28482c2b45ce283955f65f09d92aae1bfbb7af09e97b40000000000000000000000000000000000000000000000000000000000000000334bf09b8590265ce19486e19e8b4a5f3ce0a98d5cefbfbde0b6b5d1a8f090adaaf09f95b44d47e18b96f09b84b23af09f95b43f00000000000000000000000000 args=[0, 0x872A66756c8f5203aE266556168c817c6e26a3eD, 0xC80dCE06e6C4083B4f4081747E1C8C7faD21afC0, 0x7783b65E64899f5eB60CB9697C1519eD02708A68, -29, 2, true, "s🃁Ὕ`OUꠈΌ𪜴`'Ѩ3?NB¥🨘/Ⱥ�ℂ´\\\u{20d5}_e𝒪Ώz𞗴", "K𛅐&\\ᔆឋJ_<\u{a4d}\\�ඵѨ𐭪🕴MGዖ𛄲:🕴?"]] testFuzz_render(uint64,address,address,address,int24,uint24,bool,string,string) (runs: 107, μ: 13988404, ~: 13930054)
+[PASS] test_boundaries() (gas: 145672962)
+Suite result: FAILED. 4 passed; 1 failed; 0 skipped; finished in 213.08s (357.28s CPU time)
+
+Ran 1 test suite in 213.08s (213.08s CPU time): 4 tests passed, 1 failed, 0 skipped (5 total tests)
+
+Failing tests:
+Encountered 1 failing test in test/DescriptorParity.t.sol:DescriptorParityTest
+[FAIL: reference must succeed; counterexample: calldata=0x715096c40000000000000000000000000000000000000000000000000000000000000000000000000000000000000000872a66756c8f5203ae266556168c817c6e26a3ed000000000000000000000000c80dce06e6c4083b4f4081747e1c8c7fad21afc00000000000000000000000007783b65e64899f5eb60cb9697c1519ed02708a68ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe30000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000001200000000000000000000000000000000000000000000000000000000000000180000000000000000000000000000000000000000000000000000000000000003f73f09f8381e1bd9d604f55eaa088ce8cf0aa9cb46027d1a8333f4e42c2a5f09fa8982fc8baefbfbde28482c2b45ce283955f65f09d92aae1bfbb7af09e97b40000000000000000000000000000000000000000000000000000000000000000334bf09b8590265ce19486e19e8b4a5f3ce0a98d5cefbfbde0b6b5d1a8f090adaaf09f95b44d47e18b96f09b84b23af09f95b43f00000000000000000000000000 args=[0, 0x872A66756c8f5203aE266556168c817c6e26a3eD, 0xC80dCE06e6C4083B4f4081747E1C8C7faD21afC0, 0x7783b65E64899f5eB60CB9697C1519eD02708A68, -29, 2, true, "s🃁Ὕ`OUꠈΌ𪜴`'Ѩ3?NB¥🨘/Ⱥ�ℂ´\\\u{20d5}_e𝒪Ώz𞗴", "K𛅐&\\ᔆឋJ_<\u{a4d}\\�ඵѨ𐭪🕴MGዖ𛄲:🕴?"]] testFuzz_render(uint64,address,address,address,int24,uint24,bool,string,string) (runs: 107, μ: 13988404, ~: 13930054)
+
+Encountered a total of 1 failing tests, 4 tests succeeded
+
+Tip: Run `forge test --rerun` to retry only the 1 failed test
+Traceback (most recent call last):
+  File "/home/cburgdorf/Documents/hacking/fe/uniswap_v4_demo/tests/run_math_parity.py", line 446, in <module>
+    result.check_returncode()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/home/linuxbrew/.linuxbrew/Cellar/python@3.14/3.14.4/lib/python3.14/subprocess.py", line 509, in check_returncode
+    raise CalledProcessError(self.returncode, self.args, self.stdout,
+                             self.stderr)
+subprocess.CalledProcessError: Command '['forge', 'test', '--root', '/tmp/fe-descriptor-current-final-o1', '--fuzz-runs', '10000', '-vv']' returned non-zero exit status 1.

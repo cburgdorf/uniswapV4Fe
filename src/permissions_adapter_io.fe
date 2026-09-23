@@ -1,0 +1,88 @@
+// SPDX-License-Identifier: MIT
+// External-call semantics of the pinned PermissionsAdapter.
+use core::abi::ByteInput
+use core::ptr::{self, MemBuffer, MemSpan}
+use std::abi::{Bytes, DynString, sol}
+use std::evm::{Address, Ctx, Call, RawMem, copy_returndata, encode_msg_calldata, staticcall_decode, revert_error}
+use super::metadata_text
+
+#[error]
+pub struct Error { pub reason: DynString }
+msg TokenMsg {
+    #[selector = sol("balanceOf(address)")]
+    Balance { account: Address } -> u256,
+}
+pub fn balance(_ token: Address, _ account: Address) -> u256 uses (ctx: Ctx, call: Call) {
+    staticcall_decode(addr: token, gas: ctx.gas(), args: encode_msg_calldata(TokenMsg::Balance { account }).span())
+}
+fn response(_ token: Address, _ selector: u32) -> (bool, MemBuffer) uses (ctx: Ctx, call: Call) {
+    let args = Bytes::from_word_prefix(word: (selector as u256) << 224, len: 4)
+    let mut ret = MemBuffer::empty()
+    let result = call.raw_staticcall(addr: token, gas: ctx.gas(), args: args.payload_span(), ret: mut ret)
+    (result.success(), copy_returndata())
+}
+fn literal<const N: usize>(_ value: String<N>) -> DynString {
+    metadata_text::word((value as u256) << (256 - 8 * (N as u256)), N as u256)
+}
+fn read_string(_ token: Address, _ selector: u32, _ fallback: DynString) -> DynString
+uses (ctx: Ctx, call: Call)
+{
+    let (ok, data) = response(token, selector)
+    if !ok || data.len() < 64 { return fallback }
+    let offset = data.span().word_at(0)
+    let len = data.span().word_at(32)
+    if offset != 32 || len == 0 || len > data.len() - 64 { return fallback }
+    DynString::from_payload(source: MemSpan::from_raw_parts(ptr: ptr::offset_bytes(data.ptr(), 64), len))
+}
+pub fn name(_ token: Address) -> DynString uses (ctx: Ctx, call: Call) {
+    let prefix = literal<11>("Uniswap v4 ")
+    let value = read_string(token, sol("name()"), literal<18>("Permissioned Token"))
+    metadata_text::concat([prefix.payload_span(), value.payload_span()])
+}
+pub fn symbol(_ token: Address) -> DynString uses (ctx: Ctx, call: Call) {
+    let prefix = literal<2>("v4")
+    let value = read_string(token, sol("symbol()"), literal<2>("PT"))
+    metadata_text::concat([prefix.payload_span(), value.payload_span()])
+}
+pub fn decimals(_ token: Address) -> u8 uses (ctx: Ctx, call: Call) {
+    let (ok, data) = response(token, sol("decimals()"))
+    if !ok || data.len() < 32 { return 18 }
+    let value = data.span().word_at(0)
+    if value > 255 { 18 } else { value.downcast_truncate() }
+}
+fn supports(_ checker: Address, _ id: u32) -> bool uses (call: Call, mem: mut RawMem) {
+    let args = MemBuffer::alloc(36)
+    mem.mstore(addr: args.ptr(), value: (sol("supportsInterface(bytes4)") as u256) << 224)
+    mem.mstore(addr: ptr::offset_bytes(args.ptr(), 4), value: (id as u256) << 224)
+    let mut ret = MemBuffer::with_capacity(32)
+    let result = call.raw_staticcall(addr: checker, gas: 30000, args: args.span(), ret: mut ret)
+    result.success() && result.returndata_len() >= 32 && mem.mload(ret.ptr()) > 0
+}
+pub fn valid_checker(_ checker: Address) -> bool uses (call: Call, mem: mut RawMem) {
+    supports(checker, 0x01ffc9a7) && !supports(checker, 0xffffffff)
+        && supports(checker, sol("checkAllowlist(address,address)"))
+}
+pub fn transfer(_ token: Address, _ to: Address, _ amount: u256)
+uses (ctx: Ctx, call: mut Call, mem: mut RawMem)
+{
+    let args = MemBuffer::alloc(68)
+    mem.mstore(addr: args.ptr(), value: (sol("transfer(address,uint256)") as u256) << 224)
+    mem.mstore(addr: ptr::offset_bytes(args.ptr(), 4), value: to.inner)
+    mem.mstore(addr: ptr::offset_bytes(args.ptr(), 36), value: amount)
+    if !safe_call(token, args.span()) { revert_error(Error { reason: literal<15>("TRANSFER_FAILED") }) }
+}
+pub fn transfer_from(_ token: Address, _ from: Address, _ to: Address, _ amount: u256)
+uses (ctx: Ctx, call: mut Call, mem: mut RawMem)
+{
+    let args = MemBuffer::alloc(100)
+    mem.mstore(addr: args.ptr(), value: (sol("transferFrom(address,address,uint256)") as u256) << 224)
+    mem.mstore(addr: ptr::offset_bytes(args.ptr(), 4), value: from.inner)
+    mem.mstore(addr: ptr::offset_bytes(args.ptr(), 36), value: to.inner)
+    mem.mstore(addr: ptr::offset_bytes(args.ptr(), 68), value: amount)
+    if !safe_call(token, args.span()) { revert_error(Error { reason: literal<20>("TRANSFER_FROM_FAILED") }) }
+}
+fn safe_call(_ token: Address, _ args: MemSpan) -> bool uses (ctx: Ctx, call: mut Call, mem: mut RawMem) {
+    let mut ret = MemBuffer::with_capacity(32)
+    let result = call.raw_call(addr: token, gas: ctx.gas(), value: 0, args, ret: mut ret)
+    result.success() && (result.returndata_len() == 0 || (result.returndata_len() >= 32 && mem.mload(ret.ptr()) == 1))
+}

@@ -1,0 +1,96 @@
+// SPDX-License-Identifier: MIT
+// v4-periphery StateView.sol, with its immutable PoolManager dependency.
+use std::abi::{Bytes32, sol::{self, Uint160, Uint24, Int24}}
+use std::evm::{Address, Ctx, RawMem}
+use super::state_library as state
+msg StateViewMsg {
+    #[selector = sol("poolManager()")]
+    PoolManager {} -> Address,
+    #[selector = sol("getSlot0(bytes32)")]
+    Slot0 { poolId: Bytes32 } -> (Uint160, Int24, Uint24, Uint24),
+    #[selector = sol("getTickInfo(bytes32,int24)")]
+    TickInfo { poolId: Bytes32, tick: Int24 } -> (u128, i128, u256, u256),
+    #[selector = sol("getTickLiquidity(bytes32,int24)")]
+    TickLiquidity { poolId: Bytes32, tick: Int24 } -> (u128, i128),
+    #[selector = sol("getTickFeeGrowthOutside(bytes32,int24)")]
+    TickFeeGrowth { poolId: Bytes32, tick: Int24 } -> (u256, u256),
+    #[selector = sol("getFeeGrowthGlobals(bytes32)")]
+    Globals { poolId: Bytes32 } -> (u256, u256),
+    #[selector = sol("getLiquidity(bytes32)")]
+    Liquidity { poolId: Bytes32 } -> u128,
+    #[selector = sol("getTickBitmap(bytes32,int16)")]
+    Bitmap { poolId: Bytes32, tick: i16 } -> u256,
+    #[selector = sol("getPositionInfo(bytes32,address,int24,int24,bytes32)")]
+    PositionByOwner {
+        poolId: Bytes32,
+        owner: Address,
+        tickLower: Int24,
+        tickUpper: Int24,
+        salt: Bytes32,
+    } -> (u128, u256, u256),
+    #[selector = sol("getPositionInfo(bytes32,bytes32)")]
+    PositionById { poolId: Bytes32, positionId: Bytes32 } -> (u128, u256, u256),
+    #[selector = sol("getPositionLiquidity(bytes32,bytes32)")]
+    PositionLiquidity { poolId: Bytes32, positionId: Bytes32 } -> u128,
+    #[selector = sol("getFeeGrowthInside(bytes32,int24,int24)")]
+    Inside { poolId: Bytes32, tickLower: Int24, tickUpper: Int24 } -> (u256, u256),
+}
+pub contract StateView {
+    poolManager: Address,
+    init(_poolManager: Address) uses (mut poolManager) { poolManager = _poolManager }
+    recv StateViewMsg {
+        PoolManager {} -> Address uses (poolManager) {
+            poolManager
+        }
+        Slot0 { poolId } -> (Uint160, Int24, Uint24, Uint24)
+        uses (poolManager, ctx: Ctx, mem: mut RawMem)
+        {
+            let s = state::slot0(poolManager, poolId)
+            (s.sqrt_price_x96(), s.tick(), s.protocol_fee(), s.lp_fee())
+        }
+        TickInfo { poolId, tick } -> (u128, i128, u256, u256)
+        uses (poolManager, ctx: Ctx, mem: mut RawMem)
+        {
+            state::tick_info(poolManager, poolId, tick)
+        }
+        TickLiquidity { poolId, tick } -> (u128, i128)
+        uses (poolManager, ctx: Ctx, mem: mut RawMem)
+        {
+            state::tick_liquidity(poolManager, poolId, tick)
+        }
+        TickFeeGrowth { poolId, tick } -> (u256, u256)
+        uses (poolManager, ctx: Ctx, mem: mut RawMem)
+        {
+            state::tick_fee_growth(poolManager, poolId, tick)
+        }
+        Globals { poolId } -> (u256, u256) uses (poolManager, ctx: Ctx, mem: mut RawMem) {
+            state::fee_growth_globals(poolManager, poolId)
+        }
+        Liquidity { poolId } -> u128 uses (poolManager, ctx: Ctx, mem: mut RawMem) {
+            state::liquidity(poolManager, poolId)
+        }
+        Bitmap { poolId, tick } -> u256 uses (poolManager, ctx: Ctx, mem: mut RawMem) {
+            state::tick_bitmap(poolManager, poolId, tick)
+        }
+        PositionByOwner { poolId, owner, tickLower, tickUpper, salt } -> (u128, u256, u256)
+        uses (poolManager, ctx: Ctx, mem: mut RawMem)
+        {
+            state::position_info_by_owner(poolManager, poolId, owner, tickLower, tickUpper, salt)
+        }
+        PositionById { poolId, positionId } -> (u128, u256, u256)
+        uses (poolManager, ctx: Ctx, mem: mut RawMem)
+        {
+            state::position_info(poolManager, poolId, positionId)
+        }
+        PositionLiquidity { poolId, positionId } -> u128
+        uses (poolManager, ctx: Ctx, mem: mut RawMem)
+        {
+            state::position_liquidity(poolManager, poolId, positionId)
+        }
+        Inside { poolId, tickLower, tickUpper } -> (u256, u256)
+        uses (poolManager, ctx: Ctx, mem: mut RawMem)
+        {
+            state::fee_growth_inside(poolManager, poolId, tickLower, tickUpper)
+        }
+    }
+}

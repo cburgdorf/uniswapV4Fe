@@ -1,0 +1,109 @@
+// SPDX-License-Identifier: MIT
+// Byte-oriented formatting shared by the descriptor and SVG ports.
+use core::abi::ByteInput
+use core::ptr::{self, MemSpan}
+use std::abi::{Bytes, DynString}
+use std::evm::{RawMem, revert_error, Panic, PANIC_INDEX_OUT_OF_BOUNDS, PANIC_OVERFLOW}
+pub fn word(_ value: u256, _ len: u256) -> DynString {
+    DynString::from_payload(source: Bytes::from_word_prefix(word: value, len).payload_span())
+}
+pub fn from_span(_ value: MemSpan) -> DynString { DynString::from_payload(source: value) }
+pub fn set(_ data: MemSpan, _ index: u256, _ byte: u8) uses (mem: mut RawMem) {
+    if index >= data.len() { revert_error(Panic::from(PANIC_INDEX_OUT_OF_BOUNDS)) }
+    mem.mstore8(addr: ptr::offset_bytes(data.ptr(), index), value: byte)
+}
+pub fn allocate(_ len: u256) -> MemSpan {
+    let ptr = ptr::alloc_bytes(len)
+    ptr::zero_bytes(ptr, len)
+    MemSpan::from_raw_parts(ptr, len)
+}
+pub fn decimal(_ input: u256) -> DynString uses (mem: mut RawMem) {
+    let mut value = input
+    let mut length: u256 = 1
+    let mut temp = value
+    while temp >= 10 { length += 1
+ temp /= 10 }
+    let data = allocate(length)
+    let mut i = length
+    while i > 0 {
+        i -= 1
+        set(data, i, ((value % 10) + 48).downcast_truncate())
+        value /= 10
+    }
+    from_span(data)
+}
+pub fn hex(_ input: u256, _ length: u256) -> DynString uses (mem: mut RawMem) {
+    let mut value = input
+    let size = length * 2
+    let data = allocate(size)
+    let mut i = size
+    while i > 0 {
+        i -= 1
+        let nibble: u8 = (value & 15).downcast_truncate()
+        set(data, i, if nibble < 10 { nibble + 48 } else { nibble + 87 })
+        value >>= 4
+    }
+    from_span(data)
+}
+fn base64_char(_ value: u8) -> u8 {
+    if value < 26 { value + 65 }
+    else if value < 52 { value + 71 }
+    else if value < 62 { value - 4 }
+    else if value == 62 { 43 } else { 47 }
+}
+pub fn base64(_ input: MemSpan) -> DynString uses (mem: mut RawMem) {
+    let output = allocate(4 * ((input.len() + 2) / 3))
+    let mut i: u256 = 0
+    let mut j: u256 = 0
+    while i < input.len() {
+        let a = input.byte_at(i)
+        let b = if i + 1 < input.len() { input.byte_at(i + 1) } else { 0 }
+        let c = if i + 2 < input.len() { input.byte_at(i + 2) } else { 0 }
+        set(output, j, base64_char(a >> 2))
+        set(output, j + 1, base64_char(((a & 3) << 4) | (b >> 4)))
+        set(output, j + 2, if i + 1 < input.len() { base64_char(((b & 15) << 2) | (c >> 6)) } else { 61 })
+        set(output, j + 3, if i + 2 < input.len() { base64_char(c & 63) } else { 61 })
+        i += 3
+        j += 4
+    }
+    from_span(output)
+}
+fn special(_ byte: u8) -> bool { byte == 34 || byte == 12 || byte == 10 || byte == 13 || byte == 9 }
+pub fn escape(_ value: DynString) -> DynString uses (mem: mut RawMem) {
+    // The pinned reference uses uint8 cursors and panics beyond 255 bytes.
+    if value.len() > 255 { revert_error(Panic::from(PANIC_OVERFLOW)) }
+    let data = value.payload_span()
+    let mut count: u256 = 0
+    let mut i: u256 = 0
+    while i < data.len() { if special(data.byte_at(i)) { count += 1 }
+ i += 1 }
+    if count == 0 { return value }
+    let output = allocate(data.len() + count)
+    i = 0
+    let mut j: u256 = 0
+    while i < data.len() {
+        let byte = data.byte_at(i)
+        if special(byte) { set(output, j, 92)
+ j += 1 }
+        set(output, j, byte)
+        j += 1
+        i += 1
+    }
+    from_span(output)
+}
+
+pub fn concat<const N: usize>(_ parts: [MemSpan; N]) -> DynString {
+    let mut len: u256 = 0
+    let mut i: usize = 0
+    while i < N { len += parts[i].len()
+ i += 1 }
+    let output = allocate(len)
+    let mut offset: u256 = 0
+    i = 0
+    while i < N {
+        ptr::copy(dest: ptr::offset_bytes(output.ptr(), offset), source: parts[i])
+        offset += parts[i].len()
+        i += 1
+    }
+    from_span(output)
+}

@@ -1,0 +1,20 @@
+// SPDX-License-Identifier: MIT
+// Port of Uniswap v4-core BeforeSwapDelta.sol.
+pub struct BeforeSwapDelta { pub bits: i256 }
+impl Copy for BeforeSwapDelta {}
+pub const ZERO_DELTA: BeforeSwapDelta = BeforeSwapDelta { bits: 0 }
+
+pub fn to_before_swap_delta(_ specified: i128, _ unspecified: i128) -> BeforeSwapDelta {
+    BeforeSwapDelta {
+        bits: ((specified as i256) << 128)
+            | ((unspecified as i256) & 0xffffffffffffffffffffffffffffffff),
+    }
+}
+impl BeforeSwapDelta {
+    pub fn specified_delta(self) -> i128 {
+        (self.bits >> 128).downcast_truncate()
+    }
+    pub fn unspecified_delta(self) -> i128 {
+        self.bits.downcast_truncate()
+    }
+}

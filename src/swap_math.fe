@@ -1,0 +1,84 @@
+// SPDX-License-Identifier: MIT
+// Port of Uniswap v4-core SwapMath.sol.
+use std::abi::sol::{Uint24, Uint160}
+use super::full_math::{mul_div, mul_div_rounding_up}
+use super::sqrt_price_math::{
+    amount0_delta,
+    amount1_delta,
+    next_sqrt_price_from_input,
+    next_sqrt_price_from_output,
+}
+
+pub const MAX_SWAP_FEE: u256 = 1000000
+
+pub fn get_sqrt_price_target(_ zero_for_one: bool, _ next: Uint160, _ limit: Uint160) -> Uint160 {
+    if zero_for_one {
+        if next.val >= limit.val { next } else { limit }
+    } else {
+        if next.val < limit.val { next } else { limit }
+    }
+}
+
+/// Requires fee <= MAX_SWAP_FEE; the pool validates this before swapping.
+/// Negative remaining amount requests exact input, positive requests exact output.
+#[arithmetic(unchecked)]
+pub fn compute_swap_step(
+    _ current: Uint160,
+    _ target: Uint160,
+    _ liquidity: u128,
+    _ remaining: i256,
+    _ fee_pips: Uint24,
+) -> (Uint160, u256, u256, u256) {
+    let fee = fee_pips.val as u256
+    let zero_for_one = current.val >= target.val
+    let exact_in = remaining < 0
+    let mut next: Uint160 = target
+    let mut amount_in: u256 = 0
+    let mut amount_out: u256 = 0
+    let mut fee_amount: u256 = 0
+    if exact_in {
+        // Wraps for MIN_INT256, preserving a magnitude of 2**255.
+        // Use subtraction: unchecked unary negation hits the current Sonatina `neg` backend bug.
+        let magnitude: u256 = ((0 as i256) - remaining).downcast_truncate()
+        let less_fee = mul_div(magnitude, MAX_SWAP_FEE - fee, MAX_SWAP_FEE)
+        amount_in = if zero_for_one {
+            amount0_delta(target, current, liquidity, true)
+        } else {
+            amount1_delta(current, target, liquidity, true)
+        }
+        if less_fee >= amount_in {
+            fee_amount = if fee == MAX_SWAP_FEE {
+                amount_in
+            } else {
+                mul_div_rounding_up(amount_in, fee, MAX_SWAP_FEE - fee)
+            }
+        } else {
+            amount_in = less_fee
+            next = next_sqrt_price_from_input(current, liquidity, less_fee, zero_for_one)
+            fee_amount = magnitude - amount_in
+        }
+        amount_out = if zero_for_one {
+            amount1_delta(next, current, liquidity, false)
+        } else {
+            amount0_delta(current, next, liquidity, false)
+        }
+    } else {
+        let magnitude: u256 = remaining.downcast_truncate()
+        amount_out = if zero_for_one {
+            amount1_delta(target, current, liquidity, false)
+        } else {
+            amount0_delta(current, target, liquidity, false)
+        }
+        if magnitude < amount_out {
+            amount_out = magnitude
+            next = next_sqrt_price_from_output(current, liquidity, amount_out, zero_for_one)
+        }
+        amount_in = if zero_for_one {
+            amount0_delta(next, current, liquidity, true)
+        } else {
+            amount1_delta(current, next, liquidity, true)
+        }
+        fee_amount = mul_div_rounding_up(amount_in, fee, MAX_SWAP_FEE - fee)
+    }
+    (next, amount_in, amount_out, fee_amount)
+}

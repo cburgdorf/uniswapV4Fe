@@ -1,0 +1,372 @@
+// SPDX-License-Identifier: BUSL-1.1
+// Singleton PoolManager entrypoints. Original address is immutable, not storage.
+use std::abi::{Bytes, Bytes4, Bytes32, DynArray, sol::{self, Int24, Uint24, Uint160}}
+use std::evm::{Address, Ctx, RawMem, RawStorage, RawOps, Call, Log}
+use super::{
+    manager,
+    owned::Owned,
+    claims,
+    extload,
+    pool_types::{PoolKey, ModifyLiquidityParams, SwapParams},
+}
+msg PoolManagerMsg {
+    #[selector = sol("unlock(bytes)")]
+    Unlock { data: Bytes } -> Bytes,
+    #[selector = sol(
+        "initialize((address,address,uint24,int24,address),uint160)",
+    )]
+    Initialize { key: PoolKey, sqrtPriceX96: Uint160 } -> Int24,
+    #[selector = sol(
+        "modifyLiquidity((address,address,uint24,int24,address),(int24,int24,int256,bytes32),bytes)",
+    )]
+    ModifyLiquidity { key: PoolKey, params: ModifyLiquidityParams, hookData: Bytes } -> (
+        i256,
+        i256,
+    ),
+    #[selector = sol(
+        "swap((address,address,uint24,int24,address),(bool,int256,uint160),bytes)",
+    )]
+    Swap { key: PoolKey, params: SwapParams, hookData: Bytes } -> i256,
+    #[selector = sol(
+        "donate((address,address,uint24,int24,address),uint256,uint256,bytes)",
+    )]
+    Donate { key: PoolKey, amount0: u256, amount1: u256, hookData: Bytes } -> i256,
+    #[selector = sol("sync(address)")]
+    Sync { currency: Address },
+    #[selector = sol("take(address,address,uint256)")]
+    Take { currency: Address, to: Address, amount: u256 },
+    #[selector = sol("settle()")]
+    Settle {} -> u256,
+    #[selector = sol("settleFor(address)")]
+    SettleFor { recipient: Address } -> u256,
+    #[selector = sol("clear(address,uint256)")]
+    Clear { currency: Address, amount: u256 },
+    #[selector = sol("mint(address,uint256,uint256)")]
+    Mint { to: Address, id: u256, amount: u256 },
+    #[selector = sol("burn(address,uint256,uint256)")]
+    Burn { from: Address, id: u256, amount: u256 },
+    #[selector = sol(
+        "updateDynamicLPFee((address,address,uint24,int24,address),uint24)",
+    )]
+    UpdateDynamicLPFee { key: PoolKey, newDynamicLPFee: Uint24 },
+    #[selector = sol("owner()")]
+    Owner {} -> Address,
+    #[selector = sol("transferOwnership(address)")]
+    TransferOwnership { newOwner: Address },
+    #[selector = sol("protocolFeeController()")]
+    ProtocolFeeController {} -> Address,
+    #[selector = sol("protocolFeesAccrued(address)")]
+    ProtocolFeesAccrued { currency: Address } -> u256,
+    #[selector = sol("setProtocolFeeController(address)")]
+    SetProtocolFeeController { controller: Address },
+    #[selector = sol(
+        "setProtocolFee((address,address,uint24,int24,address),uint24)",
+    )]
+    SetProtocolFee { key: PoolKey, newProtocolFee: Uint24 },
+    #[selector = sol("collectProtocolFees(address,address,uint256)")]
+    CollectProtocolFees { recipient: Address, currency: Address, amount: u256 } -> u256,
+    #[selector = sol("balanceOf(address,uint256)")]
+    BalanceOf { owner: Address, id: u256 } -> u256,
+    #[selector = sol("allowance(address,address,uint256)")]
+    Allowance { owner: Address, spender: Address, id: u256 } -> u256,
+    #[selector = sol("isOperator(address,address)")]
+    IsOperator { owner: Address, spender: Address } -> bool,
+    #[selector = sol("approve(address,uint256,uint256)")]
+    Approve { spender: Address, id: u256, amount: u256 } -> bool,
+    #[selector = sol("setOperator(address,bool)")]
+    SetOperator { operator: Address, approved: bool } -> bool,
+    #[selector = sol("transfer(address,uint256,uint256)")]
+    Transfer { receiver: Address, id: u256, amount: u256 } -> bool,
+    #[selector = sol("transferFrom(address,address,uint256,uint256)")]
+    TransferFrom { sender: Address, receiver: Address, id: u256, amount: u256 } -> bool,
+    #[selector = sol("supportsInterface(bytes4)")]
+    SupportsInterface { interfaceId: Bytes4 } -> bool,
+    #[selector = sol("extsload(bytes32)")]
+    Sload { slot: Bytes32 } -> Bytes32,
+    #[selector = sol("extsload(bytes32,uint256)")]
+    SloadRange { startSlot: Bytes32, nSlots: u256 } -> DynArray<Bytes32>,
+    #[selector = sol("extsload(bytes32[])")]
+    SloadSparse { slots: DynArray<Bytes32> } -> DynArray<Bytes32>,
+    #[selector = sol("exttload(bytes32)")]
+    Tload { slot: Bytes32 } -> Bytes32,
+    #[selector = sol("exttload(bytes32[])")]
+    TloadSparse { slots: DynArray<Bytes32> } -> DynArray<Bytes32>,
+}
+pub contract PoolManager {
+    original: Address,
+    init(initialOwner: Address)
+    uses (mut original, ctx: Ctx, storage: mut RawStorage, log: mut Log)
+    {
+        original = ctx.address()
+        Owned { slot: 0 }.initialize(initialOwner)
+    }
+    recv PoolManagerMsg {
+        Unlock { data } -> Bytes uses (
+            ctx: Ctx,
+            storage: mut RawStorage,
+            ops: mut RawOps,
+            mem: mut RawMem,
+            call: mut Call,
+            log: mut Log,
+        ) {
+            manager::unlock(data)
+        }
+        Initialize { key, sqrtPriceX96 } -> Int24
+        uses (
+            ctx: Ctx,
+            storage: mut RawStorage,
+            ops: mut RawOps,
+            mem: mut RawMem,
+            call: mut Call,
+            log: mut Log,
+            original,
+        )
+        {
+            manager::initialize(original, key, sqrtPriceX96)
+        }
+        ModifyLiquidity { key, params, hookData } -> (i256, i256)
+        uses (
+            ctx: Ctx,
+            storage: mut RawStorage,
+            ops: mut RawOps,
+            mem: mut RawMem,
+            call: mut Call,
+            log: mut Log,
+            original,
+        )
+        {
+            manager::modify_liquidity(original, key, params, hookData)
+        }
+        Swap { key, params, hookData } -> i256 uses (
+            ctx: Ctx,
+            storage: mut RawStorage,
+            ops: mut RawOps,
+            mem: mut RawMem,
+            call: mut Call,
+            log: mut Log,
+            original,
+        ) {
+            manager::swap(original, key, params, hookData)
+        }
+        Donate { key, amount0, amount1, hookData } -> i256
+        uses (
+            ctx: Ctx,
+            storage: mut RawStorage,
+            ops: mut RawOps,
+            mem: mut RawMem,
+            call: mut Call,
+            log: mut Log,
+            original,
+        )
+        {
+            manager::donate(original, key, amount0, amount1, hookData)
+        }
+        Sync { currency } uses (
+            ctx: Ctx,
+            storage: mut RawStorage,
+            ops: mut RawOps,
+            mem: mut RawMem,
+            call: mut Call,
+            log: mut Log,
+        ) {
+            manager::sync(currency)
+        }
+        Take { currency, to, amount } uses (
+            ctx: Ctx,
+            storage: mut RawStorage,
+            ops: mut RawOps,
+            mem: mut RawMem,
+            call: mut Call,
+            log: mut Log,
+        ) {
+            manager::take(currency, to, amount)
+        }
+        #[payable]
+        Settle {} -> u256 uses (
+            ctx: Ctx,
+            storage: mut RawStorage,
+            ops: mut RawOps,
+            mem: mut RawMem,
+            call: mut Call,
+            log: mut Log,
+        ) {
+            manager::settle(ctx.caller())
+        }
+        #[payable]
+        SettleFor { recipient } -> u256 uses (
+            ctx: Ctx,
+            storage: mut RawStorage,
+            ops: mut RawOps,
+            mem: mut RawMem,
+            call: mut Call,
+            log: mut Log,
+        ) {
+            manager::settle(recipient)
+        }
+        Clear { currency, amount } uses (
+            ctx: Ctx,
+            storage: mut RawStorage,
+            ops: mut RawOps,
+            mem: mut RawMem,
+            call: mut Call,
+            log: mut Log,
+        ) {
+            manager::clear(currency, amount)
+        }
+        Mint { to, id, amount } uses (
+            ctx: Ctx,
+            storage: mut RawStorage,
+            ops: mut RawOps,
+            mem: mut RawMem,
+            call: mut Call,
+            log: mut Log,
+        ) {
+            manager::mint(to, id, amount)
+        }
+        Burn { from, id, amount } uses (
+            ctx: Ctx,
+            storage: mut RawStorage,
+            ops: mut RawOps,
+            mem: mut RawMem,
+            call: mut Call,
+            log: mut Log,
+        ) {
+            manager::burn(from, id, amount)
+        }
+        UpdateDynamicLPFee { key, newDynamicLPFee }
+        uses (
+            ctx: Ctx,
+            storage: mut RawStorage,
+            ops: mut RawOps,
+            mem: mut RawMem,
+            call: mut Call,
+            log: mut Log,
+        )
+        {
+            manager::update_dynamic_fee(key, newDynamicLPFee)
+        }
+        Owner {} -> Address uses (storage: RawStorage) {
+            Owned { slot: 0 }.owner()
+        }
+        TransferOwnership { newOwner } uses (ctx: Ctx, storage: mut RawStorage, log: mut Log) {
+            Owned { slot: 0 }.transfer_ownership(newOwner)
+        }
+        ProtocolFeeController {} -> Address uses (storage: RawStorage) {
+            manager::fees().controller()
+        }
+        ProtocolFeesAccrued { currency } -> u256 uses (storage: RawStorage, mem: mut RawMem) {
+            manager::fees().accrued(currency)
+        }
+        SetProtocolFeeController { controller } uses (
+            ctx: Ctx,
+            storage: mut RawStorage,
+            ops: mut RawOps,
+            mem: mut RawMem,
+            call: mut Call,
+            log: mut Log,
+        ) {
+            manager::fees().set_controller(controller)
+        }
+        SetProtocolFee { key, newProtocolFee } uses (
+            ctx: Ctx,
+            storage: mut RawStorage,
+            ops: mut RawOps,
+            mem: mut RawMem,
+            call: mut Call,
+            log: mut Log,
+        ) {
+            manager::fees().set_protocol_fee(key, newProtocolFee)
+        }
+        CollectProtocolFees { recipient, currency, amount } -> u256
+        uses (
+            ctx: Ctx,
+            storage: mut RawStorage,
+            ops: mut RawOps,
+            mem: mut RawMem,
+            call: mut Call,
+            log: mut Log,
+        )
+        {
+            manager::fees().collect(recipient, currency, amount)
+        }
+        BalanceOf { owner, id } -> u256 uses (storage: RawStorage, mem: mut RawMem) {
+            manager::claims().balance_of(owner, id)
+        }
+        Allowance { owner, spender, id } -> u256 uses (storage: RawStorage, mem: mut RawMem) {
+            manager::claims().allowance(owner, spender, id)
+        }
+        IsOperator { owner, spender } -> bool uses (storage: RawStorage, mem: mut RawMem) {
+            manager::claims().is_operator(owner, spender)
+        }
+        Approve { spender, id, amount } -> bool uses (
+            ctx: Ctx,
+            storage: mut RawStorage,
+            ops: mut RawOps,
+            mem: mut RawMem,
+            call: mut Call,
+            log: mut Log,
+        ) {
+            manager::claims().approve(spender, id, amount)
+        }
+        SetOperator { operator, approved } -> bool
+        uses (
+            ctx: Ctx,
+            storage: mut RawStorage,
+            ops: mut RawOps,
+            mem: mut RawMem,
+            call: mut Call,
+            log: mut Log,
+        )
+        {
+            manager::claims().set_operator(operator, approved)
+        }
+        Transfer { receiver, id, amount } -> bool
+        uses (
+            ctx: Ctx,
+            storage: mut RawStorage,
+            ops: mut RawOps,
+            mem: mut RawMem,
+            call: mut Call,
+            log: mut Log,
+        )
+        {
+            manager::claims().transfer(receiver, id, amount)
+        }
+        TransferFrom { sender, receiver, id, amount } -> bool
+        uses (
+            ctx: Ctx,
+            storage: mut RawStorage,
+            ops: mut RawOps,
+            mem: mut RawMem,
+            call: mut Call,
+            log: mut Log,
+        )
+        {
+            manager::claims().transfer_from(sender, receiver, id, amount)
+        }
+        SupportsInterface { interfaceId } -> bool {
+            claims::supports_interface(interfaceId)
+        }
+        Sload { slot } -> Bytes32 uses (storage: RawStorage) {
+            extload::sload(slot)
+        }
+        SloadRange { startSlot, nSlots } -> DynArray<Bytes32>
+        uses (ops: RawOps)
+        {
+            extload::return_sload_range(startSlot, nSlots)
+        }
+        SloadSparse { slots } -> DynArray<Bytes32>
+        uses (storage: RawStorage)
+        {
+            extload::sload_sparse(slots)
+        }
+        Tload { slot } -> Bytes32 uses (ops: RawOps) {
+            extload::tload(slot)
+        }
+        TloadSparse { slots } -> DynArray<Bytes32>
+        uses (ops: RawOps)
+        {
+            extload::tload_sparse(slots)
+        }
+    }
+}

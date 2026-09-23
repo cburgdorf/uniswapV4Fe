@@ -1,0 +1,220 @@
+// SPDX-License-Identifier: MIT
+// Pinned periphery CalldataDecoder.sol. Views retain absolute calldata offsets:
+// loads may cross the logical bytes boundary exactly as in the reference.
+use core::abi::ByteInput
+use core::ptr::MemBuffer
+use std::abi::{Bytes, sol::{Int24, Uint24}}
+use std::evm::{Address, CallData, revert_error}
+use super::pool_types::PoolKey
+
+const MASK32: u256 = 0xffffffff
+const MASK_ALIGNED: u256 = 0xffffffe0
+const ADDRESS_MASK: u256 = 0xffffffffffffffffffffffffffffffffffffffff
+#[error]
+pub struct SliceOutOfBounds {}
+pub struct View { pub offset: u256, pub len: u256 }
+impl Copy for View {}
+pub struct ActionsView { pub actions: View, pub params_offset: u256, pub params_len: u256 }
+impl Copy for ActionsView {}
+
+impl View {
+    #[arithmetic(unchecked)]
+    pub fn word(self, _ offset: u256) -> u256 {
+        CallData::new().word_at(self.offset + offset)
+    }
+    pub fn require_length(self, _ minimum: u256) {
+        if self.len < minimum {
+            revert_error(SliceOutOfBounds {})
+        }
+    }
+    pub fn bytes(self) -> Bytes {
+        let buffer = MemBuffer::alloc(self.len)
+        CallData::new()
+            .copy_to_memory_unchecked_aligned(
+                dest: buffer.ptr(),
+                src_offset: self.offset,
+                len: self.len,
+            )
+        Bytes::from_payload(source: buffer.span())
+    }
+    #[arithmetic(unchecked)]
+    pub fn to_bytes(self, _ arg: u256) -> View {
+        let length_ptr = self.offset + (self.word(arg << 5) & MASK32)
+        let length = CallData::new().word_at(length_ptr) & MASK32
+        let offset = length_ptr + 32
+        if self.offset + self.len < offset + length {
+            revert_error(SliceOutOfBounds {})
+        }
+        View { offset, len: length }
+    }
+    #[arithmetic(unchecked)]
+    pub fn decode_actions(self) -> ActionsView {
+        let mut invalid = self.word(0) ^ 64
+        let actions_length = self.word(64) & MASK32
+        let params_length_offset = ((actions_length + 31) & MASK_ALIGNED) + 96
+        invalid |= self.word(32) ^ params_length_offset
+        let params_length_ptr = self.offset + params_length_offset
+        let params_length = CallData::new().word_at(params_length_ptr) & MASK32
+        let params_offset = params_length_ptr + 32
+        let tail_offset = params_length << 5
+        let mut expected = tail_offset
+        let mut offset: u256 = 0
+        while offset < tail_offset {
+            let item_length_offset = CallData::new().word_at(params_offset + offset)
+            invalid |= item_length_offset ^ expected
+            let length = ((CallData::new().word_at(params_offset + item_length_offset) + 31)
+                    & MASK_ALIGNED)
+                + 32
+            expected += length
+            offset += 32
+        }
+        if invalid != 0 || self.offset + self.len < params_offset + expected {
+            revert_error(SliceOutOfBounds {})
+        }
+        ActionsView {
+            actions: View { offset: self.offset + 96, len: actions_length },
+            params_offset,
+            params_len: params_length,
+        }
+    }
+    // Swap structs are returned as lazy calldata locations, not eagerly decoded.
+    // Field validation and nested-array access are performed by the consumer.
+    #[arithmetic(unchecked)]
+    pub fn swap_struct(self, _ single: bool) -> u256 {
+        self.require_length(if single { 352 } else { 224 })
+        self.offset + self.word(0)
+    }
+    pub fn uint256(self) -> u256 {
+        self.require_length(32)
+        self.word(0)
+    }
+    pub fn currency(self) -> Address {
+        self.require_length(32)
+        address(self.word(0))
+    }
+    pub fn currency_pair(self) -> (Address, Address) {
+        self.require_length(64)
+        (address(self.word(0)), address(self.word(32)))
+    }
+    pub fn currency_pair_address(self) -> (Address, Address, Address) {
+        self.require_length(96)
+        (address(self.word(0)), address(self.word(32)), address(self.word(64)))
+    }
+    pub fn currency_address(self) -> (Address, Address) {
+        self.currency_pair()
+    }
+    pub fn currency_address_uint(self) -> (Address, Address, u256) {
+        self.require_length(96)
+        (address(self.word(0)), address(self.word(32)), self.word(64))
+    }
+    pub fn currency_uint(self) -> (Address, u256) {
+        self.require_length(64)
+        (address(self.word(0)), self.word(32))
+    }
+    pub fn currency_uint_bool(self) -> (Address, u256, bool) {
+        self.require_length(96)
+        (address(self.word(0)), self.word(32), self.word(64) != 0)
+    }
+    pub fn modify_liquidity(self) -> (u256, u256, u128, u128, View) {
+        let data = self.to_bytes(4)
+        (
+            self.word(0),
+            self.word(32),
+            self.word(64).downcast_truncate(),
+            self.word(96).downcast_truncate(),
+            data,
+        )
+    }
+    pub fn burn_or_increase_from_deltas(self) -> (u256, u128, u128, View) {
+        let data = self.to_bytes(3)
+        (self.word(0), self.word(32).downcast_truncate(), self.word(64).downcast_truncate(), data)
+    }
+    pub fn mint(self) -> (PoolKey, Int24, Int24, u256, u128, u128, Address, View) {
+        let data = self.to_bytes(11)
+        (
+            pool_key(self.offset),
+            tick(self.word(160)),
+            tick(self.word(192)),
+            self.word(224),
+            self.word(256).downcast_truncate(),
+            self.word(288).downcast_truncate(),
+            address(self.word(320)),
+            data,
+        )
+    }
+    pub fn mint_from_deltas(self) -> (PoolKey, Int24, Int24, u128, u128, Address, View) {
+        let data = self.to_bytes(10)
+        (
+            pool_key(self.offset),
+            tick(self.word(160)),
+            tick(self.word(192)),
+            self.word(224).downcast_truncate(),
+            self.word(256).downcast_truncate(),
+            address(self.word(288)),
+            data,
+        )
+    }
+}
+
+pub fn address(_ word: u256) -> Address {
+    Address { inner: word & ADDRESS_MASK }
+}
+pub fn tick(_ word: u256) -> Int24 {
+    let signed: i32 = (word << 8).downcast_truncate()
+    Int24 { val: signed >> 8 }
+}
+pub fn pool_key(_ offset: u256) -> PoolKey {
+    // A Solidity calldata struct validates each accessed scalar, but does not
+    // check the total struct size here. CALLDATALOAD supplies zero past the end.
+    let view = View { offset, len: 160 }
+    let c0 = view.word(0)
+    let c1 = view.word(32)
+    let fee = view.word(64)
+    let spacing: i256 = view.word(96).downcast_truncate()
+    let hooks = view.word(128)
+    if c0 >> 160 != 0
+        || c1 >> 160 != 0
+        || fee >> 24 != 0
+        || spacing < -8388608
+        || spacing > 8388607
+        || hooks >> 160 != 0 {
+        std::evm::revert(())
+    }
+    PoolKey {
+        currency0: address(c0),
+        currency1: address(c1),
+        fee: Uint24 { val: fee.downcast_truncate() },
+        tickSpacing: Int24 { val: spacing.downcast_truncate() },
+        hooks: address(hooks),
+    }
+}
+
+// For a bytes parameter already validated by the enclosing Fe ABI dispatcher.
+#[arithmetic(unchecked)]
+pub fn argument_bytes(_ index: u256) -> View {
+    let tail = 4 + CallData::new().word_at(4 + index * 32)
+    View { offset: tail + 32, len: CallData::new().word_at(tail) }
+}
+
+impl ActionsView {
+    pub fn parameter(self, _ index: u256) -> View {
+        if index >= self.params_len {
+            std::evm::revert_error(std::evm::Panic::from(std::evm::PANIC_INDEX_OUT_OF_BOUNDS))
+        }
+        let input = CallData::new()
+        let relative = input.word_at(self.params_offset + index * 32)
+        if relative > 0xffffffffffffffff {
+            std::evm::revert(())
+        }
+        let tail = self.params_offset + relative
+        if tail > input.len() || input.len() - tail < 32 {
+            std::evm::revert(())
+        }
+        let length = input.word_at(tail)
+        let offset = tail + 32
+        if length > 0xffffffffffffffff || length > input.len() - offset {
+            std::evm::revert(())
+        }
+        View { offset, len: length }
+    }
+}

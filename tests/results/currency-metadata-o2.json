@@ -1,0 +1,32 @@
+{
+  "suite": "currency_metadata",
+  "build_full_ingot": false,
+  "timestamp_utc": "2026-09-23T03:55:59.735238+00:00",
+  "compiler_version": "fe 26.3.0 (8b43741b4)",
+  "compiler_sha256": "3237760c6e2bbc33ca03d02d65459523d9d8cb718a7d5903e668e9dcbd7b5ca3",
+  "compiler_worktree_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "forge_version": "forge Version: 1.5.1-stable\nCommit SHA: b0a9dd9ceda36f63e2326ce530c10e6916f4b8a2\nBuild Timestamp: 2025-12-22T11:39:01.425730780Z (1766403541)\nBuild Profile: maxperf",
+  "solc_version": "0.8.26",
+  "solc_setting": "/tmp/fe-v4-solc-0.8.26",
+  "solc_via_ir": true,
+  "evm_version": "cancun",
+  "optimization": "2",
+  "fuzz_runs_per_property": 10000,
+  "fuzz_seed": "0x554e495634",
+  "reference_revision": "46c6834698c48bc4a463a86d8420f4eb1d7f3b75",
+  "periphery_revision": "9969eec44cfdf07e24b41de47f40276a58401976",
+  "dependency_revisions": {},
+  "openzeppelin_revision": "dbb6104ce834628e473d2173bbc9d47f81a9eec3",
+  "permit2_revision": null,
+  "permit2_reference_validation": null,
+  "manager_artifact_validation": null,
+  "reused_fe_build": null,
+  "sources": {
+    "src/address_string.fe": "b19ae81c4a39b63b431fc00202720be9c0c8b74199f0d8b38deaf203cbd3e1aa",
+    "src/currency_metadata_harness.fe": "9ac86a1776e5d6692ad6e5f35c648cd8ffaf6ace7131d9061a6379e9e7c9d4cf",
+    "src/safe_currency_metadata.fe": "f57425776d56d0e9ca533e85de8a284e79e15a2fa28b8e03cbfeaacef6d246aa"
+  },
+  "test_source_sha256": "7fa642d527334bdb089c8b443e4338108b7f6b7caae1fd1103b2f46d712cfafc",
+  "creation_bytecode_sha256": "2d022055f998987adef59d5050ae18059eecb174a278e01925e2a66a41985243",
+  "result": "passed"
+}

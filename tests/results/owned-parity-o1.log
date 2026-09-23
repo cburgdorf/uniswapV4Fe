@@ -1,0 +1,10 @@
+Compiling 2 files with Solc 0.8.30
+Solc 0.8.30 finished in 482.92ms
+Compiler run successful!
+
+Ran 2 tests for test/OwnedParity.t.sol:OwnedParityTest
+[PASS] testFuzz_ownership(address,address,address,uint96) (runs: 10000, μ: 405639, ~: 405659)
+[PASS] test_zeroAndSelfOwnership() (gas: 1056683)
+Suite result: ok. 2 passed; 0 failed; 0 skipped; finished in 1.60s (1.60s CPU time)
+
+Ran 1 test suite in 1.60s (1.60s CPU time): 2 tests passed, 0 failed, 0 skipped (2 total tests)

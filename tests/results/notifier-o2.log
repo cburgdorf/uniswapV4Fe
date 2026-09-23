@@ -1,0 +1,12 @@
+Compiling 52 files with Solc 0.8.26
+Solc 0.8.26 finished in 2.72s
+Compiler run successful!
+
+Ran 4 tests for test/NotifierParity.t.sol:NotifierParityTest
+[PASS] testFuzz_notifications(uint256,address,uint256,uint256,int256,bytes,bool) (runs: 10000, μ: 439845, ~: 439484)
+[PASS] testFuzz_subscription(uint256,uint256,bytes,uint8,uint64) (runs: 10000, μ: 537938, ~: 439788)
+[PASS] test_noCodeAndGasLimit() (gas: 3117219)
+[PASS] test_removedSubscriberCode() (gas: 212573)
+Suite result: ok. 4 passed; 0 failed; 0 skipped; finished in 2.85s (5.40s CPU time)
+
+Ran 1 test suite in 2.85s (2.85s CPU time): 4 tests passed, 0 failed, 0 skipped (4 total tests)

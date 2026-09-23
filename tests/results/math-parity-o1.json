@@ -1,0 +1,28 @@
+{
+  "timestamp_utc": "2026-09-22T10:19:14.687578+00:00",
+  "compiler_version": "fe 26.3.0 (aad737010)",
+  "compiler_sha256": "bcca32a599986969df798656735d88167e0f95957ba18f8ec9aa6dffb7c3ecf5",
+  "forge_version": "forge Version: 1.5.1-stable\nCommit SHA: b0a9dd9ceda36f63e2326ce530c10e6916f4b8a2\nBuild Timestamp: 2025-12-22T11:39:01.425730780Z (1766403541)\nBuild Profile: maxperf",
+  "solc_version": "0.8.30",
+  "evm_version": "cancun",
+  "optimization": "1",
+  "fuzz_runs_per_property": 10000,
+  "fuzz_seed": "0x554e495634",
+  "reference_revision": "46c6834698c48bc4a463a86d8420f4eb1d7f3b75",
+  "sources": {
+    "src/bit_math.fe": "106bbed1eb583d21028c8f37a504173b46515f072c133c9e6fff8c4c63a42896",
+    "src/full_math.fe": "82c0b4836013a7194b641ed632b61d4abffd54c2d27139de3809051879253048",
+    "src/lib.fe": "5418ad0b2fbb3ffed5ffb753c5526275c701bc9542ade982a2a1658cf960b3e2",
+    "src/math_harness.fe": "7419526e459d838156b3cd27c1240de43e873b6ef843618f550f99f25e413c96",
+    "src/math_reverts.fe": "3976e3296b8c7e50e29e109e161573fbc3aa4c81b5bbb0a0b69da4ffe3b25680",
+    "src/math_vectors.fe": "ee048c5accb1320893f4d635556a35f4176b1ecf7fad5e0082fedd7aba2e57e8",
+    "src/safe_cast.fe": "8c3a7b3e029c09253d51821241fe2b691da0a90e6ffc3b056c8d3cbb23f94784",
+    "src/sqrt_price_math.fe": "6ac16580c6e3422d45d807dfc4d276f75b78e2a1ae8fff6793d99505949e1df6",
+    "src/swap_math.fe": "fa81bafcc8ebe91c4da69b4de118e97d8b4b5df8344900f2232192e26f0adde8",
+    "src/tick_math.fe": "287f23e90cae9dd6b497555916810c71ab7b7dfadb2f193c10e2af8d24f8c890",
+    "src/unsafe_math.fe": "2e9791562721d73981a961a170a80bba8dd2bc98331d50870a760b5366652e8d"
+  },
+  "test_source_sha256": "85c8be6c6e156efb08119f74a38d671a2c55c60f88e9d964dbeffc8b37ed2393",
+  "creation_bytecode_sha256": "417a01fc9f8d5c67a2c1f0637e3ad764b2c0dbea2497e18c587f7a66c1dedf8a",
+  "result": "passed"
+}

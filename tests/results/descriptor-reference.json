@@ -1,0 +1,82 @@
+{
+  "validation_sha256": "cb15758db8596c0a730bb585922d166b1693221dd35f9d198c3d2aff9bc46616",
+  "periphery_revision": "9969eec44cfdf07e24b41de47f40276a58401976",
+  "compiler": {
+    "version": "0.8.26+commit.8a97fa7a"
+  },
+  "settings": {
+    "compilationTarget": {
+      "test/periphery/src/PositionDescriptor.sol": "PositionDescriptor"
+    },
+    "evmVersion": "cancun",
+    "libraries": {},
+    "metadata": {
+      "bytecodeHash": "ipfs"
+    },
+    "optimizer": {
+      "enabled": false,
+      "runs": 200
+    },
+    "remappings": [
+      ":@openzeppelin/=test/reference/openzeppelin/",
+      ":@uniswap/v4-core/=test/reference/",
+      ":openzeppelin-contracts/=test/reference/openzeppelin/",
+      ":permit2/=test/permit2/",
+      ":solmate/=test/reference/solmate/"
+    ],
+    "viaIR": true
+  },
+  "sources": {
+    "test/periphery/src/PositionDescriptor.sol": "91004973a439b5ce80bdb7f68a284bebd41a48355c62493fa14745ec0624aa48",
+    "test/periphery/src/interfaces/IEIP712_v4.sol": "ee4cc46349cc7f1f894197f368ddea0f71f2564c2962822eead755714f3ba57d",
+    "test/periphery/src/interfaces/IERC721Permit_v4.sol": "80680771bccd7bf47641417d5a656f950746072766e24703f354e58c2ee0875c",
+    "test/periphery/src/interfaces/IImmutableState.sol": "86f06a1f388f91ee0185495cb5d2912d564f73fabb163b3767e9c292c5069276",
+    "test/periphery/src/interfaces/IMulticall_v4.sol": "0c0f4f1cccb7cf63c1ee3dc53e8d48cf867cbff08f5a8f85dd820873277e9481",
+    "test/periphery/src/interfaces/INotifier.sol": "7fadc8550f73d9ae57925bb27f5ab3a134d4c020972a13683e1121fc11691249",
+    "test/periphery/src/interfaces/IPermit2Forwarder.sol": "3b28167d65673e7de2bbed1e6f3508350cf889f8439e8680da23ad7586f4cc57",
+    "test/periphery/src/interfaces/IPoolInitializer_v4.sol": "ca6ecf95cfbc647d49b774801d84c49c8213010771b44555b056118102d644fc",
+    "test/periphery/src/interfaces/IPositionDescriptor.sol": "ea68397628ff5d386fdfbea48af0556acb537f8d63edccb22d2fa61ac4175cdd",
+    "test/periphery/src/interfaces/IPositionManager.sol": "439bcd1310f47092a15fa1cc98971898a536eaaff91ac397d8b12eee3c7d79c1",
+    "test/periphery/src/interfaces/ISubscriber.sol": "9672e03c964da7cd484df290ad3395b6beacd90adcdd8ea2236f835407fb8e2e",
+    "test/periphery/src/interfaces/IUnorderedNonce.sol": "12e02d4e7e03a668fc1d493840315b4f2aaee2f366ca677574d37d3811d45701",
+    "test/periphery/src/libraries/AddressStringUtil.sol": "f57613ab19a41ea7eb95f645b5ec424dd0c1097c9ef66539959bf61544f53d2e",
+    "test/periphery/src/libraries/CurrencyRatioSortOrder.sol": "6773a2564c1eeb9b9165a818d245d56aed1428021ccc9b23b0341026b878b588",
+    "test/periphery/src/libraries/Descriptor.sol": "d106a5a4008de4eac20c1805b456d02c42a368504c1198c2ed0a953b1116a19f",
+    "test/periphery/src/libraries/HexStrings.sol": "bf3dc237ff833f4ca53be1f4117ebd900c5a144fe6b4df3a68deab60601edd3f",
+    "test/periphery/src/libraries/PositionInfoLibrary.sol": "6abfa1c06d62753d177df1a4ce7af8028ea3724943ca8673f7083c1cf09bc4d9",
+    "test/periphery/src/libraries/SVG.sol": "57e3a5b9c70ffe38d738a689a100267dd8546d1a880c1297bdef67515b7c78fb",
+    "test/periphery/src/libraries/SafeCurrencyMetadata.sol": "d9f7e2512c847c7711bec7dc7b6f079badd33c4d2a35d84ca77ef1d54aaabda2",
+    "test/permit2/src/interfaces/IAllowanceTransfer.sol": "a31c712c5cc8d171818a4225c09011f9ba86b2d5edf6045ac812bab93b6bbb87",
+    "test/permit2/src/interfaces/IEIP712.sol": "e386407da496dbe874c10a81801c55744fb2922a51389a51c79001422e81e0cd",
+    "test/reference/openzeppelin/contracts/token/ERC20/IERC20.sol": "6f2faae462e286e24e091d7718575179644dc60e79936ef0c92e2d1ab3ca3cee",
+    "test/reference/openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol": "1d079c20a192a135308e99fa5515c27acfbb071e6cdb0913b13634e630865939",
+    "test/reference/openzeppelin/contracts/utils/Base64.sol": "1503845f01cfbaca2453e4fb5203f25057e65143762127517b02c3ce912c50e1",
+    "test/reference/openzeppelin/contracts/utils/Strings.sol": "0519199dbc635f98ce2e4537986604ee618bca665c65e9a1738702dfacf72010",
+    "test/reference/openzeppelin/contracts/utils/math/Math.sol": "a6ee779fc42e6bf01b5e6a963065706e882b016affbedfd8be19a71ea48e6e15",
+    "test/reference/openzeppelin/contracts/utils/math/SignedMath.sol": "768c28e3a33c3312e57ae8a1caaec2893bc89ac6e386621de018f85e9a2d6e99",
+    "test/reference/src/interfaces/IExtsload.sol": "9421ef4ba198d94058cd9a4c9fd2d663c61fc682f7dafa449a873456853f0025",
+    "test/reference/src/interfaces/IExttload.sol": "c21643d2c7f48d2d2407438a64a3ff0f376324cf6a0c62608977713652308c9e",
+    "test/reference/src/interfaces/IHooks.sol": "6eb35c9c598eb932e963219f1ff180748bc4c30ac6a02d924893b3c29abb1d73",
+    "test/reference/src/interfaces/IPoolManager.sol": "a98405333567e4ab344489728014795721cf0071c151536377d2fcc986e0600c",
+    "test/reference/src/interfaces/IProtocolFees.sol": "807d68adea106ec2aa51a8009155de09ebfe09e1ee7053d5a5ae448d7e840654",
+    "test/reference/src/interfaces/external/IERC20Minimal.sol": "5e966a2d22b3b234a56af4b17e36bf7be90f9b29b1ddb6a15bfefc0b6dab4282",
+    "test/reference/src/interfaces/external/IERC6909Claims.sol": "1cd65496c829036bc6aee67bc71363ab5fb6989c65e793087d0e1e2379f7d7d8",
+    "test/reference/src/libraries/BitMath.sol": "e8a45eb3d57f9427fc47bbb2543c1a6a5f394113b378123ac7ca9f113a7502b4",
+    "test/reference/src/libraries/CustomRevert.sol": "9d3dbe6b742cb1ac30f57df89d879ade9649389de1165fc637114bd062d39fca",
+    "test/reference/src/libraries/FixedPoint128.sol": "1ca2f55160697b73bd66fd27c8724d79a57108121ce1e8a0ab8b79f38bb58fbb",
+    "test/reference/src/libraries/FullMath.sol": "a9607255a6fd604d9c92f6b7416811c38b9d86e5dfdb0c345a494ebd35f7a4a3",
+    "test/reference/src/libraries/LPFeeLibrary.sol": "e96c3fa7deac991dc09b6c5e560a340d01d6c68ccba483d4b29f8a66e5aa44e0",
+    "test/reference/src/libraries/LiquidityMath.sol": "67a39e58732340af4870342ba9230691f35501d89ed8725ca1b338deaa0eb26a",
+    "test/reference/src/libraries/Position.sol": "3dc4e2ad1564fa94eddf3ff06ce9ac592c9d578ea64ca194050382da454c8fcb",
+    "test/reference/src/libraries/SafeCast.sol": "c1a815a41607be5b4c86ca588a951f368156da8ee21bdfc18b5d51b58a0f27be",
+    "test/reference/src/libraries/StateLibrary.sol": "eebdbc1b6e431072ce5521b9e1b603d43831e3b6e062743e6665e070d5cf8a1a",
+    "test/reference/src/libraries/TickMath.sol": "272d4f6d3ff9ae33596ebcdb84a71a3c2d4542ae8fb5c88ddf1aca8043f5d06b",
+    "test/reference/src/types/BalanceDelta.sol": "320d9c13dec135c3903729e66d3a1040fe86d537a7ee53728915012ca183af32",
+    "test/reference/src/types/BeforeSwapDelta.sol": "6aee06f1553e879f5909e8f4c0eac26ec23dd4821a7e56e4d5077db39a227e12",
+    "test/reference/src/types/Currency.sol": "ba6726fd24fbc66848208dfbb2899116c10729c505e6e5552316ac2444f1dfc3",
+    "test/reference/src/types/PoolId.sol": "548424ac50ad58212545da70207283fb8990731578c115c85d5acbcb0e1d3c9f",
+    "test/reference/src/types/PoolKey.sol": "99e1afe285b5c614ebc9586ab5196db9d24a63fd924a449f5d99f490a6a6d6a9",
+    "test/reference/src/types/PoolOperation.sol": "cf72ad0c3e5e91662029e862acd841fabce8753040b0d4e802dee64ef1157232"
+  },
+  "creation_bytecode_sha256": "e6b0eccd917e737f823b14a6f3820be704a74748e1b1223e8fc6cce45056d6e6"
+}

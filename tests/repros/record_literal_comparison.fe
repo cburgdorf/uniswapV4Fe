@@ -1,0 +1,7 @@
+use core::ops::Eq
+use std::evm::Address
+pub fn check(_ value: Address) -> bool {
+    value == (Address { inner: 0 })
+}
+#[test]
+fn compares_zero() { assert!(check(Address { inner: 0 })) }

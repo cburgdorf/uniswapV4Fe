@@ -1,0 +1,195 @@
+// SPDX-License-Identifier: MIT
+// PositionManager's liquidity/action engine, including the deprecated
+// FROM_DELTAS actions retained for compatibility with the pinned reference.
+use core::ops::Sub
+use std::abi::{Bytes, Bytes32, sol::{self, Int24}}
+use std::evm::{Address, Ctx, Call, RawMem, RawStorage, Log, revert, revert_error}
+use super::{actions, pool_types::{PoolKey, ModifyLiquidityParams}, position_info::{self, PositionInfo}, position_manager_state as state, erc721::Tokens, notifier::Notifications, balance_delta::{BalanceDelta, ZERO_DELTA}, calldata_decoder::{ActionsView, View}, router, payments::{self, Permit2Payment, TokenPayer}, delta_resolver as resolver, transient_state_library, state_library, position, liquidity_amounts, tick_math, safe_cast, slippage_check, currency::Currency, native_wrapper}
+#[error]
+pub struct NotApproved { pub caller: Address }
+#[error]
+pub struct PoolManagerMustBeLocked {}
+#[event]
+pub struct ModifyPosition {
+    #[indexed]
+    pub id: Bytes32,
+    #[indexed]
+    pub sender: Address,
+    pub tickLower: Int24,
+    pub tickUpper: Int24,
+    pub liquidityDelta: i256,
+    pub salt: Bytes32,
+}
+msg PoolMsg {
+    #[selector = sol("modifyLiquidity((address,address,uint24,int24,address),(int24,int24,int256,bytes32),bytes)")]
+    Modify { key: PoolKey, params: ModifyLiquidityParams, hookData: Bytes } -> (i256, i256),
+    #[selector = sol("clear(address,uint256)")]
+    Clear { currency: Address, amount: u256 },
+}
+// Virtual liquidity validation and action hooks of PositionManager. The default
+// policy has no permission checks; derived managers supply their own policy.
+pub trait PositionPolicy {
+    fn validate_mint(self, _ key: PoolKey, _ owner: Address)
+    uses (ctx: Ctx, storage: RawStorage, mem: mut RawMem) {}
+    fn validate_increase(self, _ id: u256)
+    uses (ctx: Ctx, storage: RawStorage, mem: mut RawMem) {}
+    fn extra_action(self, _ manager: Address, _ actor: Address, _ action: u256, _ params: View) -> bool
+    uses (ctx: Ctx, call: mut Call, storage: mut RawStorage, mem: mut RawMem, log: mut Log) { false }
+    fn sweep(self, _ token: Address, _ recipient: Address)
+    uses (ctx: Ctx, call: mut Call, mem: mut RawMem) {
+        let currency = Currency { address: token }
+        let amount = currency.balance_of_self()
+        if amount > 0 { currency.transfer(recipient, amount) }
+    }
+}
+impl PositionPolicy for Permit2Payment {}
+pub struct Config { pub manager: Address, pub permit2: Address, pub weth: Address, pub unsubscribe_gas: u256 }
+impl Copy for Config {}
+impl Config {
+    pub fn notifications(self) -> Notifications { Notifications { subscribers_slot: 7, info_slot: 9, gas_limit: self.unsubscribe_gas } }
+    pub fn require_locked(self) uses (ctx: Ctx) {
+        if transient_state_library::is_unlocked(self.manager) { revert_error(PoolManagerMustBeLocked {}) }
+    }
+    pub fn require_approved(self, _ actor: Address, _ id: u256) uses (storage: RawStorage, mem: mut RawMem) {
+        let tokens = Tokens { slot: 0 }
+        if !tokens.is_approved_or_owner(actor, id) { revert_error(NotApproved { caller: actor }) }
+    }
+    pub fn transfer(self, _ from: Address, _ to: Address, _ id: u256)
+    uses (ctx: Ctx, call: mut Call, storage: mut RawStorage, mem: mut RawMem, log: mut Log) {
+        self.require_locked()
+        Tokens { slot: 0 }.transfer_from(from, to, id)
+        if state::info(id).has_subscriber() { self.notifications().unsubscribe(id) }
+    }
+    pub fn liquidity(self, _ id: u256, _ key: PoolKey, _ info: PositionInfo) -> u128 uses (ctx: Ctx, mem: mut RawMem) {
+        let position_key = position::calculate_position_key(ctx.address(), info.tick_lower(), info.tick_upper(), id)
+        state_library::position_liquidity(self.manager, key.to_id(), Bytes32 { val: position_key })
+    }
+    fn modify_pool(self, _ actor: Address, _ id: u256, _ key: PoolKey, _ info: PositionInfo, _ change: i256, _ hook: View, _ notify: bool) -> (BalanceDelta, BalanceDelta)
+    uses (ctx: Ctx, call: mut Call, storage: RawStorage, mem: mut RawMem, log: mut Log) {
+        let salt = Bytes32 { val: id }
+        let result = call.call(addr: self.manager, gas: ctx.gas(), value: 0, message: PoolMsg::Modify {
+            key, params: ModifyLiquidityParams { tickLower: info.tick_lower(), tickUpper: info.tick_upper(), liquidityDelta: change, salt }, hookData: hook.bytes(),
+        })
+        log.emit(ModifyPosition { id: key.to_id(), sender: actor, tickLower: info.tick_lower(), tickUpper: info.tick_upper(), liquidityDelta: change, salt: Bytes32 { val: id } })
+        if notify && info.has_subscriber() { self.notifications().modify(id, change, result.1) }
+        (BalanceDelta { bits: result.0 }, BalanceDelta { bits: result.1 })
+    }
+    fn from_deltas(self, _ key: PoolKey, _ lower: Int24, _ upper: Int24) -> u256 uses (ctx: Ctx, mem: mut RawMem) {
+        let price = state_library::slot0(self.manager, key.to_id()).sqrt_price_x96()
+        liquidity_amounts::for_amounts(price, tick_math::get_sqrt_price_at_tick(lower), tick_math::get_sqrt_price_at_tick(upper), resolver::full_credit(self.manager, key.currency0), resolver::full_credit(self.manager, key.currency1)) as u256
+    }
+    fn increase<P: PositionPolicy>(self, _ policy: P, _ actor: Address, _ id: u256, _ liquidity: u256, _ maximum0: u128, _ maximum1: u128, _ hook: View, _ from_deltas: bool)
+    uses (ctx: Ctx, call: mut Call, storage: RawStorage, mem: mut RawMem, log: mut Log) {
+        policy.validate_increase(id)
+        self.require_approved(actor, id)
+        let (key, info) = state::pool_and_info(id)
+        let amount = if from_deltas { self.from_deltas(key, info.tick_lower(), info.tick_upper()) } else { liquidity }
+        let (delta, fees) = self.modify_pool(actor, id, key, info, safe_cast::to_int256(amount), hook, true)
+        slippage_check::validate_max_in(delta - fees, maximum0, maximum1)
+    }
+    fn decrease(self, _ actor: Address, _ id: u256, _ liquidity: u256, _ minimum0: u128, _ minimum1: u128, _ hook: View)
+    uses (ctx: Ctx, call: mut Call, storage: RawStorage, mem: mut RawMem, log: mut Log) {
+        self.require_approved(actor, id)
+        let (key, info) = state::pool_and_info(id)
+        let (delta, fees) = self.modify_pool(actor, id, key, info, -safe_cast::to_int256(liquidity), hook, true)
+        slippage_check::validate_min_out(delta - fees, minimum0, minimum1)
+    }
+    fn mint<P: PositionPolicy>(self, _ policy: P, _ actor: Address, _ key: PoolKey, _ lower: Int24, _ upper: Int24, _ liquidity: u256, _ maximum0: u128, _ maximum1: u128, _ owner: Address, _ hook: View)
+    uses (ctx: Ctx, call: mut Call, storage: mut RawStorage, mem: mut RawMem, log: mut Log) {
+        policy.validate_mint(key, owner)
+        let id = state::allocate_token_id()
+        Tokens { slot: 0 }.mint(owner, id)
+        let info = position_info::initialize(key, lower, upper)
+        state::write_info(id, info)
+        if state::pool_key(info.pool_id()).tickSpacing.val == 0 { state::store_pool_key(info.pool_id(), key) }
+        let (delta, _) = self.modify_pool(actor, id, key, info, safe_cast::to_int256(liquidity), hook, true)
+        slippage_check::validate_max_in(delta, maximum0, maximum1)
+    }
+    fn burn(self, _ actor: Address, _ id: u256, _ minimum0: u128, _ minimum1: u128, _ hook: View)
+    uses (ctx: Ctx, call: mut Call, storage: mut RawStorage, mem: mut RawMem, log: mut Log) {
+        self.require_approved(actor, id)
+        let (key, info) = state::pool_and_info(id)
+        let liquidity = self.liquidity(id, key, info) as u256
+        let owner = Tokens { slot: 0 }.owner_of(id)
+        state::write_info(id, PositionInfo { bits: 0 })
+        Tokens { slot: 0 }.burn(id)
+        let mut fees = ZERO_DELTA
+        if liquidity > 0 {
+            let (delta, accrued) = self.modify_pool(actor, id, key, info, -safe_cast::to_int256(liquidity), hook, false)
+            fees = accrued
+            slippage_check::validate_min_out(delta - fees, minimum0, minimum1)
+        }
+        if info.has_subscriber() { self.notifications().burn(id, owner, info.bits, liquidity, fees.bits) }
+    }
+    fn settle<P: TokenPayer>(self, _ policy: P, _ token: Address, _ payer: Address, _ amount: u256) uses (ctx: Ctx, call: mut Call, mem: mut RawMem) {
+        payments::settle(policy, self.manager, token, payer, amount)
+    }
+    pub fn execute(self, _ actor: Address, _ data: ActionsView)
+    uses (ctx: Ctx, call: mut Call, storage: mut RawStorage, mem: mut RawMem, log: mut Log) {
+        self.execute_with(Permit2Payment { permit2: self.permit2 }, actor, data)
+    }
+    pub fn execute_with<P: TokenPayer + PositionPolicy + Copy>(self, _ policy: P, _ actor: Address, _ data: ActionsView)
+    uses (ctx: Ctx, call: mut Call, storage: mut RawStorage, mem: mut RawMem, log: mut Log) {
+        if data.actions.len != data.params_len { revert_error(router::InputLengthMismatch {}) }
+        let mut i: u256 = 0
+        while i < data.actions.len {
+            self.action(policy, actor, data.actions.word(i) >> 248, data.parameter(i))
+            i += 1
+        }
+    }
+    fn action<P: TokenPayer + PositionPolicy + Copy>(self, _ policy: P, _ actor: Address, _ action: u256, _ params: View)
+    uses (ctx: Ctx, call: mut Call, storage: mut RawStorage, mem: mut RawMem, log: mut Log) {
+        if policy.extra_action(self.manager, actor, action, params) { return }
+        if action == actions::INCREASE_LIQUIDITY || action == actions::DECREASE_LIQUIDITY {
+            let (id, amount, a0, a1, hook) = params.modify_liquidity()
+            if action == actions::INCREASE_LIQUIDITY { self.increase(policy, actor, id, amount, a0, a1, hook, false) }
+            else { self.decrease(actor, id, amount, a0, a1, hook) }
+        } else if action == actions::INCREASE_LIQUIDITY_FROM_DELTAS || action == actions::BURN_POSITION {
+            let (id, a0, a1, hook) = params.burn_or_increase_from_deltas()
+            if action == actions::BURN_POSITION { self.burn(actor, id, a0, a1, hook) }
+            else { self.increase(policy, actor, id, 0, a0, a1, hook, true) }
+        } else if action == actions::MINT_POSITION {
+            let (key, lower, upper, amount, a0, a1, owner, hook) = params.mint()
+            self.mint(policy, actor, key, lower, upper, amount, a0, a1, router::map_recipient(owner, actor), hook)
+        } else if action == actions::MINT_POSITION_FROM_DELTAS {
+            let (key, lower, upper, a0, a1, owner, hook) = params.mint_from_deltas()
+            let amount = self.from_deltas(key, lower, upper)
+            self.mint(policy, actor, key, lower, upper, amount, a0, a1, router::map_recipient(owner, actor), hook)
+        } else if action == actions::SETTLE_PAIR {
+            let (a, b) = params.currency_pair()
+            self.settle(policy, a, actor, resolver::full_debt(self.manager, a))
+            self.settle(policy, b, actor, resolver::full_debt(self.manager, b))
+        } else if action == actions::TAKE_PAIR {
+            let (a, b, to) = params.currency_pair_address()
+            let recipient = router::map_recipient(to, actor)
+            payments::take(self.manager, a, recipient, resolver::full_credit(self.manager, a))
+            payments::take(self.manager, b, recipient, resolver::full_credit(self.manager, b))
+        } else if action == actions::SETTLE {
+            let (token, amount, user) = params.currency_uint_bool()
+            self.settle(policy, token, if user { actor } else { ctx.address() }, policy.map_settle(self.manager, amount, token))
+        } else if action == actions::TAKE {
+            let (token, to, amount) = params.currency_address_uint()
+            payments::take(self.manager, token, router::map_recipient(to, actor), resolver::map_take(self.manager, amount, token))
+        } else if action == actions::CLOSE_CURRENCY {
+            let token = params.currency()
+            let delta = transient_state_library::currency_delta(self.manager, ctx.address(), token)
+            if delta < 0 { self.settle(policy, token, actor, (-delta).downcast_truncate()) }
+            else { payments::take(self.manager, token, actor, delta.downcast_truncate()) }
+        } else if action == actions::CLEAR_OR_TAKE {
+            let (token, maximum) = params.currency_uint()
+            let amount = resolver::full_credit(self.manager, token)
+            if amount == 0 { return }
+            if amount <= maximum {
+                if ctx.extcodesize(self.manager) == 0 { revert(()) }
+                call.call(addr: self.manager, gas: ctx.gas(), value: 0, message: PoolMsg::Clear { currency: token, amount })
+            } else { payments::take(self.manager, token, actor, amount) }
+        } else if action == actions::SWEEP {
+            let (token, to) = params.currency_address()
+            policy.sweep(token, router::map_recipient(to, actor))
+        } else if action == actions::WRAP {
+            native_wrapper::wrap(self.weth, resolver::map_wrap_unwrap(self.manager, Address { inner: 0 }, params.uint256(), self.weth))
+        } else if action == actions::UNWRAP {
+            native_wrapper::unwrap(self.weth, resolver::map_wrap_unwrap(self.manager, self.weth, params.uint256(), Address { inner: 0 }))
+        } else { revert_error(router::UnsupportedAction { action }) }
+    }
+}

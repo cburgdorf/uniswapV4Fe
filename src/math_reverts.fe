@@ -1,0 +1,71 @@
+// SPDX-License-Identifier: MIT
+use super::full_math::{mul_div, mul_div_rounding_up, MAX_U256}
+use super::bit_math::{most_significant_bit, least_significant_bit}
+use std::evm::Evm
+
+msg MathProbeMsg {
+    #[selector = 0x01020304]
+    Compute { operation: u256, a: u256, b: u256, denominator: u256 } -> u256,
+}
+
+contract MathProbe {
+    recv MathProbeMsg {
+        Compute { operation, a, b, denominator } -> u256 {
+            if operation == 0 {
+                return mul_div(a, b, denominator)
+            }
+            if operation == 1 {
+                return mul_div_rounding_up(a, b, denominator)
+            }
+            if operation == 2 {
+                return most_significant_bit(a) as u256
+            }
+            least_significant_bit(a) as u256
+        }
+    }
+}
+
+#[test]
+fn math_reverts_have_empty_payload() uses (evm: mut Evm) {
+    let probe = evm.create2<MathProbe>(value: 0, args: (), salt: 0)
+    // Positive control proves the message reaches the intended arithmetic.
+    let value: u256 = evm
+        .call(
+            addr: probe,
+            gas: 1000000,
+            value: 0,
+            message: MathProbeMsg::Compute { operation: 0, a: 6, b: 7, denominator: 3 },
+        )
+    assert!(value == 14)
+    for operation in 0 .. 4 {
+        let failure = evm
+            .try_call(
+                addr: probe,
+                gas: 1000000,
+                value: 0,
+                message: MathProbeMsg::Compute {
+                    operation: operation as u256,
+                    a: 0,
+                    b: 0,
+                    denominator: 0,
+                },
+            )
+        assert!(!failure.success())
+        assert!(failure.returndata_len() == 0)
+    }
+    // Floor fits exactly in 256 bits, but the additional rounding bit does not.
+    let overflow = evm
+        .try_call(
+            addr: probe,
+            gas: 1000000,
+            value: 0,
+            message: MathProbeMsg::Compute {
+                operation: 1,
+                a: MAX_U256 - 1,
+                b: MAX_U256 - 1,
+                denominator: MAX_U256 - 2,
+            },
+        )
+    assert!(!overflow.success())
+    assert!(overflow.returndata_len() == 0)
+}

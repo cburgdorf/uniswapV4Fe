@@ -1,0 +1,39 @@
+// SPDX-License-Identifier: MIT
+// Test-only ABI surface for the periphery arithmetic libraries.
+use std::abi::sol::{self, Uint160}
+use super::{liquidity_amounts, slippage_check, bips, balance_delta::BalanceDelta}
+msg PeripheryMathMsg {
+    #[selector = sol("liquidity0(uint160,uint160,uint256)")]
+    Liquidity0 { a: Uint160, b: Uint160, amount: u256 } -> u128,
+    #[selector = sol("liquidity1(uint160,uint160,uint256)")]
+    Liquidity1 { a: Uint160, b: Uint160, amount: u256 } -> u128,
+    #[selector = sol("liquidity(uint160,uint160,uint160,uint256,uint256)")]
+    Liquidity { price: Uint160, a: Uint160, b: Uint160, amount0: u256, amount1: u256 } -> u128,
+    #[selector = sol("slippage(int256,uint128,uint128,bool)")]
+    Slippage { delta: i256, a: u128, b: u128, minimum: bool },
+    #[selector = sol("portion(uint256,uint256)")]
+    Portion { amount: u256, bips: u256 } -> u256,
+}
+pub contract PeripheryMathHarness {
+    recv PeripheryMathMsg {
+        Liquidity0 { a, b, amount } -> u128 {
+            liquidity_amounts::for_amount0(a, b, amount)
+        }
+        Liquidity1 { a, b, amount } -> u128 {
+            liquidity_amounts::for_amount1(a, b, amount)
+        }
+        Liquidity { price, a, b, amount0, amount1 } -> u128 {
+            liquidity_amounts::for_amounts(price, a, b, amount0, amount1)
+        }
+        Slippage { delta, a, b, minimum } {
+            if minimum {
+                slippage_check::validate_min_out(BalanceDelta { bits: delta }, a, b)
+            } else {
+                slippage_check::validate_max_in(BalanceDelta { bits: delta }, a, b)
+            }
+        }
+        Portion { amount, bips: part } -> u256 {
+            bips::calculate_portion(amount, part)
+        }
+    }
+}

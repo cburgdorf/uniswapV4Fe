@@ -1,0 +1,14 @@
+Compiling 22 files with Solc 0.8.30
+Solc 0.8.30 finished in 363.69ms
+Compiler run successful!
+
+Ran 6 tests for test/CalldataDecoderParity.t.sol:CalldataDecoderParityTest
+[PASS] testFuzz_actions(bytes,bytes,bytes,bytes,uint8) (runs: 10000, μ: 33809, ~: 31129)
+[PASS] testFuzz_liquidity(uint256,uint256,uint256,uint256,bytes) (runs: 10000, μ: 27904, ~: 27735)
+[PASS] testFuzz_mint(address,int24,int24,uint256,bytes,uint256,uint8) (runs: 10000, μ: 34303, ~: 35095)
+[PASS] testFuzz_primitives(uint256,uint256,uint256,uint8) (runs: 10000, μ: 13522, ~: 13546)
+[PASS] testFuzz_raw(bytes,uint8,uint256) (runs: 10000, μ: 16150, ~: 16284)
+[PASS] test_lengthsAndOffsetMasks() (gas: 76621719)
+Suite result: ok. 6 passed; 0 failed; 0 skipped; finished in 1.01s (2.63s CPU time)
+
+Ran 1 test suite in 1.01s (1.01s CPU time): 6 tests passed, 0 failed, 0 skipped (6 total tests)

@@ -1,0 +1,51 @@
+// SPDX-License-Identifier: MIT
+// Port of Uniswap v4-core SafeCast.sol.
+use std::abi::sol::Uint160
+use std::evm::revert_error
+
+#[error]
+pub struct SafeCastOverflow {}
+
+pub fn to_uint160(_ x: u256) -> Uint160 {
+    if x >> 160 != 0 {
+        revert_error(SafeCastOverflow {})
+    }
+    Uint160 { val: x }
+}
+
+pub fn to_uint128(_ x: u256) -> u128 {
+    if x >> 128 != 0 {
+        revert_error(SafeCastOverflow {})
+    }
+    x.downcast_truncate()
+}
+
+pub fn signed_to_uint128(_ x: i128) -> u128 {
+    if x < 0 {
+        revert_error(SafeCastOverflow {})
+    }
+    x.downcast_truncate()
+}
+
+pub fn to_int128(_ x: i256) -> i128 {
+    let y: i128 = x.downcast_truncate()
+    if (y as i256) != x {
+        revert_error(SafeCastOverflow {})
+    }
+    y
+}
+
+pub fn to_int256(_ x: u256) -> i256 {
+    let y: i256 = x.downcast_truncate()
+    if y < 0 {
+        revert_error(SafeCastOverflow {})
+    }
+    y
+}
+
+pub fn unsigned_to_int128(_ x: u256) -> i128 {
+    if x >= (1 as u256) << 127 {
+        revert_error(SafeCastOverflow {})
+    }
+    x.downcast_truncate()
+}

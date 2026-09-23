@@ -1,0 +1,96 @@
+// SPDX-License-Identifier: BUSL-1.1
+// Ports of v4-core Lock, NonzeroDeltaCount, CurrencyDelta and CurrencyReserves.
+use std::evm::{Address, RawOps, RawMem}
+use std::evm::packed::keccak_packed
+use super::balance_delta::BalanceDelta
+
+pub const IS_UNLOCKED_SLOT: u256 = 0xc090fc4683624cfc3884e9d8de5eca132f2d0ec062aff75d43c0465d5ceeab23
+pub const NONZERO_DELTA_COUNT_SLOT: u256 = 0x7d4b3164c6e45b97e7d87b7125a44c5828d005af88f9d751cfd78729c5d99a0b
+pub const RESERVES_OF_SLOT: u256 = 0x1e0745a7db1623981f0b2a5d4232364c00787266eb75ad546f190e6cebe9bd95
+pub const CURRENCY_SLOT: u256 = 0x27e098c505d44ec3574004bca052aabf76bd35004c182099d8c575fb238593b9
+const ADDRESS_MASK: u256 = 0xffffffffffffffffffffffffffffffffffffffff
+
+pub fn unlock() uses (ops: mut RawOps) {
+    ops.tstor_ptr<u256>(IS_UNLOCKED_SLOT).write(1)
+}
+pub fn lock() uses (ops: mut RawOps) {
+    ops.tstor_ptr<u256>(IS_UNLOCKED_SLOT).write(0)
+}
+pub fn is_unlocked() -> bool uses (ops: RawOps) {
+    ops.tstor_ptr<u256>(IS_UNLOCKED_SLOT).read() != 0
+}
+pub fn nonzero_delta_count() -> u256 uses (ops: RawOps) {
+    ops.tstor_ptr<u256>(NONZERO_DELTA_COUNT_SLOT).read()
+}
+#[arithmetic(unchecked)]
+pub fn increment_count() uses (ops: mut RawOps) {
+    let slot = ops.tstor_ptr<u256>(NONZERO_DELTA_COUNT_SLOT)
+    slot.write(slot.read() + 1)
+}
+#[arithmetic(unchecked)]
+pub fn decrement_count() uses (ops: mut RawOps) {
+    let slot = ops.tstor_ptr<u256>(NONZERO_DELTA_COUNT_SLOT)
+    slot.write(slot.read() - 1)
+}
+
+pub fn currency_delta_slot(_ currency: Address, _ target: Address) -> u256
+uses (mem: mut RawMem)
+{
+    keccak_packed(
+        (target.inner & ADDRESS_MASK, currency.inner & ADDRESS_MASK),
+    )
+}
+pub fn get_delta(_ currency: Address, _ target: Address) -> i256
+uses (mem: mut RawMem, ops: RawOps)
+{
+    ops.tstor_ptr<i256>(currency_delta_slot(currency, target)).read()
+}
+pub fn apply_delta(_ currency: Address, _ target: Address, _ delta: i128) -> (i256, i256)
+uses (mem: mut RawMem, ops: mut RawOps)
+{
+    let slot = ops.tstor_ptr<i256>(currency_delta_slot(currency, target))
+    let previous = slot.read()
+    let next = previous + (delta as i256)
+    slot.write(next)
+    (previous, next)
+}
+
+pub fn synced_currency() -> Address uses (ops: RawOps) {
+    Address { inner: ops.tstor_ptr<u256>(CURRENCY_SLOT).read() & ADDRESS_MASK }
+}
+pub fn synced_reserves() -> u256 uses (ops: RawOps) {
+    ops.tstor_ptr<u256>(RESERVES_OF_SLOT).read()
+}
+pub fn reset_currency() uses (ops: mut RawOps) {
+    ops.tstor_ptr<u256>(CURRENCY_SLOT).write(0)
+}
+pub fn sync_currency_and_reserves(_ currency: Address, _ amount: u256)
+uses (ops: mut RawOps)
+{
+    ops.tstor_ptr<u256>(CURRENCY_SLOT).write(currency.inner & ADDRESS_MASK)
+    ops.tstor_ptr<u256>(RESERVES_OF_SLOT).write(amount)
+}
+
+/// PoolManager._accountDelta, including the zero-delta fast path and counter transitions.
+pub fn account_delta(_ currency: Address, _ target: Address, _ delta: i128)
+uses (mem: mut RawMem, ops: mut RawOps)
+{
+    if delta == 0 { return }
+    let (previous, next) = apply_delta(currency, target, delta)
+    if next == 0 {
+        decrement_count()
+    } else if previous == 0 {
+        increment_count()
+    }
+}
+pub fn account_pool_delta(
+    _ currency0: Address,
+    _ currency1: Address,
+    _ target: Address,
+    _ delta: BalanceDelta,
+)
+uses (mem: mut RawMem, ops: mut RawOps)
+{
+    account_delta(currency0, target, delta.amount0())
+    account_delta(currency1, target, delta.amount1())
+}

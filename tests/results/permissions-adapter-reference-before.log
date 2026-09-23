@@ -1,0 +1,15 @@
+Parity artifacts: /tmp/fe-permissions-adapter-test-o1
+Compiler: fe 26.3.0 (91d3e8215); sha256=fb65ef0e54fcfeb4875b987d2fa2e8bd7da020295670f7e940efe1476066f264
+Wrote /tmp/fe-permissions-adapter-test-o1/fe/PermissionsAdapter.bin
+Wrote /tmp/fe-permissions-adapter-test-o1/fe/PermissionsAdapter.runtime.bin
+Wrote /tmp/fe-permissions-adapter-test-o1/fe/PermissionsAdapter.abi.json
+Traceback (most recent call last):
+  File "/home/cburgdorf/Documents/hacking/fe/uniswap_v4_demo/tests/run_math_parity.py", line 352, in <module>
+    data = (args.reference_solmate / source).read_bytes()
+  File "/home/linuxbrew/.linuxbrew/Cellar/python@3.14/3.14.4/lib/python3.14/pathlib/__init__.py", line 777, in read_bytes
+    with self.open(mode='rb', buffering=0) as f:
+         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/linuxbrew/.linuxbrew/Cellar/python@3.14/3.14.4/lib/python3.14/pathlib/__init__.py", line 771, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/fe-v4-solmate-pinned/src/tokens/ERC20.sol'

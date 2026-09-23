@@ -1,0 +1,67 @@
+// SPDX-License-Identifier: MIT
+// Multicall_v4 delegatecall execution and canonical bytes[] result encoding.
+use core::abi::{AbiSize, AbiDecoder, ByteInput, Decode, Encode, checked_frame_end, checked_tail, store_word}
+use core::ptr::{self, MemArray, MemSpan, MemBuffer}
+use std::abi::{Bytes, DynArray, Sol}
+use std::evm::{Ctx, Call, CallData, revert, copy_returndata, bubble_last_revert}
+// Calldata-only bytes[] view. Decode the offset table before entering the
+// body, but validate each byte payload only immediately before its call.
+// This preserves the first subcall's revert if a later payload is malformed.
+pub struct Calls { pub offset: u256, pub len: u256 }
+impl AbiSize for Calls {
+    const HEAD_SIZE: u256 = 32
+    const IS_DYNAMIC: bool = true
+    fn payload_size(self) -> u256 {
+        <DynArray<Bytes> as Decode<Sol>>::decode_from(CallData::new(), self.offset - 32).payload_size()
+    }
+}
+impl Encode<Sol> for Calls {
+    fn encode(own self, _ dest: *u8) {
+        let owned = <DynArray<Bytes> as Decode<Sol>>::decode_from(CallData::new(), self.offset - 32)
+        <DynArray<Bytes> as Encode<Sol>>::encode(owned, dest)
+    }
+}
+impl Decode<Sol> for Calls {
+    fn decode_payload<D: AbiDecoder<Sol>>(_ d: mut D) -> Self {
+        let input = d.input()
+        let pos = d.pos()
+        let offset = checked_frame_end<Sol>(pos, 32, input.len())
+        let len = input.word_at(pos)
+        if len > 0xffffffffffffffff { revert(()) }
+        checked_frame_end<Sol>(offset, len * 32, input.len())
+        Self { offset, len }
+    }
+}
+pub fn execute(_ data: Calls) -> DynArray<Bytes>
+uses (ctx: Ctx, call: mut Call) {
+    let count = data.len
+    let input = CallData::new()
+    let results: MemArray<MemSpan> = MemArray::new_uninit(count)
+    let mut size = 32 + count * 32
+    let mut i: u256 = 0
+    while i < count {
+        let offset = input.word_at(data.offset + i * 32)
+        let args = <Bytes as Decode<Sol>>::decode_from(input, checked_tail<Sol>(data.offset, offset))
+        let mut ret = MemBuffer::with_capacity(0)
+        let outcome = call.raw_delegatecall(addr: ctx.address(), gas: ctx.gas(), args: args.payload_span(), ret: mut ret)
+        if !outcome.success() { bubble_last_revert() }
+        let result = copy_returndata()
+        *results.ptr_at(i as usize) = result.span()
+        size += 32 + ((result.len() + 31) / 32) * 32
+        i += 1
+    }
+    let output = ptr::alloc_bytes(size)
+    ptr::zero_bytes(output, size)
+    store_word(ptr: output, value: count)
+    let mut cursor = 32 + count * 32
+    i = 0
+    while i < count {
+        let result = *results.ptr_at(i as usize)
+        store_word(ptr: ptr::offset_bytes(output, 32 + i * 32), value: cursor - 32)
+        store_word(ptr: ptr::offset_bytes(output, cursor), value: result.len())
+        ptr::copy(dest: ptr::offset_bytes(output, cursor + 32), source: result)
+        cursor += 32 + ((result.len() + 31) / 32) * 32
+        i += 1
+    }
+    DynArray::from_abi_tail(data: output, len: count, size: size)
+}

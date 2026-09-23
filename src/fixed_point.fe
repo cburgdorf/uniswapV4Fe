@@ -1,0 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Constants from Uniswap v4-core FixedPoint96.sol and FixedPoint128.sol.
+pub const RESOLUTION: u8 = 96
+pub const Q96: u256 = 0x1000000000000000000000000
+pub const Q128: u256 = 0x100000000000000000000000000000000

@@ -1,0 +1,44 @@
+// SPDX-License-Identifier: MIT
+// Port of Uniswap v4-core FullMath.sol, revision in ../README.md.
+// Algorithm by Remco Bloemen, https://xn--2-umb.com/21/muldiv.
+use std::evm::crypto::mulmod
+use super::require
+
+pub const MAX_U256: u256 = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+
+/// Full precision floor(a * b / denominator), including 512-bit products.
+#[arithmetic(unchecked)]
+pub fn mul_div(_ a: u256, _ b: u256, _ denominator: u256) -> u256 {
+    let mut low = a * b
+    let mm = mulmod(a, b, MAX_U256)
+    let mut high = mm - low - (if mm < low { 1 } else { 0 })
+    require(denominator > high)
+    if high == 0 {
+        return low / denominator
+    }
+
+    let remainder = mulmod(a, b, denominator)
+    high = high - (if remainder > low { 1 } else { 0 })
+    low = low - remainder
+    let twos = (0 - denominator) & denominator
+    let odd = denominator / twos
+    low = low / twos
+    let shift = (0 - twos) / twos + 1
+    low = low | (high * shift)
+
+    let mut inverse = (3 * odd) ^ 2
+    for _i in 0 .. 6 {
+        inverse = inverse * (2 - odd * inverse)
+    }
+    low * inverse
+}
+
+/// Full precision ceil(a * b / denominator).
+pub fn mul_div_rounding_up(_ a: u256, _ b: u256, _ denominator: u256) -> u256 {
+    let result = mul_div(a, b, denominator)
+    if mulmod(a, b, denominator) != 0 {
+        require(result < MAX_U256)
+        return result + 1
+    }
+    result
+}

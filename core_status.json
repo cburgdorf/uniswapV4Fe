@@ -1,0 +1,667 @@
+{
+  "reference_revision": "46c6834698c48bc4a463a86d8420f4eb1d7f3b75",
+  "completion_policy": "Completed 2026-09-24: the unmodified upstream Foundry suite of this repository passes against the Fe contracts with outcomes identical to the Solidity originals (tests/run_upstream_suites.py; tests/results/upstream-conformance-o1.json). Per-source evidence below remains the detailed record; contract size (EIP-170) is outside the completion scope.",
+  "sources": [
+    {
+      "reference_source": "src/ERC6909.sol",
+      "reference_sha256": "0f1bf94844851b561ae53d57263366d18f4c4431eb47096871e8715837c6ec9d",
+      "fe_sources": [
+        "src/claims.fe",
+        "src/pool_manager.fe"
+      ],
+      "evidence": [
+        "tests/results/claims-parity-o1.json",
+        "tests/results/manager-position-current-o1.json",
+        "tests/results/manager-stateful-latest-o1.json"
+      ],
+      "behavior": "Balances, allowances, operators, transfers, authorization, truncated currency IDs, mint/burn, events and rollback; integrated unlock settlement."
+    },
+    {
+      "reference_source": "src/ERC6909Claims.sol",
+      "reference_sha256": "6fa9989899398646fd7c33f837254a69e7c75b77af120970ede397c3d0fbdc37",
+      "fe_sources": [
+        "src/claims.fe",
+        "src/pool_manager.fe"
+      ],
+      "evidence": [
+        "tests/results/claims-parity-o1.json",
+        "tests/results/manager-position-current-o1.json",
+        "tests/results/manager-stateful-latest-o1.json"
+      ],
+      "behavior": "Balances, allowances, operators, transfers, authorization, truncated currency IDs, mint/burn, events and rollback; integrated unlock settlement."
+    },
+    {
+      "reference_source": "src/Extsload.sol",
+      "reference_sha256": "ac157c05d62562eed212cdf290046a85d192e7b1f8aba69c3ce358b0ebac4279",
+      "fe_sources": [
+        "src/extload.fe",
+        "src/pool_manager.fe"
+      ],
+      "evidence": [
+        "tests/results/extload-parity-o1.json",
+        "tests/results/manager-position-current-o1.json",
+        "tests/results/manager-stateful-latest-o1.json"
+      ],
+      "behavior": "Single, range and sparse persistent/transient storage reads; wraparound addressing, dynamic return shape and malformed calldata."
+    },
+    {
+      "reference_source": "src/Exttload.sol",
+      "reference_sha256": "386b5618307a20144a44308b81188c7755a6c279db6c5824cf63a910864324d4",
+      "fe_sources": [
+        "src/extload.fe",
+        "src/pool_manager.fe"
+      ],
+      "evidence": [
+        "tests/results/extload-parity-o1.json",
+        "tests/results/manager-position-current-o1.json",
+        "tests/results/manager-stateful-latest-o1.json"
+      ],
+      "behavior": "Single, range and sparse persistent/transient storage reads; wraparound addressing, dynamic return shape and malformed calldata."
+    },
+    {
+      "reference_source": "src/NoDelegateCall.sol",
+      "reference_sha256": "525bf4df92c4ac0fd582e1b6ac18fdfb5d147d410f38f19231e4c9a469187415",
+      "fe_sources": [
+        "src/manager.fe",
+        "src/pool_manager.fe"
+      ],
+      "evidence": [
+        "tests/results/manager-position-current-o1.json",
+        "tests/results/manager-stateful-latest-o1.json"
+      ],
+      "behavior": "Immutable original-address guard for initialize, modifyLiquidity, swap and donate. Manager test explicitly checks delegated initialize rejection.",
+      "adaptation": "Shared check_not_delegate helper plus immutable receiver field replaces abstract inheritance."
+    },
+    {
+      "reference_source": "src/PoolManager.sol",
+      "reference_sha256": "3b6ab111dadf613e3cfd617e4b1c6ab75b5445cd15cbe52d7c6207fc02449717",
+      "fe_sources": [
+        "src/manager.fe",
+        "src/pool_manager.fe",
+        "src/pool.fe",
+        "src/pool_swap.fe",
+        "src/transient.fe"
+      ],
+      "evidence": [
+        "tests/results/manager-position-current-o1.json",
+        "tests/results/manager-stateful-latest-o1.json"
+      ],
+      "behavior": "33 public entrypoints, initialize/unlock, settlement, liquidity, swaps, donations, ERC6909 claims, protocol/LP fees, callback guards, hooks, events and ABI. 10000 randomized 20-step sequences additionally check two-pool isolation, complete tick/position storage, independent liquidity/bitmap models, full removals and rollback after each step."
+    },
+    {
+      "reference_source": "src/ProtocolFees.sol",
+      "reference_sha256": "bdabfbdfa0d8692ee187ffab948c295c2c6ebcc2dcf86e552fba3491309843c6",
+      "fe_sources": [
+        "src/protocol_fees.fe",
+        "src/pool_manager.fe"
+      ],
+      "evidence": [
+        "tests/results/protocol-fees-parity-o1.json",
+        "tests/results/manager-position-current-o1.json",
+        "tests/results/manager-stateful-latest-o1.json"
+      ],
+      "behavior": "Owner/controller authorization, fee rates, accrued fees, collection, zero-amount mapping, synced-currency restrictions and transfer rollback."
+    },
+    {
+      "reference_source": "src/interfaces/IExtsload.sol",
+      "reference_sha256": "9421ef4ba198d94058cd9a4c9fd2d663c61fc682f7dafa449a873456853f0025",
+      "fe_sources": [
+        "src/extload.fe",
+        "src/pool_manager.fe"
+      ],
+      "evidence": [
+        "tests/results/extload-parity-o1.json",
+        "tests/results/manager-position-current-o1.json",
+        "tests/results/manager-stateful-latest-o1.json"
+      ],
+      "behavior": "Single, range and sparse persistent/transient storage reads; wraparound addressing, dynamic return shape and malformed calldata."
+    },
+    {
+      "reference_source": "src/interfaces/IExttload.sol",
+      "reference_sha256": "c21643d2c7f48d2d2407438a64a3ff0f376324cf6a0c62608977713652308c9e",
+      "fe_sources": [
+        "src/extload.fe",
+        "src/pool_manager.fe"
+      ],
+      "evidence": [
+        "tests/results/extload-parity-o1.json",
+        "tests/results/manager-position-current-o1.json",
+        "tests/results/manager-stateful-latest-o1.json"
+      ],
+      "behavior": "Single, range and sparse persistent/transient storage reads; wraparound addressing, dynamic return shape and malformed calldata."
+    },
+    {
+      "reference_source": "src/interfaces/IHooks.sol",
+      "reference_sha256": "6eb35c9c598eb932e963219f1ff180748bc4c30ac6a02d924893b3c29abb1d73",
+      "fe_sources": [
+        "src/hooks.fe"
+      ],
+      "evidence": [
+        "tests/results/hooks-parity-o1.json",
+        "tests/results/manager-position-current-o1.json",
+        "tests/results/manager-stateful-latest-o1.json"
+      ],
+      "behavior": "All ten callback signatures, permissions, selector/return-length validation, delta parsing, reentrancy and lifecycle invocation.",
+      "adaptation": "Fe dispatch functions encode the reference hook wire interface; hook implementations remain external contracts."
+    },
+    {
+      "reference_source": "src/interfaces/IPoolManager.sol",
+      "reference_sha256": "a98405333567e4ab344489728014795721cf0071c151536377d2fcc986e0600c",
+      "fe_sources": [
+        "src/manager.fe",
+        "src/pool_manager.fe",
+        "src/pool.fe",
+        "src/pool_swap.fe",
+        "src/transient.fe"
+      ],
+      "evidence": [
+        "tests/results/manager-position-current-o1.json",
+        "tests/results/manager-stateful-latest-o1.json"
+      ],
+      "behavior": "33 public entrypoints, initialize/unlock, settlement, liquidity, swaps, donations, ERC6909 claims, protocol/LP fees, callback guards, hooks, events and ABI. 10000 randomized 20-step sequences additionally check two-pool isolation, complete tick/position storage, independent liquidity/bitmap models, full removals and rollback after each step."
+    },
+    {
+      "reference_source": "src/interfaces/IProtocolFees.sol",
+      "reference_sha256": "807d68adea106ec2aa51a8009155de09ebfe09e1ee7053d5a5ae448d7e840654",
+      "fe_sources": [
+        "src/protocol_fees.fe",
+        "src/pool_manager.fe"
+      ],
+      "evidence": [
+        "tests/results/protocol-fees-parity-o1.json",
+        "tests/results/manager-position-current-o1.json",
+        "tests/results/manager-stateful-latest-o1.json"
+      ],
+      "behavior": "Owner/controller authorization, fee rates, accrued fees, collection, zero-amount mapping, synced-currency restrictions and transfer rollback."
+    },
+    {
+      "reference_source": "src/interfaces/callback/IUnlockCallback.sol",
+      "reference_sha256": "2e4a514730654da2e08a82eff5b3eabae12dc1c6198951396e1d466d4c0e223e",
+      "fe_sources": [
+        "src/manager.fe",
+        "src/v4_router.fe",
+        "src/position_manager.fe"
+      ],
+      "evidence": [
+        "tests/results/manager-position-current-o1.json",
+        "tests/results/router-real-permit2-latest-o1.json",
+        "tests/results/position-policy-latest-o1.json",
+        "tests/results/manager-stateful-latest-o1.json"
+      ],
+      "behavior": "unlockCallback(bytes) authentication, return/revert forwarding, malformed return decoding and settlement obligation."
+    },
+    {
+      "reference_source": "src/interfaces/external/IERC20Minimal.sol",
+      "reference_sha256": "5e966a2d22b3b234a56af4b17e36bf7be90f9b29b1ddb6a15bfefc0b6dab4282",
+      "fe_sources": [
+        "src/currency.fe"
+      ],
+      "evidence": [
+        "tests/results/currency-parity-o1.json",
+        "tests/results/router-real-permit2-latest-o1.json"
+      ],
+      "behavior": "External ERC20 balance/transfer semantics, optional return values, native currency, error wrapping and real Permit2 settlement.",
+      "adaptation": "ERC20 tokens are external dependencies. Currency is represented by a canonical address; no standalone ERC20 token implementation is prescribed by core."
+    },
+    {
+      "reference_source": "src/interfaces/external/IERC6909Claims.sol",
+      "reference_sha256": "1cd65496c829036bc6aee67bc71363ab5fb6989c65e793087d0e1e2379f7d7d8",
+      "fe_sources": [
+        "src/claims.fe",
+        "src/pool_manager.fe"
+      ],
+      "evidence": [
+        "tests/results/claims-parity-o1.json",
+        "tests/results/manager-position-current-o1.json",
+        "tests/results/manager-stateful-latest-o1.json"
+      ],
+      "behavior": "Balances, allowances, operators, transfers, authorization, truncated currency IDs, mint/burn, events and rollback; integrated unlock settlement."
+    },
+    {
+      "reference_source": "src/libraries/BitMath.sol",
+      "reference_sha256": "e8a45eb3d57f9427fc47bbb2543c1a6a5f394113b378123ac7ca9f113a7502b4",
+      "fe_sources": [
+        "src/bit_math.fe"
+      ],
+      "evidence": [
+        "tests/results/math-parity-o1.json",
+        "tests/results/manager-position-current-o1.json",
+        "tests/results/manager-stateful-latest-o1.json"
+      ],
+      "behavior": "Reference arithmetic, Solidity-width inputs, overflow/rounding/error behavior; deterministic Fe vectors and differential arithmetic tests, plus integrated pool consumers."
+    },
+    {
+      "reference_source": "src/libraries/CurrencyDelta.sol",
+      "reference_sha256": "dfbb3d232c2d52bb09c8dcbb38b4a8fd16c616b8e6bf49e6f4ee948760530f7b",
+      "fe_sources": [
+        "src/transient.fe"
+      ],
+      "evidence": [
+        "tests/results/transient-parity-o1.json",
+        "tests/results/transient-transactions-o1.json",
+        "tests/results/manager-position-current-o1.json",
+        "tests/results/manager-stateful-latest-o1.json"
+      ],
+      "behavior": "Checked currency/account deltas, reserves, lock and nonzero count; transaction-end clearing, static-call rejection, rollback and unlock settlement."
+    },
+    {
+      "reference_source": "src/libraries/CurrencyReserves.sol",
+      "reference_sha256": "b38f1d3807d90bbccb865c0d96caf1ef92d6df9b69adbbe43b1d12e1241523c9",
+      "fe_sources": [
+        "src/transient.fe"
+      ],
+      "evidence": [
+        "tests/results/transient-parity-o1.json",
+        "tests/results/transient-transactions-o1.json",
+        "tests/results/manager-position-current-o1.json",
+        "tests/results/manager-stateful-latest-o1.json"
+      ],
+      "behavior": "Checked currency/account deltas, reserves, lock and nonzero count; transaction-end clearing, static-call rejection, rollback and unlock settlement."
+    },
+    {
+      "reference_source": "src/libraries/CustomRevert.sol",
+      "reference_sha256": "9d3dbe6b742cb1ac30f57df89d879ade9649389de1165fc637114bd062d39fca",
+      "fe_sources": [
+        "src/currency.fe",
+        "src/hooks.fe"
+      ],
+      "evidence": [
+        "tests/results/currency-parity-o1.json",
+        "tests/results/hooks-parity-o1.json",
+        "tests/results/manager-position-current-o1.json",
+        "tests/results/manager-stateful-latest-o1.json"
+      ],
+      "behavior": "Typed custom errors preserve selector/argument bytes; ERC-7751 wrapping preserves target, selector, revert reason and context.",
+      "adaptation": "Fe typed #[error] values and revert_error replace scratch-memory revertWith overloads; currency::wrap_last_error implements dynamic wrapping. No Solidity memory-layout API is required by protocol callers."
+    },
+    {
+      "reference_source": "src/libraries/FixedPoint128.sol",
+      "reference_sha256": "1ca2f55160697b73bd66fd27c8724d79a57108121ce1e8a0ab8b79f38bb58fbb",
+      "fe_sources": [
+        "src/fixed_point.fe"
+      ],
+      "evidence": [
+        "tests/results/foundation-latest-o1.json"
+      ],
+      "behavior": "Constants, fee masks/rates, checked liquidity arithmetic and boundaries; independent reference component comparison."
+    },
+    {
+      "reference_source": "src/libraries/FixedPoint96.sol",
+      "reference_sha256": "66ee26d4fb3ac639124bdfa27d3256d196970997fa127c09e9bf7154e30d4590",
+      "fe_sources": [
+        "src/fixed_point.fe"
+      ],
+      "evidence": [
+        "tests/results/foundation-latest-o1.json"
+      ],
+      "behavior": "Constants, fee masks/rates, checked liquidity arithmetic and boundaries; independent reference component comparison."
+    },
+    {
+      "reference_source": "src/libraries/FullMath.sol",
+      "reference_sha256": "a9607255a6fd604d9c92f6b7416811c38b9d86e5dfdb0c345a494ebd35f7a4a3",
+      "fe_sources": [
+        "src/full_math.fe"
+      ],
+      "evidence": [
+        "tests/results/math-parity-o1.json",
+        "tests/results/manager-position-current-o1.json",
+        "tests/results/manager-stateful-latest-o1.json"
+      ],
+      "behavior": "Reference arithmetic, Solidity-width inputs, overflow/rounding/error behavior; deterministic Fe vectors and differential arithmetic tests, plus integrated pool consumers."
+    },
+    {
+      "reference_source": "src/libraries/Hooks.sol",
+      "reference_sha256": "297d577998cdede64d48b47b12f15e4f442eea032fbb9676bb3c2f89da89b83c",
+      "fe_sources": [
+        "src/hooks.fe"
+      ],
+      "evidence": [
+        "tests/results/hooks-parity-o1.json",
+        "tests/results/manager-position-current-o1.json",
+        "tests/results/manager-stateful-latest-o1.json"
+      ],
+      "behavior": "All ten callback signatures, permissions, selector/return-length validation, delta parsing, reentrancy and lifecycle invocation.",
+      "adaptation": "Fe dispatch functions encode the reference hook wire interface; hook implementations remain external contracts."
+    },
+    {
+      "reference_source": "src/libraries/LPFeeLibrary.sol",
+      "reference_sha256": "e96c3fa7deac991dc09b6c5e560a340d01d6c68ccba483d4b29f8a66e5aa44e0",
+      "fe_sources": [
+        "src/lp_fee.fe"
+      ],
+      "evidence": [
+        "tests/results/foundation-latest-o1.json"
+      ],
+      "behavior": "Constants, fee masks/rates, checked liquidity arithmetic and boundaries; independent reference component comparison."
+    },
+    {
+      "reference_source": "src/libraries/LiquidityMath.sol",
+      "reference_sha256": "67a39e58732340af4870342ba9230691f35501d89ed8725ca1b338deaa0eb26a",
+      "fe_sources": [
+        "src/liquidity_math.fe"
+      ],
+      "evidence": [
+        "tests/results/foundation-latest-o1.json"
+      ],
+      "behavior": "Constants, fee masks/rates, checked liquidity arithmetic and boundaries; independent reference component comparison."
+    },
+    {
+      "reference_source": "src/libraries/Lock.sol",
+      "reference_sha256": "29cd41a53de22514164e638e7bc965ccf4d9f34b455b43a1a15e06a8cb86e7f1",
+      "fe_sources": [
+        "src/transient.fe"
+      ],
+      "evidence": [
+        "tests/results/transient-parity-o1.json",
+        "tests/results/transient-transactions-o1.json",
+        "tests/results/manager-position-current-o1.json",
+        "tests/results/manager-stateful-latest-o1.json"
+      ],
+      "behavior": "Checked currency/account deltas, reserves, lock and nonzero count; transaction-end clearing, static-call rejection, rollback and unlock settlement."
+    },
+    {
+      "reference_source": "src/libraries/NonzeroDeltaCount.sol",
+      "reference_sha256": "0ae35ca64da2527b4e1f7afa4ca10c4b65af952dc473c33b6663101e8d199f40",
+      "fe_sources": [
+        "src/transient.fe"
+      ],
+      "evidence": [
+        "tests/results/transient-parity-o1.json",
+        "tests/results/transient-transactions-o1.json",
+        "tests/results/manager-position-current-o1.json",
+        "tests/results/manager-stateful-latest-o1.json"
+      ],
+      "behavior": "Checked currency/account deltas, reserves, lock and nonzero count; transaction-end clearing, static-call rejection, rollback and unlock settlement."
+    },
+    {
+      "reference_source": "src/libraries/ParseBytes.sol",
+      "reference_sha256": "6a6f3d1cec0143fd70ea68c34e6dce3bde72f368b213f1a225ada23dbfd99bb8",
+      "fe_sources": [
+        "src/hooks.fe"
+      ],
+      "evidence": [
+        "tests/results/hooks-parity-o1.json",
+        "tests/results/manager-position-current-o1.json",
+        "tests/results/manager-stateful-latest-o1.json"
+      ],
+      "behavior": "Selector, signed delta and fee extraction from hook return bytes.",
+      "adaptation": "Bounded parsing is integrated into hook response validation instead of exposing unchecked arbitrary Solidity memory reads."
+    },
+    {
+      "reference_source": "src/libraries/Pool.sol",
+      "reference_sha256": "59c493035ad25d56f24a457e8b40d9d1e3784504b8ff13d171db1eb25c6f128e",
+      "fe_sources": [
+        "src/pool.fe",
+        "src/pool_swap.fe"
+      ],
+      "evidence": [
+        "tests/results/pool-parity-o1.json",
+        "tests/results/manager-position-current-o1.json",
+        "tests/results/manager-stateful-latest-o1.json"
+      ],
+      "behavior": "Initialization, tick and fee accounting, liquidity, tick crossing, exact-input/output swaps, donation and error paths; isolated roots and overflow scenarios."
+    },
+    {
+      "reference_source": "src/libraries/Position.sol",
+      "reference_sha256": "3dc4e2ad1564fa94eddf3ff06ce9ac592c9d578ea64ca194050382da454c8fcb",
+      "fe_sources": [
+        "src/position.fe"
+      ],
+      "evidence": [
+        "tests/results/state-parity-o1.json",
+        "tests/results/pool-parity-o1.json",
+        "tests/results/manager-position-current-o1.json",
+        "tests/results/manager-stateful-latest-o1.json"
+      ],
+      "behavior": "Owner/range/salt key, liquidity delta, wrapping fee-growth accounting, empty-position restrictions and storage parity."
+    },
+    {
+      "reference_source": "src/libraries/ProtocolFeeLibrary.sol",
+      "reference_sha256": "f8d96d9c8b5d12ab927b34551699bd7086750475f70254c9505e636f2cafe56a",
+      "fe_sources": [
+        "src/protocol_fee.fe"
+      ],
+      "evidence": [
+        "tests/results/foundation-latest-o1.json"
+      ],
+      "behavior": "Constants, fee masks/rates, checked liquidity arithmetic and boundaries; independent reference component comparison."
+    },
+    {
+      "reference_source": "src/libraries/SafeCast.sol",
+      "reference_sha256": "c1a815a41607be5b4c86ca588a951f368156da8ee21bdfc18b5d51b58a0f27be",
+      "fe_sources": [
+        "src/safe_cast.fe"
+      ],
+      "evidence": [
+        "tests/results/math-parity-o1.json",
+        "tests/results/manager-position-current-o1.json",
+        "tests/results/manager-stateful-latest-o1.json"
+      ],
+      "behavior": "Reference arithmetic, Solidity-width inputs, overflow/rounding/error behavior; deterministic Fe vectors and differential arithmetic tests, plus integrated pool consumers."
+    },
+    {
+      "reference_source": "src/libraries/SqrtPriceMath.sol",
+      "reference_sha256": "42440c21bbab86c7eed4716b281ed5ca281cf14af8b5e06dc6dc3bc6864bcfdf",
+      "fe_sources": [
+        "src/sqrt_price_math.fe"
+      ],
+      "evidence": [
+        "tests/results/math-parity-o1.json",
+        "tests/results/manager-position-current-o1.json",
+        "tests/results/manager-stateful-latest-o1.json"
+      ],
+      "behavior": "Reference arithmetic, Solidity-width inputs, overflow/rounding/error behavior; deterministic Fe vectors and differential arithmetic tests, plus integrated pool consumers."
+    },
+    {
+      "reference_source": "src/libraries/StateLibrary.sol",
+      "reference_sha256": "eebdbc1b6e431072ce5521b9e1b603d43831e3b6e062743e6665e070d5cf8a1a",
+      "fe_sources": [
+        "src/state_library.fe"
+      ],
+      "evidence": [
+        "tests/results/state-view-latest-o1.json",
+        "tests/results/position-metadata-latest-o1.json"
+      ],
+      "behavior": "Pool, tick, bitmap, fee-growth and position external reads, computed slots, range-call boundaries, short responses and allocation/error precedence."
+    },
+    {
+      "reference_source": "src/libraries/SwapMath.sol",
+      "reference_sha256": "eb3971ea0ba84ff0a01f2fbe43f62f9c393121ef1724774ed3f3ab7760780e4a",
+      "fe_sources": [
+        "src/swap_math.fe"
+      ],
+      "evidence": [
+        "tests/results/math-parity-o1.json",
+        "tests/results/manager-position-current-o1.json",
+        "tests/results/manager-stateful-latest-o1.json"
+      ],
+      "behavior": "Reference arithmetic, Solidity-width inputs, overflow/rounding/error behavior; deterministic Fe vectors and differential arithmetic tests, plus integrated pool consumers."
+    },
+    {
+      "reference_source": "src/libraries/TickBitmap.sol",
+      "reference_sha256": "19b25dccfac8bd90f9d615fb182547eb7b5908a5cbf21a1c5920b92c47383cb6",
+      "fe_sources": [
+        "src/tick_bitmap.fe"
+      ],
+      "evidence": [
+        "tests/results/state-bitmap-refactor-o2.json",
+        "tests/results/pool-parity-o1.json",
+        "tests/results/manager-position-current-o1.json",
+        "tests/results/manager-stateful-latest-o1.json"
+      ],
+      "behavior": "Flip, compressed negative ticks, one-word scans, initialized bounds and isolated storage roots.",
+      "adaptation": "Historical O2 evidence is retained for the bitmap refactor; current native O1 and integrated manager tests supplement it. No new O2 run is required."
+    },
+    {
+      "reference_source": "src/libraries/TickMath.sol",
+      "reference_sha256": "272d4f6d3ff9ae33596ebcdb84a71a3c2d4542ae8fb5c88ddf1aca8043f5d06b",
+      "fe_sources": [
+        "src/tick_math.fe"
+      ],
+      "evidence": [
+        "tests/results/math-parity-o1.json",
+        "tests/results/manager-position-current-o1.json",
+        "tests/results/manager-stateful-latest-o1.json"
+      ],
+      "behavior": "Reference arithmetic, Solidity-width inputs, overflow/rounding/error behavior; deterministic Fe vectors and differential arithmetic tests, plus integrated pool consumers."
+    },
+    {
+      "reference_source": "src/libraries/TransientStateLibrary.sol",
+      "reference_sha256": "9835fca9df8b3f649def66835c5d7ee68de6a6cbe92bf255eb5d8b92a6a8d60e",
+      "fe_sources": [
+        "src/transient_state_library.fe"
+      ],
+      "evidence": [
+        "tests/results/delta-resolver-o1.json",
+        "tests/results/router-real-permit2-latest-o1.json"
+      ],
+      "behavior": "Synced currency/reserves, count, account deltas and lock reads via external exttload, including read failure handling and native-reserve short circuit."
+    },
+    {
+      "reference_source": "src/libraries/UnsafeMath.sol",
+      "reference_sha256": "2de236e7ca0b9572a6b0184557565b6fd54e177224e202c727fe248785ede427",
+      "fe_sources": [
+        "src/unsafe_math.fe"
+      ],
+      "evidence": [
+        "tests/results/math-parity-o1.json",
+        "tests/results/manager-position-current-o1.json",
+        "tests/results/manager-stateful-latest-o1.json"
+      ],
+      "behavior": "Reference arithmetic, Solidity-width inputs, overflow/rounding/error behavior; deterministic Fe vectors and differential arithmetic tests, plus integrated pool consumers."
+    },
+    {
+      "reference_source": "src/types/BalanceDelta.sol",
+      "reference_sha256": "320d9c13dec135c3903729e66d3a1040fe86d537a7ee53728915012ca183af32",
+      "fe_sources": [
+        "src/balance_delta.fe"
+      ],
+      "evidence": [
+        "tests/results/foundation-latest-o1.json"
+      ],
+      "behavior": "Exact packed bit layout, truncation/sign extension, arithmetic or masked updates and boundary/error behavior."
+    },
+    {
+      "reference_source": "src/types/BeforeSwapDelta.sol",
+      "reference_sha256": "6aee06f1553e879f5909e8f4c0eac26ec23dd4821a7e56e4d5077db39a227e12",
+      "fe_sources": [
+        "src/before_swap_delta.fe"
+      ],
+      "evidence": [
+        "tests/results/foundation-latest-o1.json"
+      ],
+      "behavior": "Exact packed bit layout, truncation/sign extension, arithmetic or masked updates and boundary/error behavior."
+    },
+    {
+      "reference_source": "src/types/Currency.sol",
+      "reference_sha256": "ba6726fd24fbc66848208dfbb2899116c10729c505e6e5552316ac2444f1dfc3",
+      "fe_sources": [
+        "src/currency.fe"
+      ],
+      "evidence": [
+        "tests/results/currency-parity-o1.json",
+        "tests/results/router-real-permit2-latest-o1.json"
+      ],
+      "behavior": "External ERC20 balance/transfer semantics, optional return values, native currency, error wrapping and real Permit2 settlement.",
+      "adaptation": "ERC20 tokens are external dependencies. Currency is represented by a canonical address; no standalone ERC20 token implementation is prescribed by core."
+    },
+    {
+      "reference_source": "src/types/PoolId.sol",
+      "reference_sha256": "548424ac50ad58212545da70207283fb8990731578c115c85d5acbcb0e1d3c9f",
+      "fe_sources": [
+        "src/pool_types.fe"
+      ],
+      "evidence": [
+        "tests/results/types-parity-o1.json",
+        "tests/results/manager-position-current-o1.json",
+        "tests/results/manager-stateful-latest-o1.json"
+      ],
+      "behavior": "Canonical PoolKey and operation tuples, pool ID hash, ABI widths and field ordering, boundary/truncation cases and concrete PoolManager ABI."
+    },
+    {
+      "reference_source": "src/types/PoolKey.sol",
+      "reference_sha256": "99e1afe285b5c614ebc9586ab5196db9d24a63fd924a449f5d99f490a6a6d6a9",
+      "fe_sources": [
+        "src/pool_types.fe"
+      ],
+      "evidence": [
+        "tests/results/types-parity-o1.json",
+        "tests/results/manager-position-current-o1.json",
+        "tests/results/manager-stateful-latest-o1.json"
+      ],
+      "behavior": "Canonical PoolKey and operation tuples, pool ID hash, ABI widths and field ordering, boundary/truncation cases and concrete PoolManager ABI."
+    },
+    {
+      "reference_source": "src/types/PoolOperation.sol",
+      "reference_sha256": "cf72ad0c3e5e91662029e862acd841fabce8753040b0d4e802dee64ef1157232",
+      "fe_sources": [
+        "src/pool_types.fe"
+      ],
+      "evidence": [
+        "tests/results/types-parity-o1.json",
+        "tests/results/manager-position-current-o1.json",
+        "tests/results/manager-stateful-latest-o1.json"
+      ],
+      "behavior": "Canonical PoolKey and operation tuples, pool ID hash, ABI widths and field ordering, boundary/truncation cases and concrete PoolManager ABI."
+    },
+    {
+      "reference_source": "src/types/Slot0.sol",
+      "reference_sha256": "378b45486644dc7e49726358e83d0e2fffdaee088d18cac1a3df00d02c3635b4",
+      "fe_sources": [
+        "src/slot0.fe"
+      ],
+      "evidence": [
+        "tests/results/foundation-latest-o1.json"
+      ],
+      "behavior": "Exact packed bit layout, truncation/sign extension, arithmetic or masked updates and boundary/error behavior."
+    }
+  ],
+  "reference_test_fixtures": [
+    "src/test/ActionsRouter.sol",
+    "src/test/BaseTestHooks.sol",
+    "src/test/CurrencyTest.sol",
+    "src/test/CustomCurveHook.sol",
+    "src/test/DeltaReturningHook.sol",
+    "src/test/DynamicFeesTestHook.sol",
+    "src/test/DynamicReturnFeeTestHook.sol",
+    "src/test/EmptyRevertContract.sol",
+    "src/test/EmptyTestHooks.sol",
+    "src/test/FeeTakingHook.sol",
+    "src/test/Fuzzers.sol",
+    "src/test/HooksTest.sol",
+    "src/test/LPFeeTakingHook.sol",
+    "src/test/LiquidityMathTest.sol",
+    "src/test/MockContract.sol",
+    "src/test/MockERC6909Claims.sol",
+    "src/test/MockHooks.sol",
+    "src/test/NativeERC20.sol",
+    "src/test/NoDelegateCallTest.sol",
+    "src/test/PoolClaimsTest.sol",
+    "src/test/PoolDonateTest.sol",
+    "src/test/PoolEmptyUnlockTest.sol",
+    "src/test/PoolModifyLiquidityTest.sol",
+    "src/test/PoolModifyLiquidityTestNoChecks.sol",
+    "src/test/PoolNestedActionsTest.sol",
+    "src/test/PoolSwapTest.sol",
+    "src/test/PoolTakeTest.sol",
+    "src/test/PoolTestBase.sol",
+    "src/test/ProtocolFeesImplementation.sol",
+    "src/test/ProxyPoolManager.sol",
+    "src/test/SkipCallsTestHook.sol",
+    "src/test/SqrtPriceMathEchidnaTest.sol",
+    "src/test/SwapRouterNoChecks.sol",
+    "src/test/TestERC20.sol",
+    "src/test/TestInvalidERC20.sol",
+    "src/test/TickMathEchidnaTest.sol",
+    "src/test/TickMathTest.sol",
+    "src/test/TickOverflowSafetyEchidnaTest.sol"
+  ],
+  "test_fixture_policy": "The 38 src/test Solidity files are upstream test actors/harnesses, not deployed protocol functionality. The port exercises the protocol through Fe unit tests and differential Solidity fixtures in tests/solidity; this inventory does not claim line-by-line translation of upstream test actors.",
+  "upstream_conformance": {
+    "evidence": [
+      "tests/results/upstream-conformance-o1.json",
+      "tests/results/upstream-conformance-o1-tests.json"
+    ],
+    "native_evidence": "tests/results/native-integrated-o1.json"
+  }
+}

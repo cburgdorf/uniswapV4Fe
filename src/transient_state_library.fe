@@ -1,0 +1,37 @@
+// SPDX-License-Identifier: MIT
+// External transient reads from the pinned v4-core TransientStateLibrary.sol.
+use core::abi::store_word
+use core::ptr::{self, MemBuffer}
+use std::abi::{Bytes32, sol}
+use std::evm::{Address, Ctx, RawMem, staticcall_decode}
+use super::{transient, calldata_decoder::address}
+
+pub fn read_word(_ manager: Address, _ slot: u256) -> u256 uses (ctx: Ctx) {
+    let args = MemBuffer::alloc(36)
+    store_word(
+        ptr: args.ptr(),
+        value: (sol("exttload(bytes32)") as u256) << 224,
+    )
+    store_word(ptr: ptr::offset_bytes(args.ptr(), 4), value: slot)
+    staticcall_decode<Bytes32>(addr: manager, gas: ctx.gas(), args: args.span()).val
+}
+pub fn synced_currency(_ manager: Address) -> Address uses (ctx: Ctx) {
+    address(read_word(manager, transient::CURRENCY_SLOT))
+}
+pub fn synced_reserves(_ manager: Address) -> u256 uses (ctx: Ctx) {
+    if synced_currency(manager).inner == 0 {
+        return 0
+    }
+    read_word(manager, transient::RESERVES_OF_SLOT)
+}
+pub fn nonzero_delta_count(_ manager: Address) -> u256 uses (ctx: Ctx) {
+    read_word(manager, transient::NONZERO_DELTA_COUNT_SLOT)
+}
+pub fn currency_delta(_ manager: Address, _ target: Address, _ currency: Address) -> i256
+uses (ctx: Ctx, mem: mut RawMem)
+{
+    read_word(manager, transient::currency_delta_slot(currency, target)).downcast_truncate()
+}
+pub fn is_unlocked(_ manager: Address) -> bool uses (ctx: Ctx) {
+    read_word(manager, transient::IS_UNLOCKED_SLOT) != 0
+}

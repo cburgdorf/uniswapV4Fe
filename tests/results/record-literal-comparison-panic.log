@@ -1,0 +1,40 @@
+
+thread '<unnamed>' (1367329) panicked at crates/hir/src/analysis/semantic/lower/body.rs:1001:26:
+record field should resolve
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: core::option::expect_failed
+   3: <fe_hir::analysis::semantic::lower::body::SmirLowerCtxt>::lower_expr_inner
+   4: <fe_hir::analysis::semantic::lower::body::SmirLowerCtxt>::lower_expr_operand
+   5: <fe_hir::analysis::semantic::lower::body::SmirLowerCtxt>::lower_call_like_expr
+   6: <fe_hir::analysis::semantic::lower::body::SmirLowerCtxt>::lower_expr_inner
+   7: <fe_hir::analysis::semantic::lower::body::SmirLowerCtxt>::lower_expr
+   8: <fe_hir::analysis::semantic::lower::body::SmirLowerCtxt>::lower_expr
+   9: fe_hir::analysis::semantic::lower::body::lower_to_smir_with_call_sites
+  10: <fe_hir::analysis::semantic::instance::semantic::SemanticInstance as <fe_hir::analysis::semantic::instance::semantic::SemanticInstance>::body::InnerTrait_>::body_
+  11: <salsa::function::IngredientImpl<<fe_hir::analysis::semantic::instance::semantic::SemanticInstance>::body::body_::Configuration_>>::execute
+  12: <salsa::function::IngredientImpl<<fe_hir::analysis::semantic::instance::semantic::SemanticInstance>::body::body_::Configuration_>>::fetch_cold
+  13: <salsa::function::IngredientImpl<<fe_hir::analysis::semantic::instance::semantic::SemanticInstance>::body::body_::Configuration_>>::fetch
+  14: <std::thread::local::LocalKey<salsa::attach::Attached>>::with::<salsa::attach::attach<&fe_hir::analysis::semantic::ir::SemanticBody, dyn fe_hir::analysis::HirAnalysisDb, <fe_hir::analysis::semantic::instance::semantic::SemanticInstance>::body::body_::{closure#0}>::{closure#0}, &fe_hir::analysis::semantic::ir::SemanticBody>
+  15: <fe_hir::analysis::semantic::normalized::admission::admitted_semantic_body_query::Configuration_ as salsa::function::Configuration>::execute
+  16: <salsa::function::IngredientImpl<fe_hir::analysis::semantic::normalized::admission::admitted_semantic_body_query::Configuration_>>::execute
+  17: <salsa::function::IngredientImpl<fe_hir::analysis::semantic::normalized::admission::admitted_semantic_body_query::Configuration_>>::fetch_cold
+  18: <salsa::function::IngredientImpl<fe_hir::analysis::semantic::normalized::admission::admitted_semantic_body_query::Configuration_>>::fetch
+  19: <std::thread::local::LocalKey<salsa::attach::Attached>>::with::<salsa::attach::attach<fe_hir::analysis::semantic::normalized::admission::SemanticBodyAdmission, dyn fe_hir::analysis::HirAnalysisDb, fe_hir::analysis::semantic::normalized::admission::admitted_semantic_body_query::{closure#0}>::{closure#0}, fe_hir::analysis::semantic::normalized::admission::SemanticBodyAdmission>
+  20: <fe_hir::analysis::semantic::borrowck::solver::Borrowck>::new
+  21: <fe_hir::analysis::semantic::borrowck::check::semantic_borrow_check_query::Configuration_ as salsa::function::Configuration>::execute
+  22: <salsa::function::IngredientImpl<fe_hir::analysis::semantic::borrowck::check::semantic_borrow_check_query::Configuration_>>::execute
+  23: <salsa::function::IngredientImpl<fe_hir::analysis::semantic::borrowck::check::semantic_borrow_check_query::Configuration_>>::fetch_cold
+  24: <salsa::function::IngredientImpl<fe_hir::analysis::semantic::borrowck::check::semantic_borrow_check_query::Configuration_>>::fetch
+  25: <std::thread::local::LocalKey<salsa::attach::Attached>>::with::<salsa::attach::attach<fe_hir::analysis::semantic::borrowck::ir::SemanticBorrowCheckResult, dyn fe_hir::analysis::HirAnalysisDb, fe_hir::analysis::semantic::borrowck::check::semantic_borrow_check_query::{closure#0}>::{closure#0}, fe_hir::analysis::semantic::borrowck::ir::SemanticBorrowCheckResult>
+  26: fe_hir::analysis::semantic::borrowck::check::collect_owner
+  27: fe_hir::analysis::semantic::borrowck::check::collect_semantic_borrow_diagnostic_vouchers
+  28: <fe_hir::analysis::analysis_pass::AnalysisPassManager>::run_on_module_tree
+  29: <fe_driver::db::DriverDataBase>::mir_diagnostics_for_ingot
+  30: <fe::dependency_diagnostics::CompilationDiagnostics>::for_ingot
+  31: fe::test::prepare_suite_job
+  32: fe::test::emit_parallel_suite_outcome
+  33: fe::test::suite_worker_loop_parallel
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
+Error: suite worker panicked: record field should resolve

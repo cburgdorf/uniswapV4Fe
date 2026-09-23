@@ -1,0 +1,62 @@
+// SPDX-License-Identifier: MIT
+// Permit2 SignatureVerification at cc56ad0f3439c502c246fc5cfcc3db92bb8b7219.
+use core::abi::ByteInput
+use core::option::Option
+use core::result::Result
+use core::ptr::MemBuffer
+use std::abi::{Bytes, Bytes32, sol}
+use std::evm::{Address, Ctx, Call, RawMem, encode_msg_calldata, bubble_last_revert, revert, revert_error, crypto::ecrecover_raw}
+#[error]
+pub struct InvalidSignatureLength {}
+#[error]
+pub struct InvalidSignature {}
+#[error]
+pub struct InvalidSigner {}
+#[error]
+pub struct InvalidContractSignature {}
+msg ContractSignatureMsg {
+    #[selector = sol("isValidSignature(bytes32,bytes)")]
+    Verify { hash: Bytes32, signature: Bytes } -> std::abi::Bytes4,
+}
+pub fn verify(_ signature: own Bytes, _ hash: Bytes32, _ owner: Address)
+uses (ctx: Ctx, call: Call, mem: RawMem)
+{
+    if ctx.extcodesize(owner) == 0 {
+        let data = signature.payload_span()
+        let mut r: u256 = 0
+        let mut s: u256 = 0
+        let mut v: u256 = 0
+        if data.len() == 65 {
+            r = data.word_at(0)
+            s = data.word_at(32)
+            v = data.byte_at(64) as u256
+        } else if data.len() == 64 {
+            r = data.word_at(0)
+            let vs = data.word_at(32)
+            s = vs & 0x7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+            v = (vs >> 255) + 27
+        } else {
+            revert_error(InvalidSignatureLength {})
+        }
+        // The reference deliberately accepts high-s signatures in 65-byte form.
+        let signer = match ecrecover_raw(hash: hash.val, v, r, s) {
+            Result::Ok(Option::Some(address)) => address,
+            Result::Ok(Option::None) => { revert_error(InvalidSignature {}) },
+            Result::Err(_) => { revert(()) },
+        }
+        if signer != owner.inner { revert_error(InvalidSigner {}) }
+    } else {
+        let args = encode_msg_calldata(ContractSignatureMsg::Verify { hash, signature })
+        // A high-level Solidity bytes4 return consumes one word; extra returndata
+        // must not force an unbounded copy/allocation in this caller.
+        let mut ret = MemBuffer::with_capacity(32)
+        let outcome = call.raw_staticcall(addr: owner, gas: ctx.gas(), args: args.span(), ret: mut ret)
+        if !outcome.success() { bubble_last_revert() }
+        if outcome.returndata_len() < 32 { revert(()) }
+        let word = mem.mload(ret.ptr())
+        if word & 0x00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff != 0 { revert(()) }
+        if word >> 224 != sol("isValidSignature(bytes32,bytes)") as u256 {
+            revert_error(InvalidContractSignature {})
+        }
+    }
+}

@@ -1,0 +1,201 @@
+// SPDX-License-Identifier: BUSL-1.1
+// Swap portion of Uniswap v4-core Pool.sol; see pool.fe for storage/actions.
+use std::abi::sol::{Uint24, Uint160, Int24}
+use std::evm::{RawStorage, RawMem, revert_error}
+use super::pool::{
+    Pool,
+    SwapParams,
+    SwapResult,
+    InvalidFeeForExactOut,
+    PriceLimitAlreadyExceeded,
+    PriceLimitOutOfBounds,
+}
+use super::balance_delta::{BalanceDelta, ZERO_DELTA, to_balance_delta}
+use super::{tick_math, swap_math, safe_cast, liquidity_math, lp_fee, protocol_fee, unsafe_math}
+use super::fixed_point::Q128
+
+#[arithmetic(unchecked)]
+fn wrapping_add(_ a: u256, _ b: u256) -> u256 {
+    a + b
+}
+#[arithmetic(unchecked)]
+fn wrapping_signed_add(_ a: i256, _ b: i256) -> i256 {
+    a + b
+}
+#[arithmetic(unchecked)]
+fn wrapping_signed_sub(_ a: i256, _ b: i256) -> i256 {
+    a - b
+}
+#[arithmetic(unchecked)]
+fn wrapping_neg128(_ a: i128) -> i128 {
+    (0 as i128) - a
+}
+#[arithmetic(unchecked)]
+fn protocol_share(_ input: u256, _ fee: u256, _ protocol: u256, _ swap_fee: u256) -> u256 {
+    if swap_fee == protocol {
+        fee
+    } else {
+        (input + fee) * protocol / protocol_fee::PIPS_DENOMINATOR
+    }
+}
+#[arithmetic(unchecked)]
+fn wrapping_sub(_ a: u256, _ b: u256) -> u256 {
+    a - b
+}
+
+impl Pool {
+    /// Execute the full multi-tick swap loop. PoolManager checks initialization.
+    pub fn swap(self, _ params: SwapParams) -> (BalanceDelta, u256, Uint24, SwapResult)
+    uses (mem: mut RawMem, storage: mut RawStorage)
+    {
+        let start = self.slot0()
+        let zero_for_one = params.zero_for_one
+        let protocol = if zero_for_one {
+            protocol_fee::zero_for_one_fee(start.protocol_fee())
+        } else {
+            protocol_fee::one_for_zero_fee(start.protocol_fee())
+        }
+        let mut remaining = params.amount_specified
+        let mut calculated: i256 = 0
+        let mut result = SwapResult {
+            sqrt_price_x96: start.sqrt_price_x96(),
+            tick: start.tick(),
+            liquidity: self.liquidity(),
+        }
+        let lp = if lp_fee::is_override(params.lp_fee_override) {
+            lp_fee::remove_override_flag_and_validate(params.lp_fee_override)
+        } else {
+            start.lp_fee()
+        }
+        let fee = if protocol == 0 {
+            lp
+        } else {
+            protocol_fee::calculate_swap_fee(protocol, lp)
+        }
+        if (fee.val as u256) >= swap_math::MAX_SWAP_FEE && params.amount_specified > 0 {
+            revert_error(InvalidFeeForExactOut {})
+        }
+        if params.amount_specified == 0 {
+            return (ZERO_DELTA, 0, fee, result)
+        }
+        let limit = params.sqrt_price_limit_x96
+        if zero_for_one {
+            if limit.val >= start.sqrt_price_x96().val {
+                revert_error(
+                    PriceLimitAlreadyExceeded {
+                        sqrt_price_current_x96: start.sqrt_price_x96(),
+                        sqrt_price_limit_x96: limit,
+                    },
+                )
+            }
+            if limit.val <= tick_math::MIN_SQRT_PRICE {
+                revert_error(PriceLimitOutOfBounds { sqrt_price_limit_x96: limit })
+            }
+        } else {
+            if limit.val <= start.sqrt_price_x96().val {
+                revert_error(
+                    PriceLimitAlreadyExceeded {
+                        sqrt_price_current_x96: start.sqrt_price_x96(),
+                        sqrt_price_limit_x96: limit,
+                    },
+                )
+            }
+            if limit.val >= tick_math::MAX_SQRT_PRICE {
+                revert_error(PriceLimitOutOfBounds { sqrt_price_limit_x96: limit })
+            }
+        }
+        let growth_index: u256 = if zero_for_one { 1 } else { 2 }
+        let mut growth = self.read_word(growth_index)
+        let mut amount_to_protocol: u256 = 0
+        while remaining != 0 && result.sqrt_price_x96.val != limit.val {
+            let price_start = result.sqrt_price_x96
+            let (next_tick_unclamped, initialized) = self
+                .next_tick(result.tick, params.tick_spacing, zero_for_one)
+            let mut next_tick = next_tick_unclamped
+            if next_tick.val <= tick_math::MIN_TICK {
+                next_tick = Int24 { val: tick_math::MIN_TICK }
+            }
+            if next_tick.val >= tick_math::MAX_TICK {
+                next_tick = Int24 { val: tick_math::MAX_TICK }
+            }
+            let tick_price = tick_math::get_sqrt_price_at_tick(next_tick)
+            let target = swap_math::get_sqrt_price_target(zero_for_one, tick_price, limit)
+            let (next_price, amount_in, amount_out, computed_fee) = swap_math::compute_swap_step(
+                result.sqrt_price_x96,
+                target,
+                result.liquidity,
+                remaining,
+                fee,
+            )
+            result.sqrt_price_x96 = next_price
+            let mut step_fee = computed_fee
+            if params.amount_specified > 0 {
+                remaining = wrapping_signed_sub(remaining, safe_cast::to_int256(amount_out))
+                calculated -= safe_cast::to_int256(amount_in + step_fee)
+            } else {
+                remaining = wrapping_signed_add(
+                    remaining,
+                    safe_cast::to_int256(wrapping_add(amount_in, step_fee)),
+                )
+                calculated += safe_cast::to_int256(amount_out)
+            }
+            if protocol > 0 {
+                let share = protocol_share(amount_in, step_fee, protocol as u256, fee.val as u256)
+                step_fee = wrapping_sub(step_fee, share)
+                amount_to_protocol = wrapping_add(amount_to_protocol, share)
+            }
+            if result.liquidity > 0 {
+                growth = wrapping_add(
+                    growth,
+                    unsafe_math::simple_mul_div(step_fee, Q128, result.liquidity as u256),
+                )
+            }
+            if result.sqrt_price_x96.val == tick_price.val {
+                if initialized {
+                    let g0 = if zero_for_one {
+                        growth
+                    } else {
+                        self.read_word(1)
+                    }
+                    let g1 = if zero_for_one {
+                        self.read_word(2)
+                    } else {
+                        growth
+                    }
+                    let net = self.cross_tick(next_tick, g0, g1)
+                    let change = if zero_for_one {
+                        wrapping_neg128(net)
+                    } else {
+                        net
+                    }
+                    result.liquidity = liquidity_math::add_delta(result.liquidity, change)
+                }
+                result.tick = if zero_for_one {
+                    Int24 { val: next_tick.val - 1 }
+                } else {
+                    next_tick
+                }
+            } else if result.sqrt_price_x96.val != price_start.val {
+                result.tick = tick_math::get_tick_at_sqrt_price(result.sqrt_price_x96)
+            }
+        }
+        self.write_word(
+            0,
+            start.set_tick(result.tick).set_sqrt_price_x96(result.sqrt_price_x96).bits,
+        )
+        if self.liquidity() != result.liquidity {
+            self.set_liquidity(result.liquidity)
+        }
+        self.write_word(growth_index, growth)
+        let specified_delta = safe_cast::to_int128(
+            wrapping_signed_sub(params.amount_specified, remaining),
+        )
+        let calculated_delta = safe_cast::to_int128(calculated)
+        let delta = if zero_for_one != (params.amount_specified < 0) {
+            to_balance_delta(calculated_delta, specified_delta)
+        } else {
+            to_balance_delta(specified_delta, calculated_delta)
+        }
+        (delta, amount_to_protocol, fee, result)
+    }
+}

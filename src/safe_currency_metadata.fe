@@ -1,0 +1,51 @@
+// SPDX-License-Identifier: MIT
+// Pinned SafeCurrencyMetadata: bytes32 symbols discard every zero byte;
+// malformed dynamic-string success data reverts rather than using a fallback.
+use core::abi::ByteInput
+use core::ptr::{self, MemBuffer, MemSpan}
+use std::abi::{Bytes, DynString, sol}
+use std::evm::{Address, Ctx, Call, RawMem, copy_returndata, decode_returndata, revert_error, Panic, PANIC_INDEX_OUT_OF_BOUNDS}
+use super::address_string
+fn response(_ token: Address, _ selector: u32) -> (bool, MemBuffer) uses (ctx: Ctx, call: Call) {
+    let args = Bytes::from_word_prefix(word: (selector as u256) << 224, len: 4)
+    let mut ret = MemBuffer::with_capacity(0)
+    let outcome = call.raw_staticcall(addr: token, gas: ctx.gas(), args: args.payload_span(), ret: mut ret)
+    (outcome.success(), copy_returndata())
+}
+pub fn decimals(_ token: Address) -> u8 uses (ctx: Ctx, call: Call) {
+    if token.inner == 0 { return 18 }
+    let (success, data) = response(token, sol("decimals()"))
+    if success && data.len() == 32 {
+        let value = data.span().word_at(0)
+        if value <= 255 { return value.downcast_truncate() }
+    }
+    0
+}
+pub fn truncate(_ value: DynString) -> DynString {
+    if value.len() < 12 { revert_error(Panic::from(PANIC_INDEX_OUT_OF_BOUNDS)) }
+    DynString::from_payload(source: MemSpan::from_raw_parts(ptr: value.payload_span().ptr(), len: 12))
+}
+pub fn symbol(_ token: Address, _ native_label: DynString) -> DynString uses (ctx: Ctx, call: Call, mem: mut RawMem) {
+    if token.inner == 0 { return native_label }
+    let (success, data) = response(token, sol("symbol()"))
+    let mut result = DynString::from_payload(source: MemSpan::empty())
+    if success {
+        if data.len() == 32 {
+            let output = ptr::alloc_bytes(32)
+            let mut count: u256 = 0
+            let mut i: u256 = 0
+            while i < 32 {
+                let byte = data.span().byte_at(i)
+                if byte != 0 {
+                    mem.mstore8(addr: ptr::offset_bytes(output, count), value: byte)
+                    count += 1
+                }
+                i += 1
+            }
+            result = DynString::from_payload(source: MemSpan::from_raw_parts(ptr: output, len: count))
+        } else if data.len() > 64 { result = decode_returndata(data.span()) }
+    }
+    if result.len() == 0 { address_string::to_ascii(token, 6) }
+    else if result.len() > 12 { truncate(result) }
+    else { result }
+}

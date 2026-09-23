@@ -1,0 +1,82 @@
+// SPDX-License-Identifier: MIT
+// Permit2Forwarder intentionally accepts arbitrary owner/spender fields and
+// returns underlying revert bytes so a front-run permit does not abort a batch.
+use core::abi::{AbiSize, AbiSpan, AbiDecoder, ByteInput, Decode, Encode}
+use core::ptr::MemBuffer
+use std::abi::{Sol, Bytes, DynArray, sol::{self, Uint160, Uint48}}
+use std::evm::{Address, Ctx, Call, encode_msg_calldata, copy_returndata, revert}
+pub struct Details { pub token: Address, pub amount: Uint160, pub expiration: Uint48, pub nonce: Uint48 }
+impl AbiSize for Details { const HEAD_SIZE: u256 = 128 const IS_DYNAMIC: bool = false }
+impl AbiSpan<Sol> for Details {
+    fn payload_end<I: ByteInput>(_: I, base: u256, pos: u256) -> u256 { pos + 128 }
+}
+impl Decode<Sol> for Details {
+    fn decode_payload<D: AbiDecoder<Sol>>(_ d: mut D) -> Self {
+        let (token, amount, expiration, nonce) = <(Address, Uint160, Uint48, Uint48) as Decode<Sol>>::decode_payload(mut d)
+        Self { token, amount, expiration, nonce }
+    }
+}
+impl Encode<Sol> for Details {
+    fn encode(own self, _ ptr: *u8) { <(Address, Uint160, Uint48, Uint48) as Encode<Sol>>::encode((self.token, self.amount, self.expiration, self.nonce), ptr) }
+}
+pub struct Single { pub details: Details, pub spender: Address, pub sigDeadline: u256 }
+impl AbiSize for Single { const HEAD_SIZE: u256 = 192 const IS_DYNAMIC: bool = false }
+impl Decode<Sol> for Single {
+    fn decode_payload<D: AbiDecoder<Sol>>(_ d: mut D) -> Self {
+        let (details, spender, sigDeadline) = <(Details, Address, u256) as Decode<Sol>>::decode_payload(mut d)
+        Self { details, spender, sigDeadline }
+    }
+}
+impl Encode<Sol> for Single {
+    fn encode(own self, _ ptr: *u8) { <(Details, Address, u256) as Encode<Sol>>::encode((self.details, self.spender, self.sigDeadline), ptr) }
+}
+pub struct Batch { pub details: DynArray<Details>, pub spender: Address, pub sigDeadline: u256 }
+impl AbiSize for Batch {
+    const HEAD_SIZE: u256 = 96
+    const IS_DYNAMIC: bool = true
+    fn payload_size(self) -> u256 { 96 + self.details.encoded_size() }
+}
+impl Decode<Sol> for Batch {
+    fn decode_payload<D: AbiDecoder<Sol>>(_ d: mut D) -> Self {
+        // This public calldata tuple must use bounded field decoding: the
+        // unbounded cursor path adds dynamic offsets before checking overflow.
+        let pos = d.pos()
+        let input = d.input()
+        let (details, spender, sigDeadline) = <(DynArray<Details>, Address, u256) as Decode<Sol>>::decode_from_bounded(input, pos, input.len())
+        d.set_pos(pos + Self::HEAD_SIZE)
+        Self { details, spender, sigDeadline }
+    }
+}
+impl Encode<Sol> for Batch {
+    fn encode(own self, _ ptr: *u8) { <(DynArray<Details>, Address, u256) as Encode<Sol>>::encode((self.details, self.spender, self.sigDeadline), ptr) }
+}
+msg PermitMsg {
+    #[selector = sol("permit(address,((address,uint160,uint48,uint48),address,uint256),bytes)")]
+    ForwardSingle { owner: Address, permitSingle: Single, signature: Bytes },
+    #[selector = sol("permit(address,((address,uint160,uint48,uint48)[],address,uint256),bytes)")]
+    ForwardBatch { owner: Address, permitBatch: Batch, signature: Bytes },
+}
+pub fn single(_ target: Address, _ owner: Address, _ permit: own Single, _ signature: own Bytes) -> Bytes
+uses (ctx: Ctx, call: mut Call) {
+    let args = encode_msg_calldata(PermitMsg::ForwardSingle { owner, permitSingle: permit, signature })
+    forward(target, args)
+}
+pub fn batch(_ target: Address, _ owner: Address, _ permit: own Batch, _ signature: own Bytes) -> Bytes
+uses (ctx: Ctx, call: mut Call) {
+    // Static DynArray elements are checked lazily by Fe. The reference checks
+    // each narrow scalar while encoding the outgoing calldata, before calling.
+    let data = permit.details.encoded_span()
+    let mut i: u256 = 0
+    while i < permit.details.len() {
+        let _ = <Details as Decode<Sol>>::decode_from_bounded(data, 32 + i * 128, data.len())
+        i += 1
+    }
+    let args = encode_msg_calldata(PermitMsg::ForwardBatch { owner, permitBatch: permit, signature })
+    forward(target, args)
+}
+fn forward(_ target: Address, _ args: MemBuffer) -> Bytes uses (ctx: Ctx, call: mut Call) {
+    if ctx.extcodesize(target) == 0 { revert(()) }
+    let mut ret = MemBuffer::with_capacity(0)
+    let outcome = call.raw_call(addr: target, gas: ctx.gas(), value: 0, args: args.span(), ret: mut ret)
+    if outcome.success() { Bytes::empty() } else { Bytes::from_payload(source: copy_returndata().span()) }
+}

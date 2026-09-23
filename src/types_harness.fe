@@ -1,0 +1,30 @@
+// SPDX-License-Identifier: MIT
+use std::abi::{Bytes32, sol}
+use std::evm::RawMem
+use super::pool_types::{PoolKey, ModifyLiquidityParams, SwapParams}
+msg TypesMsg {
+    #[selector = sol("poolId((address,address,uint24,int24,address))")]
+    PoolId { key: PoolKey } -> Bytes32,
+    #[selector = sol("echoKey((address,address,uint24,int24,address))")]
+    EchoKey { key: PoolKey } -> PoolKey,
+    #[selector = sol("echoModify((int24,int24,int256,bytes32))")]
+    EchoModify { params: ModifyLiquidityParams } -> ModifyLiquidityParams,
+    #[selector = sol("echoSwap((bool,int256,uint160))")]
+    EchoSwap { params: SwapParams } -> SwapParams,
+}
+pub contract TypesHarness uses (mem: mut RawMem) {
+    recv TypesMsg {
+        PoolId { key } -> Bytes32 uses (mut mem) {
+            key.to_id()
+        }
+        EchoKey { key } -> PoolKey {
+            key
+        }
+        EchoModify { params } -> ModifyLiquidityParams {
+            params
+        }
+        EchoSwap { params } -> SwapParams {
+            params
+        }
+    }
+}

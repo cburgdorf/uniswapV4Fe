@@ -1,0 +1,18 @@
+// SPDX-License-Identifier: MIT
+// v4-periphery ERC721PermitHash: each ABI field occupies a full word.
+use std::abi::Bytes32
+use std::evm::{Address, RawMem}
+use std::evm::packed::keccak_packed
+const PERMIT_TYPEHASH: u256 = 0x49ecf333e5b8c95c40fdafc95c1ad136e8914a8fb55e9dc8bb01eaa83a2df9ad
+const PERMIT_FOR_ALL_TYPEHASH: u256 = 0x6673cb397ee2a50b6b8401653d3638b4ac8b3db9c28aa6870ffceb7574ec2f76
+pub fn permit(_ spender: Address, _ token: u256, _ nonce: u256, _ deadline: u256) -> Bytes32
+uses (mem: mut RawMem)
+{
+    Bytes32 { val: keccak_packed((PERMIT_TYPEHASH, spender.inner, token, nonce, deadline)) }
+}
+pub fn permit_for_all(_ operator: Address, _ approved: bool, _ nonce: u256, _ deadline: u256) -> Bytes32
+uses (mem: mut RawMem)
+{
+    let flag: u256 = if approved { 1 } else { 0 }
+    Bytes32 { val: keccak_packed((PERMIT_FOR_ALL_TYPEHASH, operator.inner, flag, nonce, deadline)) }
+}

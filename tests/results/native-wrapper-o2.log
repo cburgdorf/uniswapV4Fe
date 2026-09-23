@@ -1,0 +1,11 @@
+Compiling 56 files with Solc 0.8.26
+Solc 0.8.26 finished in 2.16s
+Compiler run successful!
+
+Ran 3 tests for test/NativeWrapperParity.t.sol:NativeWrapperParityTest
+[PASS] testFuzz_receive(uint64,uint8,bool) (runs: 10000, μ: 38527, ~: 39682)
+[PASS] testFuzz_wrapAndUnwrap(uint64,uint64,bool) (runs: 10000, μ: 134161, ~: 112778)
+[PASS] test_zeroAndNoCode() (gas: 525330)
+Suite result: ok. 3 passed; 0 failed; 0 skipped; finished in 484.01ms (661.56ms CPU time)
+
+Ran 1 test suite in 484.55ms (484.01ms CPU time): 3 tests passed, 0 failed, 0 skipped (3 total tests)

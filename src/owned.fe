@@ -1,0 +1,50 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Port of Solmate Owned.sol at 4b47a19038b798b4a33d9749d25e570443520647.
+use core::ops::Eq
+use std::evm::{Address, Ctx, RawStorage, Log, revert_error}
+const MASK: u256 = 0xffffffffffffffffffffffffffffffffffffffff
+#[event]
+pub struct OwnershipTransferred {
+    #[indexed]
+    pub user: Address,
+    #[indexed]
+    pub newOwner: Address,
+}
+#[error]
+pub struct Error { pub reason: String<12> }
+pub struct Owned { pub slot: u256 }
+impl Copy for Owned {}
+impl Owned {
+    pub fn owner(self) -> Address uses (storage: RawStorage) {
+        Address { inner: storage.sload(self.slot) & MASK }
+    }
+    fn write_owner(self, _ owner: Address) uses (storage: mut RawStorage) {
+        storage
+            .sstore(
+                slot: self.slot,
+                value: (storage.sload(self.slot) & !MASK) | (owner.inner & MASK),
+            )
+    }
+    pub fn initialize(self, _ owner: Address)
+    uses (storage: mut RawStorage, log: mut Log)
+    {
+        self.write_owner(owner)
+        log.emit(
+            OwnershipTransferred { user: Address::zero(), newOwner: owner },
+        )
+    }
+    pub fn check_owner(self) uses (ctx: Ctx, storage: RawStorage) {
+        if ctx.caller() != self.owner() {
+            revert_error(Error { reason: "UNAUTHORIZED" })
+        }
+    }
+    pub fn transfer_ownership(self, _ new_owner: Address)
+    uses (ctx: Ctx, storage: mut RawStorage, log: mut Log)
+    {
+        self.check_owner()
+        self.write_owner(new_owner)
+        log.emit(
+            OwnershipTransferred { user: ctx.caller(), newOwner: new_owner },
+        )
+    }
+}

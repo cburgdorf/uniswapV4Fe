@@ -1,0 +1,23 @@
+Compiling 37 files with Solc 0.8.26
+Solc 0.8.26 finished in 1.56s
+Compiler run successful with warnings:
+Warning (5740): Unreachable code.
+  --> test/periphery/src/base/DeltaResolver.sol:46:13:
+   |
+46 |             poolManager.settle();
+   |             ^^^^^^^^^^^^^^^^^^^^
+
+
+Ran 9 tests for test/RouterParity.t.sol:RouterParityTest
+[PASS] testFuzz_multi(int128,int128,uint128,uint128,uint256,bool,uint8) (runs: 10000, μ: 118200, ~: 83635)
+[PASS] testFuzz_mutatedMulti(uint256,uint8) (runs: 10000, μ: 130594, ~: 88703)
+[PASS] testFuzz_mutatedSingle(uint256,uint8) (runs: 10000, μ: 143224, ~: 91295)
+[PASS] testFuzz_raw(bytes,uint8) (runs: 10000, μ: 74609, ~: 74606)
+[PASS] testFuzz_single(int128,int128,uint128,uint128,uint256,bool,bool,bytes) (runs: 10000, μ: 160411, ~: 164728)
+[PASS] test_secondHopMustFillAndPriceLimit() (gas: 313623)
+[PASS] test_shortParametersAndUnsupportedActions() (gas: 19102850)
+[PASS] test_signedHookOffset() (gas: 126804)
+[PASS] test_successAndUnfilled() (gas: 464993)
+Suite result: ok. 9 passed; 0 failed; 0 skipped; finished in 887.34ms (3.43s CPU time)
+
+Ran 1 test suite in 887.84ms (887.34ms CPU time): 9 tests passed, 0 failed, 0 skipped (9 total tests)

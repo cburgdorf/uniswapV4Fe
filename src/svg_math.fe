@@ -1,0 +1,46 @@
+// SPDX-License-Identifier: MIT
+use core::ptr::{self, MemSpan}
+use std::abi::{DynString, sol::Int24}
+use std::evm::{Address, RawMem, revert_error, Panic, PANIC_OVERFLOW, PANIC_INDEX_OUT_OF_BOUNDS}
+use std::evm::packed::keccak_packed
+use super::{metadata_text as text, bit_math, svg}
+fn checked_tick(_ value: i32) -> i32 {
+    if value < -8388608 || value > 8388607 { revert_error(Panic::from(PANIC_OVERFLOW)) }
+    value
+}
+pub fn getCurve(_ lower: Int24, _ upper: Int24, _ spacing: Int24) -> DynString uses (mem: mut RawMem) {
+    let range = checked_tick(checked_tick(upper.val - lower.val) / spacing.val)
+    let index: u8 = if range <= 4 { 1 } else if range <= 8 { 2 } else if range <= 16 { 3 } else if range <= 32 { 4 } else if range <= 64 { 5 } else if range <= 128 { 6 } else if range <= 256 { 7 } else { 8 }
+    svg::curvePath(index)
+}
+pub fn substring(_ value: DynString, _ start: u256, _ end: u256) -> DynString {
+    let len = end - start
+    // An empty substring beyond the string end is allowed by the reference loop.
+    if len == 0 { return text::from_span(MemSpan::empty()) }
+    if end > value.len() { revert_error(Panic::from(PANIC_INDEX_OUT_OF_BOUNDS)) }
+    text::from_span(MemSpan::from_raw_parts(ptr: ptr::offset_bytes(value.payload_span().ptr(), start), len))
+}
+pub fn tickToString(_ tick: Int24) -> DynString uses (mem: mut RawMem) {
+    if tick.val >= 0 { return text::decimal((tick.val as i256).downcast_truncate()) }
+    let absolute = checked_tick(-tick.val)
+    text::concat([text::word(0x2d00000000000000000000000000000000000000000000000000000000000000, 1).payload_span(), text::decimal((absolute as i256).downcast_truncate()).payload_span()])
+}
+pub fn rangeLocation(_ lower: Int24, _ upper: Int24) -> (DynString, DynString) {
+    let middle = checked_tick(lower.val + upper.val) / 2
+    let (x, x_len, y, y_len): (u256, u256, u256, u256) = if middle < -125000 { (0x38, 1, 0x37, 1) }
+        else if middle < -75000 { (0x38, 1, 0x31302e35, 4) }
+        else if middle < -25000 { (0x38, 1, 0x31342e3235, 5) }
+        else if middle < -5000 { (0x3130, 2, 0x3138, 2) }
+        else if middle < 0 { (0x3131, 2, 0x3231, 2) }
+        else if middle < 5000 { (0x3133, 2, 0x3233, 2) }
+        else if middle < 25000 { (0x3135, 2, 0x3235, 2) }
+        else if middle < 75000 { (0x3138, 2, 0x3236, 2) }
+        else if middle < 125000 { (0x3231, 2, 0x3237, 2) }
+        else { (0x3234, 2, 0x3237, 2) }
+    (text::word(x << ((32 - x_len) * 8), x_len), text::word(y << ((32 - y_len) * 8), y_len))
+}
+pub fn isRare(_ token_id: u256, _ hooks: Address) -> bool uses (mem: mut RawMem) {
+    let hash = keccak_packed((token_id, hooks))
+    let divisor: u8 = 1 + bit_math::most_significant_bit(token_id) * 2
+    hash < 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff / (divisor as u256)
+}

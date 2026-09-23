@@ -1,0 +1,15 @@
+errors in file:///tmp/fe-v4-tuple5-dynarray.fe
+
+error[9-0008]: message field does not satisfy ABI requirements in msg variant `Read`
+  ┌─ fe-v4-tuple5-dynarray.fe:6:20
+  │
+6 │     Read { values: DynArray<(Address, Uint24, Int24, Address, Bytes)> } -> u256,
+  │                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `DynArray<(Address, Uint24, Int24, Address, Bytes)>` does not satisfy `Decode<Sol>`
+  │
+  = message fields must implement `AbiSize`, `Encode<Sol>`, and `Decode<Sol>`
+
+error[6-0003]: trait bound is not satisfied
+  ┌─ fe-v4-tuple5-dynarray.fe:9:18
+  │
+9 │     recv Probe { Read { values } -> u256 { values.len() } }
+  │                  ^^^^^^^^^^^^^^^ `DynArray<(Address, Uint24, Int24, Address, Bytes)>` doesn't implement `Decode<Sol>`

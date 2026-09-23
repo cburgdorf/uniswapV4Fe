@@ -1,0 +1,24 @@
+// SPDX-License-Identifier: MIT
+// ERC721Permit_v4 permit sequencing; token operations are in erc721.fe.
+use std::abi::Bytes
+use std::evm::{Address, Ctx, Call, RawMem, RawStorage, Log, revert_error}
+use super::{erc721::Tokens, eip712::Domain, unordered_nonce::Nonces, erc721_permit_hash as hashes, signature_verification}
+#[error]
+pub struct SignatureDeadlineExpired {}
+pub fn permit(_ tokens: Tokens, _ nonces: Nonces, _ domain: Domain, _ spender: Address, _ id: u256, _ deadline: u256, _ nonce: u256, _ signature: own Bytes)
+uses (ctx: Ctx, call: Call, mem: mut RawMem, storage: mut RawStorage, log: mut Log) {
+    if ctx.timestamp() > deadline { revert_error(SignatureDeadlineExpired {}) }
+    let owner = tokens.raw_owner(id)
+    let digest = domain.digest(hashes::permit(spender, id, nonce, deadline))
+    signature_verification::verify(signature, digest, owner)
+    nonces.consume(owner, nonce)
+    tokens.approve_unchecked(owner, spender, id)
+}
+pub fn permit_for_all(_ tokens: Tokens, _ nonces: Nonces, _ domain: Domain, _ owner: Address, _ operator: Address, _ approved: bool, _ deadline: u256, _ nonce: u256, _ signature: own Bytes)
+uses (ctx: Ctx, call: Call, mem: mut RawMem, storage: mut RawStorage, log: mut Log) {
+    if ctx.timestamp() > deadline { revert_error(SignatureDeadlineExpired {}) }
+    let digest = domain.digest(hashes::permit_for_all(operator, approved, nonce, deadline))
+    signature_verification::verify(signature, digest, owner)
+    nonces.consume(owner, nonce)
+    tokens.approve_for_all(owner, operator, approved)
+}

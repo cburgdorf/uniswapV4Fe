@@ -1,0 +1,218 @@
+// SPDX-License-Identifier: MIT
+// Wire layouts from the pinned IReservesLens and ReservesLens.ScanState.
+use core::abi::{AbiSize, AbiSpan, AbiDecoder, ByteInput, Decode, Encode, checked_frame_end}
+use core::ptr
+use std::abi::{Sol, Bytes32, sol::{Uint160, Int24}}
+use std::evm::Address
+pub struct PoolTVL {
+    pub coreAmount0: u256,
+    pub coreAmount1: u256,
+    pub hookReserves0: u256,
+    pub hookReserves1: u256,
+    pub hookEffective0: u256,
+    pub hookEffective1: u256,
+    pub sqrtPriceX96: Uint160,
+    pub tick: Int24,
+    pub activeLiquidity: u128,
+    pub blockNumber: u256,
+    pub statsProvider: Address,
+    pub hookPermissions: u16,
+    pub hasCustomAccounting: bool,
+    pub statsStatus: u8,
+}
+impl Copy for PoolTVL {}
+impl PoolTVL {
+    pub fn empty() -> Self {
+        Self {
+            coreAmount0: 0,
+            coreAmount1: 0,
+            hookReserves0: 0,
+            hookReserves1: 0,
+            hookEffective0: 0,
+            hookEffective1: 0,
+            sqrtPriceX96: Uint160 { val: 0 },
+            tick: Int24 { val: 0 },
+            activeLiquidity: 0,
+            blockNumber: 0,
+            statsProvider: Address { inner: 0 },
+            hookPermissions: 0,
+            hasCustomAccounting: false,
+            statsStatus: 0,
+        }
+    }
+}
+impl AbiSize for PoolTVL {
+    const HEAD_SIZE: u256 = 448
+    const IS_DYNAMIC: bool = false
+}
+impl AbiSpan<Sol> for PoolTVL {
+    fn payload_end<I: ByteInput>(_ input: I, base: u256, pos: u256) -> u256 {
+        checked_frame_end<Sol>(pos, Self::HEAD_SIZE, input.len())
+    }
+}
+impl Decode<Sol> for PoolTVL {
+    fn decode_payload<D: AbiDecoder<Sol>>(_ d: mut D) -> Self {
+        checked_frame_end<Sol>(d.pos(), Self::HEAD_SIZE, d.input().len())
+        let coreAmount0 = <u256 as Decode<Sol>>::decode_payload(mut d)
+        let coreAmount1 = <u256 as Decode<Sol>>::decode_payload(mut d)
+        let hookReserves0 = <u256 as Decode<Sol>>::decode_payload(mut d)
+        let hookReserves1 = <u256 as Decode<Sol>>::decode_payload(mut d)
+        let hookEffective0 = <u256 as Decode<Sol>>::decode_payload(mut d)
+        let hookEffective1 = <u256 as Decode<Sol>>::decode_payload(mut d)
+        let sqrtPriceX96 = <Uint160 as Decode<Sol>>::decode_payload(mut d)
+        let tick = <Int24 as Decode<Sol>>::decode_payload(mut d)
+        let activeLiquidity = <u128 as Decode<Sol>>::decode_payload(mut d)
+        let blockNumber = <u256 as Decode<Sol>>::decode_payload(mut d)
+        let statsProvider = <Address as Decode<Sol>>::decode_payload(mut d)
+        let hookPermissions = <u16 as Decode<Sol>>::decode_payload(mut d)
+        let hasCustomAccounting = <bool as Decode<Sol>>::decode_payload(mut d)
+        let statsStatus = <u8 as Decode<Sol>>::decode_payload(mut d)
+        Self { coreAmount0, coreAmount1, hookReserves0, hookReserves1, hookEffective0, hookEffective1, sqrtPriceX96, tick, activeLiquidity, blockNumber, statsProvider, hookPermissions, hasCustomAccounting, statsStatus }
+    }
+}
+impl Encode<Sol> for PoolTVL {
+    fn encode(own self, _ dest: *u8) {
+        <u256 as Encode<Sol>>::encode(self.coreAmount0, ptr::offset_bytes(dest, 0))
+        <u256 as Encode<Sol>>::encode(self.coreAmount1, ptr::offset_bytes(dest, 32))
+        <u256 as Encode<Sol>>::encode(self.hookReserves0, ptr::offset_bytes(dest, 64))
+        <u256 as Encode<Sol>>::encode(self.hookReserves1, ptr::offset_bytes(dest, 96))
+        <u256 as Encode<Sol>>::encode(self.hookEffective0, ptr::offset_bytes(dest, 128))
+        <u256 as Encode<Sol>>::encode(self.hookEffective1, ptr::offset_bytes(dest, 160))
+        <Uint160 as Encode<Sol>>::encode(self.sqrtPriceX96, ptr::offset_bytes(dest, 192))
+        <Int24 as Encode<Sol>>::encode(self.tick, ptr::offset_bytes(dest, 224))
+        <u128 as Encode<Sol>>::encode(self.activeLiquidity, ptr::offset_bytes(dest, 256))
+        <u256 as Encode<Sol>>::encode(self.blockNumber, ptr::offset_bytes(dest, 288))
+        <Address as Encode<Sol>>::encode(self.statsProvider, ptr::offset_bytes(dest, 320))
+        <u16 as Encode<Sol>>::encode(self.hookPermissions, ptr::offset_bytes(dest, 352))
+        <bool as Encode<Sol>>::encode(self.hasCustomAccounting, ptr::offset_bytes(dest, 384))
+        <u8 as Encode<Sol>>::encode(self.statsStatus, ptr::offset_bytes(dest, 416))
+    }
+}
+pub struct PopulatedTick {
+    pub tick: Int24,
+    pub liquidityNet: i128,
+    pub liquidityGross: u128,
+}
+impl Copy for PopulatedTick {}
+impl PopulatedTick {
+    pub fn empty() -> Self {
+        Self {
+            tick: Int24 { val: 0 },
+            liquidityNet: 0,
+            liquidityGross: 0,
+        }
+    }
+}
+impl AbiSize for PopulatedTick {
+    const HEAD_SIZE: u256 = 96
+    const IS_DYNAMIC: bool = false
+}
+impl AbiSpan<Sol> for PopulatedTick {
+    fn payload_end<I: ByteInput>(_ input: I, base: u256, pos: u256) -> u256 {
+        checked_frame_end<Sol>(pos, Self::HEAD_SIZE, input.len())
+    }
+}
+impl Decode<Sol> for PopulatedTick {
+    fn decode_payload<D: AbiDecoder<Sol>>(_ d: mut D) -> Self {
+        checked_frame_end<Sol>(d.pos(), Self::HEAD_SIZE, d.input().len())
+        let tick = <Int24 as Decode<Sol>>::decode_payload(mut d)
+        let liquidityNet = <i128 as Decode<Sol>>::decode_payload(mut d)
+        let liquidityGross = <u128 as Decode<Sol>>::decode_payload(mut d)
+        Self { tick, liquidityNet, liquidityGross }
+    }
+}
+impl Encode<Sol> for PopulatedTick {
+    fn encode(own self, _ dest: *u8) {
+        <Int24 as Encode<Sol>>::encode(self.tick, ptr::offset_bytes(dest, 0))
+        <i128 as Encode<Sol>>::encode(self.liquidityNet, ptr::offset_bytes(dest, 32))
+        <u128 as Encode<Sol>>::encode(self.liquidityGross, ptr::offset_bytes(dest, 64))
+    }
+}
+pub struct ScanState {
+    pub version: u8,
+    pub blockNumber: u256,
+    pub contextHash: Bytes32,
+    pub sqrtPriceX96: Uint160,
+    pub currentTick: Int24,
+    pub activeLiquidity: u128,
+    pub wordPos: i16,
+    pub bitPos: u16,
+    pub hasPreviousTick: bool,
+    pub previousTick: Int24,
+    pub runningLiquidity: u128,
+    pub amount0: u256,
+    pub amount1: u256,
+    pub observedCurrentLiquidity: bool,
+    pub currentLiquidity: u128,
+}
+impl Copy for ScanState {}
+impl ScanState {
+    pub fn empty() -> Self {
+        Self {
+            version: 0,
+            blockNumber: 0,
+            contextHash: Bytes32 { val: 0 },
+            sqrtPriceX96: Uint160 { val: 0 },
+            currentTick: Int24 { val: 0 },
+            activeLiquidity: 0,
+            wordPos: 0,
+            bitPos: 0,
+            hasPreviousTick: false,
+            previousTick: Int24 { val: 0 },
+            runningLiquidity: 0,
+            amount0: 0,
+            amount1: 0,
+            observedCurrentLiquidity: false,
+            currentLiquidity: 0,
+        }
+    }
+}
+impl AbiSize for ScanState {
+    const HEAD_SIZE: u256 = 480
+    const IS_DYNAMIC: bool = false
+}
+impl AbiSpan<Sol> for ScanState {
+    fn payload_end<I: ByteInput>(_ input: I, base: u256, pos: u256) -> u256 {
+        checked_frame_end<Sol>(pos, Self::HEAD_SIZE, input.len())
+    }
+}
+impl Decode<Sol> for ScanState {
+    fn decode_payload<D: AbiDecoder<Sol>>(_ d: mut D) -> Self {
+        checked_frame_end<Sol>(d.pos(), Self::HEAD_SIZE, d.input().len())
+        let version = <u8 as Decode<Sol>>::decode_payload(mut d)
+        let blockNumber = <u256 as Decode<Sol>>::decode_payload(mut d)
+        let contextHash = <Bytes32 as Decode<Sol>>::decode_payload(mut d)
+        let sqrtPriceX96 = <Uint160 as Decode<Sol>>::decode_payload(mut d)
+        let currentTick = <Int24 as Decode<Sol>>::decode_payload(mut d)
+        let activeLiquidity = <u128 as Decode<Sol>>::decode_payload(mut d)
+        let wordPos = <i16 as Decode<Sol>>::decode_payload(mut d)
+        let bitPos = <u16 as Decode<Sol>>::decode_payload(mut d)
+        let hasPreviousTick = <bool as Decode<Sol>>::decode_payload(mut d)
+        let previousTick = <Int24 as Decode<Sol>>::decode_payload(mut d)
+        let runningLiquidity = <u128 as Decode<Sol>>::decode_payload(mut d)
+        let amount0 = <u256 as Decode<Sol>>::decode_payload(mut d)
+        let amount1 = <u256 as Decode<Sol>>::decode_payload(mut d)
+        let observedCurrentLiquidity = <bool as Decode<Sol>>::decode_payload(mut d)
+        let currentLiquidity = <u128 as Decode<Sol>>::decode_payload(mut d)
+        Self { version, blockNumber, contextHash, sqrtPriceX96, currentTick, activeLiquidity, wordPos, bitPos, hasPreviousTick, previousTick, runningLiquidity, amount0, amount1, observedCurrentLiquidity, currentLiquidity }
+    }
+}
+impl Encode<Sol> for ScanState {
+    fn encode(own self, _ dest: *u8) {
+        <u8 as Encode<Sol>>::encode(self.version, ptr::offset_bytes(dest, 0))
+        <u256 as Encode<Sol>>::encode(self.blockNumber, ptr::offset_bytes(dest, 32))
+        <Bytes32 as Encode<Sol>>::encode(self.contextHash, ptr::offset_bytes(dest, 64))
+        <Uint160 as Encode<Sol>>::encode(self.sqrtPriceX96, ptr::offset_bytes(dest, 96))
+        <Int24 as Encode<Sol>>::encode(self.currentTick, ptr::offset_bytes(dest, 128))
+        <u128 as Encode<Sol>>::encode(self.activeLiquidity, ptr::offset_bytes(dest, 160))
+        <i16 as Encode<Sol>>::encode(self.wordPos, ptr::offset_bytes(dest, 192))
+        <u16 as Encode<Sol>>::encode(self.bitPos, ptr::offset_bytes(dest, 224))
+        <bool as Encode<Sol>>::encode(self.hasPreviousTick, ptr::offset_bytes(dest, 256))
+        <Int24 as Encode<Sol>>::encode(self.previousTick, ptr::offset_bytes(dest, 288))
+        <u128 as Encode<Sol>>::encode(self.runningLiquidity, ptr::offset_bytes(dest, 320))
+        <u256 as Encode<Sol>>::encode(self.amount0, ptr::offset_bytes(dest, 352))
+        <u256 as Encode<Sol>>::encode(self.amount1, ptr::offset_bytes(dest, 384))
+        <bool as Encode<Sol>>::encode(self.observedCurrentLiquidity, ptr::offset_bytes(dest, 416))
+        <u128 as Encode<Sol>>::encode(self.currentLiquidity, ptr::offset_bytes(dest, 448))
+    }
+}

@@ -1,0 +1,17 @@
+Compiling 19 files with Solc 0.8.30
+Solc 0.8.30 finished in 1.70s
+Compiler run successful!
+
+Ran 9 tests for test/PoolParity.t.sol:PoolParityTest
+[PASS] testFuzz_initialization(uint256,uint160,uint24) (runs: 10000, μ: 99405, ~: 78413)
+[PASS] testFuzz_insideGrowth(uint256,int24,uint256,uint256,uint256,uint256,uint256,uint256) (runs: 10000, μ: 28853, ~: 28752)
+[PASS] testFuzz_liquiditySwapLifecycle((uint256,uint64,uint64,uint32,uint24,uint16,bool,bool)) (runs: 10000, μ: 654395, ~: 681510)
+[PASS] testFuzz_maxLiquidity(int24) (runs: 10000, μ: 12373, ~: 12388)
+[PASS] testFuzz_tickAccounting((uint256,int24,int24,uint256,uint256,uint256,uint256,uint256,int128,bool)) (runs: 10000, μ: 48674, ~: 47770)
+[PASS] test_errorsAndLimits() (gas: 1327874)
+[PASS] test_minimumSignedInputAndZeroLiquidity() (gas: 577747)
+[PASS] test_multiTickCrossingsAndRoots() (gas: 6565121)
+[PASS] test_tickOverflowAndGrowthWrap() (gas: 515427)
+Suite result: ok. 9 passed; 0 failed; 0 skipped; finished in 5.68s (8.92s CPU time)
+
+Ran 1 test suite in 5.68s (5.68s CPU time): 9 tests passed, 0 failed, 0 skipped (9 total tests)

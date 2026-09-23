@@ -1,0 +1,42 @@
+// SPDX-License-Identifier: MIT
+// Port of Uniswap v4-core LPFeeLibrary.sol.
+use std::abi::sol::Uint24
+use std::evm::revert_error
+
+pub const DYNAMIC_FEE_FLAG: u32 = 0x800000
+pub const OVERRIDE_FEE_FLAG: u32 = 0x400000
+pub const REMOVE_OVERRIDE_MASK: u32 = 0xbfffff
+pub const MAX_LP_FEE: u32 = 1000000
+
+#[error]
+pub struct LPFeeTooLarge { pub fee: Uint24 }
+
+pub fn is_dynamic_fee(_ fee: Uint24) -> bool {
+    fee.val == DYNAMIC_FEE_FLAG
+}
+pub fn is_valid(_ fee: Uint24) -> bool {
+    fee.val <= MAX_LP_FEE
+}
+pub fn validate(_ fee: Uint24) {
+    if !is_valid(fee) {
+        revert_error(LPFeeTooLarge { fee })
+    }
+}
+pub fn initial_lp_fee(_ fee: Uint24) -> Uint24 {
+    if is_dynamic_fee(fee) {
+        return Uint24 { val: 0 }
+    }
+    validate(fee)
+    fee
+}
+pub fn is_override(_ fee: Uint24) -> bool {
+    fee.val & OVERRIDE_FEE_FLAG != 0
+}
+pub fn remove_override_flag(_ fee: Uint24) -> Uint24 {
+    Uint24 { val: fee.val & REMOVE_OVERRIDE_MASK }
+}
+pub fn remove_override_flag_and_validate(_ fee: Uint24) -> Uint24 {
+    let result = remove_override_flag(fee)
+    validate(result)
+    result
+}

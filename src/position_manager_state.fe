@@ -1,0 +1,48 @@
+// SPDX-License-Identifier: MIT
+// PositionManager's exact post-inheritance storage layout:
+// ERC721 0..5, unordered nonces 6, subscribers 7, nextTokenId 8,
+// positionInfo 9 and poolKeys 10. Immutable configuration occupies no slots.
+use std::abi::{Bytes32, sol::{Uint24, Int24}}
+use std::evm::{Address, RawMem, RawStorage}
+use std::evm::packed::keccak_packed
+use super::{pool_types::PoolKey, position_info::PositionInfo}
+const ADDRESS_MASK: u256 = 0xffffffffffffffffffffffffffffffffffffffff
+fn info_slot(_ id: u256) -> u256 uses (mem: mut RawMem) { keccak_packed((id, 9 as u256)) }
+fn key_slot(_ pool_id: Bytes32) -> u256 uses (mem: mut RawMem) { keccak_packed((pool_id.val, 10 as u256)) }
+pub fn info(_ id: u256) -> PositionInfo uses (mem: mut RawMem, storage: RawStorage) {
+    PositionInfo { bits: storage.sload(info_slot(id)) }
+}
+pub fn write_info(_ id: u256, _ value: PositionInfo) uses (mem: mut RawMem, storage: mut RawStorage) {
+    storage.sstore(slot: info_slot(id), value: value.bits)
+}
+pub fn pool_key(_ pool_id: Bytes32) -> PoolKey uses (mem: mut RawMem, storage: RawStorage) {
+    let slot = key_slot(pool_id)
+    let packed = storage.sload(slot + 1)
+    let spacing_word: u32 = (packed >> 184).downcast_truncate()
+    let signed: i32 = (spacing_word << 8).downcast_truncate()
+    PoolKey {
+        currency0: Address { inner: storage.sload(slot) & ADDRESS_MASK },
+        currency1: Address { inner: packed & ADDRESS_MASK },
+        fee: Uint24 { val: ((packed >> 160) & 0xffffff).downcast_truncate() },
+        tickSpacing: Int24 { val: signed >> 8 },
+        hooks: Address { inner: storage.sload(slot + 2) & ADDRESS_MASK },
+    }
+}
+pub fn store_pool_key(_ pool_id: Bytes32, _ key: PoolKey) uses (mem: mut RawMem, storage: mut RawStorage) {
+    let slot = key_slot(pool_id)
+    let tick: u256 = (key.tickSpacing.val as i256).downcast_truncate()
+    storage.sstore(slot: slot, value: (storage.sload(slot) & !ADDRESS_MASK) | key.currency0.inner)
+    let mask: u256 = 0xffffffffffffffffffffffffffffffffffffffffffffffffffff
+    storage.sstore(slot: slot + 1, value: (storage.sload(slot + 1) & !mask) | key.currency1.inner | ((key.fee.val as u256) << 160) | ((tick & 0xffffff) << 184))
+    storage.sstore(slot: slot + 2, value: (storage.sload(slot + 2) & !ADDRESS_MASK) | key.hooks.inner)
+}
+pub fn pool_and_info(_ id: u256) -> (PoolKey, PositionInfo) uses (mem: mut RawMem, storage: RawStorage) {
+    let value = info(id)
+    (pool_key(value.pool_id()), value)
+}
+#[arithmetic(unchecked)]
+pub fn allocate_token_id() -> u256 uses (storage: mut RawStorage) {
+    let id = storage.sload(8)
+    storage.sstore(slot: 8, value: id + 1)
+    id
+}

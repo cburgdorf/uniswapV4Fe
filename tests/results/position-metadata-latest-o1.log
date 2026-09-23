@@ -1,0 +1,24 @@
+Parity artifacts: /tmp/fe-position-metadata-latest-o1
+Compiler: fe 26.3.0 (702686c98); sha256=f3aaead7171e522c76b07fba14d25b70997fe3251a952686b0ad9c918aebac44
+Verified 50 pinned reference sources; recorded Solidity Descriptor creation bytecode
+Compiling 107 files with Solc 0.8.26
+Solc 0.8.26 finished in 12.50s
+Compiler run successful with warnings:
+Warning (2018): Function state mutability can be restricted to view
+  --> test/PositionManagerWorkflows.t.sol:52:5:
+   |
+52 |     function notifySubscribe(uint256 id,bytes calldata) external {require(address(PositionManager(payable(msg.sender)).subscriber(id))==address(this));}
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+Ran 6 tests for test/PositionManagerWorkflows.t.sol:PositionManagerWorkflowsTest
+[PASS] testFuzz_creditAndNativeActions(uint128) (runs: 1000, μ: 52448248, ~: 52448248)
+[PASS] testFuzz_lifecycle(uint128,bool,bool,bool,uint64) (runs: 1000, μ: 52316602, ~: 52673428)
+[PASS] testFuzz_realDescriptorLifecycle(uint128,bool,int16) (runs: 1000, μ: 228085153, ~: 227791679)
+[PASS] test_externalUnlock() (gas: 51913509)
+[PASS] test_guardsAndPublicEntrypoints() (gas: 52412841)
+[PASS] test_referenceLifecycle() (gas: 64952470)
+Suite result: ok. 6 passed; 0 failed; 0 skipped; finished in 168.49s (177.72s CPU time)
+
+Ran 1 test suite in 168.49s (168.49s CPU time): 6 tests passed, 0 failed, 0 skipped (6 total tests)
+Verified protocol ABI: /tmp/fe-position-metadata-latest-o1/fe/PositionManager.protocol.abi.json

@@ -1,0 +1,65 @@
+running `fe test` for 7 inputs (jobs=2)
+
+COMPILING        long_error_event_n.. /tmp/fe-uniswap-current2/crates/fe/tests/fixtures/fe_test/long_error_event_names.fe
+READY [1.5139s]  long_error_event_n.. running 10 tests
+PASS  [0.0001s]  long_error_event_n.. error_name_31
+COMPILING        abi_unpadded_dynam.. /tmp/fe-uniswap-current2/crates/fe/tests/fixtures/fe_test/abi_unpadded_dynamic_payload.fe
+PASS  [0.0002s]  long_error_event_n.. event_name_31
+PASS  [0.0001s]  long_error_event_n.. error_name_32
+PASS  [0.0000s]  long_error_event_n.. event_name_32
+PASS  [0.0000s]  long_error_event_n.. error_name_33
+PASS  [0.0000s]  long_error_event_n.. event_name_33
+PASS  [0.0000s]  long_error_event_n.. error_name_64
+PASS  [0.0000s]  long_error_event_n.. event_name_64
+PASS  [0.0000s]  long_error_event_n.. error_name_65
+PASS  [0.0000s]  long_error_event_n.. event_name_65
+READY [5.2971s]  abi_unpadded_dynam.. running 14 tests
+COMPILING        payable_return       /tmp/fe-uniswap-current2/crates/fe/tests/fixtures/fe_test/payable_return.fe
+PASS  [0.0002s]  abi_unpadded_dynam.. unpadded_bytes_all_decode_paths
+PASS  [0.0001s]  abi_unpadded_dynam.. dirty_padding_is_cleared
+PASS  [0.0001s]  abi_unpadded_dynam.. unpadded_strings
+PASS  [0.0001s]  abi_unpadded_dynam.. unpadded_nested_bytes
+PASS  [0.0000s]  abi_unpadded_dynam.. missing_actual_bytes_rejected
+PASS  [0.0001s]  abi_unpadded_dynam.. missing_nested_bytes_rejected
+PASS  [0.0000s]  abi_unpadded_dynam.. aligned_and_empty_bytes
+PASS  [0.0001s]  abi_unpadded_dynam.. canonical_array_keeps_full_span
+PASS  [0.0001s]  abi_unpadded_dynam.. missing_length_word_rejected
+PASS  [0.0001s]  abi_unpadded_dynam.. overflowing_length_rejected
+PASS  [0.0002s]  abi_unpadded_dynam.. unpadded_array_all_decode_paths_reencode_aligned
+PASS  [0.0001s]  abi_unpadded_dynam.. short_string_all_decode_paths_respect_input_extent
+PASS  [0.0002s]  abi_unpadded_dynam.. partially_padded_array_all_decode_paths_clear_padding
+PASS  [0.0001s]  abi_unpadded_dynam.. deeply_nested_array_clears_partial_padding
+READY [2.7088s]  payable_return       running 4 tests
+COMPILING        composed_abi_decoder /tmp/fe-uniswap-current2/crates/fe/tests/fixtures/fe_test/composed_abi_decoder.fe
+PASS  [0.0002s]  payable_return       test_payable_scalar_zero_value
+PASS  [0.0001s]  payable_return       test_payable_scalar_with_value
+PASS  [0.0001s]  payable_return       test_payable_tuple_with_value
+PASS  [0.0001s]  payable_return       test_payable_dynamic_return
+READY [2.0438s]  composed_abi_decoder running 3 tests
+COMPILING        precompile_wrappers  /tmp/fe-uniswap-current2/crates/fe/tests/fixtures/fe_test/precompile_wrappers.fe
+PASS  [0.0001s]  composed_abi_decoder composed_addresses_roundtrip
+PASS  [0.0000s]  composed_abi_decoder composed_first_address_rejects_noncanonical_word
+PASS  [0.0001s]  composed_abi_decoder composed_second_address_rejects_noncanonical_word
+READY [4.2627s]  precompile_wrappers  running 7 tests
+COMPILING        record_literal_imp.. /tmp/fe-uniswap-current2/crates/fe/tests/fixtures/fe_test/record_literal_implicit_borrow.fe
+PASS  [0.0001s]  precompile_wrappers  test_hash_and_copy_precompiles_return_results
+PASS  [0.0004s]  precompile_wrappers  test_signature_precompiles_expose_invalid_signature
+PASS  [0.0001s]  precompile_wrappers  test_math_and_ec_precompiles_return_results
+PASS  [0.0000s]  precompile_wrappers  test_raw_staticcall_copies_to_output_buffer
+PASS  [0.0000s]  precompile_wrappers  test_new_fixed_buffer_wrappers_do_not_bubble_failure
+PASS  [0.0001s]  precompile_wrappers  test_fixed_precompile_wrappers_reject_mismatched_buffer_lengths
+PASS  [0.0000s]  precompile_wrappers  test_variable_precompile_wrappers_reject_invalid_chunk_lengths
+READY [0.2369s]  record_literal_imp.. running 3 tests
+COMPILING        event_many_fields    /tmp/fe-uniswap-current2/crates/fe/tests/fixtures/fe_test/event_many_fields.fe
+PASS  [0.0000s]  record_literal_imp.. address_equality_borrows_record_literal
+PASS  [0.0000s]  record_literal_imp.. borrowed_record_literal_preserves_field_order
+PASS  [0.0000s]  record_literal_imp.. borrowed_record_variant_preserves_field_order
+READY [3.4628s]  event_many_fields    running 6 tests
+PASS  [0.0000s]  event_many_fields    topic0_e7data
+PASS  [0.0000s]  event_many_fields    topic0_e8data
+PASS  [0.0001s]  event_many_fields    topic0_e6data
+PASS  [0.0000s]  event_many_fields    topic0_e16data
+PASS  [0.0000s]  event_many_fields    topic0_e7noidx
+PASS  [0.0001s]  event_many_fields    emit_many_field_events
+
+test result: ok. 47 passed; 0 failed

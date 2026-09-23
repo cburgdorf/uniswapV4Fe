@@ -1,0 +1,8 @@
+{
+  "compiler_revision": "09385e70d",
+  "command": "/tmp/fe-uniswap-integrated/target/release/fe check .",
+  "exit_code": 0,
+  "result": "passed",
+  "scope": "Whole project before adding PositionDescriptor; the new component has separate build/validation evidence.",
+  "note": "The check produced no diagnostics. Previous session 2715 completed successfully."
+}

@@ -1,0 +1,19 @@
+{
+  "fe_abi_sha256": "f65de873438fe2ed4642840a8873552a0380234768c88034a848f5698ecc5b86",
+  "reference_artifact_sha256": "96890a2241d9cfb0bf47584ed280dea7df754f97978d870bc39b3d5a05f89d51",
+  "protocol_abi_sha256": "349cb01022de0fd007fb36d6f70c698fad566448a1fa770c853c1a16975e6fb8",
+  "adapter_sha256": "c33993ea72c1313bd52e05bf881aea21ff57dd686f383bf1a9fe4eb0e78458eb",
+  "callable_and_event_layouts": "compatible",
+  "reference_metadata_applied": [
+    "numeric handler 0xac9650d8 -> multicall(bytes[]) (explicit lazy calldata codec)",
+    "function:bump(uint256)",
+    "function:counter()",
+    "function:echo(bytes)",
+    "function:fail(bytes)"
+  ],
+  "explicit_fallback_receive": false,
+  "explicit_lazy_multicall": true,
+  "explicit_flat_dynamic_returns": [],
+  "fe_error_signatures": [],
+  "reference_error_signatures": []
+}

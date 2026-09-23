@@ -1,0 +1,26 @@
+Compiling 1 files with Solc 0.8.26
+Solc 0.8.26 finished in 7.90s
+Compiler run successful!
+
+Ran 17 tests for test/ManagerParity.t.sol:ManagerParityTest
+[PASS] testFuzz_callbackReturn(uint8,uint256,uint256,bool) (runs: 10000, μ: 116111, ~: 79512)
+[PASS] testFuzz_claims(uint64,bool,uint96) (runs: 10000, μ: 281877, ~: 279425)
+[PASS] testFuzz_hookLifecycle(uint32,uint16,bool,bool) (runs: 10000, μ: 1472639, ~: 1327589)
+[PASS] testFuzz_initialize(uint160,int24,uint24) (runs: 10000, μ: 41812, ~: 31266)
+[PASS] testFuzz_lifecycle(uint64,uint32,uint32,bool) (runs: 10000, μ: 806727, ~: 808235)
+[PASS] testFuzz_statefulPoolAccounting(uint256) (runs: 10000, μ: 13218275, ~: 12049525)
+[PASS] testFuzz_unlockEcho(bytes) (runs: 10000, μ: 135181, ~: 135057)
+[PASS] test_callbackAllocationPrecedesBounds() (gas: 216026)
+[PASS] test_dynamicLPFeeAuthorization() (gas: 134410)
+[PASS] test_hookFailureAndWrongSelectorRollBack() (gas: 1647637)
+[PASS] test_hookLifecycleSuccessAndExhaustion() (gas: 3230432)
+[PASS] test_hookReturnedDeltaAndSettlement() (gas: 1138691)
+[PASS] test_lockedMethodsAndDelegateCall() (gas: 277969)
+[PASS] test_protocolFeeAccrualAndCollection() (gas: 874094)
+[PASS] test_settleForAndClear() (gas: 164143)
+[PASS] test_shortUnpaddedCallbackReturn() (gas: 134791)
+[PASS] test_unlockRollbackAndReentry() (gas: 258903)
+Suite result: ok. 17 passed; 0 failed; 0 skipped; finished in 181.69s (208.13s CPU time)
+
+Ran 1 test suite in 181.70s (181.69s CPU time): 17 tests passed, 0 failed, 0 skipped (17 total tests)
+Verified protocol ABI: /tmp/fe-manager-stateful-latest-o1/fe/PoolManager.protocol.abi.json

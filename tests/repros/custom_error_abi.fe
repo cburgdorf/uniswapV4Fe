@@ -1,0 +1,13 @@
+use std::abi::sol
+use std::evm::revert_error
+#[error]
+pub struct Failure { pub code: u256 }
+msg ErrorMsg {
+    #[selector = sol("fail()")]
+    Fail {},
+}
+pub contract ErrorAbiProbe {
+    recv ErrorMsg {
+        Fail {} { revert_error(Failure { code: 7 }) }
+    }
+}

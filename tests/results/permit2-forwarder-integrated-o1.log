@@ -1,0 +1,20 @@
+Parity artifacts: /tmp/uniswap-upstream/permit2-forwarder-final-o1
+Compiler: fe 26.3.0 (9e2213a79); sha256=62a348861753829883fa71f9ed9af4e5c94e7e0b97b6cdf71f3ba2028c03b4c0
+Wrote /tmp/uniswap-upstream/permit2-forwarder-final-o1/fe/Permit2ForwarderHarness.bin
+Wrote /tmp/uniswap-upstream/permit2-forwarder-final-o1/fe/Permit2ForwarderHarness.runtime.bin
+Wrote /tmp/uniswap-upstream/permit2-forwarder-final-o1/fe/Permit2ForwarderHarness.abi.json
+Compiling 56 files with Solc 0.8.26
+Solc 0.8.26 finished in 3.13s
+Compiler run successful!
+
+Ran 7 tests for test/Permit2ForwarderParity.t.sol:Permit2ForwarderParityTest
+[PASS] testFuzz_batch(uint256,uint8,address,bytes,bytes,uint8) (runs: 10000, μ: 823697, ~: 730143)
+[PASS] testFuzz_mutatedCalldata(uint256,uint256,bool,bool) (runs: 10000, μ: 138971, ~: 39567)
+[PASS] testFuzz_single(address,address,uint160,uint48,uint48,address,uint256,bytes,bytes,uint8) (runs: 10000, μ: 478046, ~: 416042)
+[PASS] test_batchOverflowingDetailsOffset() (gas: 39926)
+[PASS] test_batchOverflowingSignatureOffset() (gas: 40041)
+[PASS] test_dirtyArrayElementAndNoCode() (gas: 1051877)
+[PASS] test_everyTruncatedPrefix() (gas: 22580436)
+Suite result: ok. 7 passed; 0 failed; 0 skipped; finished in 973.12ms (2.45s CPU time)
+
+Ran 1 test suite in 973.55ms (973.12ms CPU time): 7 tests passed, 0 failed, 0 skipped (7 total tests)

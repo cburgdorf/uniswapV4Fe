@@ -1,0 +1,74 @@
+// SPDX-License-Identifier: MIT
+// Mint/burn and root selection are test-only; PoolManager supplies authorization.
+use std::abi::{Bytes4, sol}
+use std::evm::{Address, Ctx, RawMem, RawStorage, Log}
+use super::claims::{Claims, supports_interface}
+msg ClaimsMsg {
+    #[selector = sol("isOperator(address,address)")]
+    IsOperator { owner: Address, spender: Address } -> bool,
+    #[selector = sol("balanceOf(address,uint256)")]
+    BalanceOf { owner: Address, id: u256 } -> u256,
+    #[selector = sol("allowance(address,address,uint256)")]
+    Allowance { owner: Address, spender: Address, id: u256 } -> u256,
+    #[selector = sol("transfer(address,uint256,uint256)")]
+    Transfer { receiver: Address, id: u256, amount: u256 } -> bool,
+    #[selector = sol("transferFrom(address,address,uint256,uint256)")]
+    TransferFrom { sender: Address, receiver: Address, id: u256, amount: u256 } -> bool,
+    #[selector = sol("approve(address,uint256,uint256)")]
+    Approve { spender: Address, id: u256, amount: u256 } -> bool,
+    #[selector = sol("setOperator(address,bool)")]
+    SetOperator { operator: Address, approved: bool } -> bool,
+    #[selector = sol("supportsInterface(bytes4)")]
+    SupportsInterface { interfaceId: Bytes4 } -> bool,
+    #[selector = sol("mint(address,uint256,uint256)")]
+    Mint { receiver: Address, id: u256, amount: u256 },
+    #[selector = sol("burn(address,uint256,uint256)")]
+    Burn { sender: Address, id: u256, amount: u256 },
+    #[selector = sol("burnFrom(address,uint256,uint256)")]
+    BurnFrom { sender: Address, id: u256, amount: u256 },
+}
+pub contract ClaimsHarness uses (ctx: Ctx, mem: mut RawMem, storage: mut RawStorage, log: mut Log) {
+    root: u256,
+    init(initial_root: u256) uses (mut root) { root = initial_root }
+    recv ClaimsMsg {
+        IsOperator { owner, spender } -> bool uses (root, mut mem, storage) {
+            Claims { slot: root }.is_operator(owner, spender)
+        }
+        BalanceOf { owner, id } -> u256 uses (root, mut mem, storage) {
+            Claims { slot: root }.balance_of(owner, id)
+        }
+        Allowance { owner, spender, id } -> u256 uses (root, mut mem, storage) {
+            Claims { slot: root }.allowance(owner, spender, id)
+        }
+        SupportsInterface { interfaceId } -> bool {
+            supports_interface(interfaceId)
+        }
+        Transfer { receiver, id, amount } -> bool
+        uses (root, ctx, mut mem, mut storage, mut log)
+        {
+            Claims { slot: root }.transfer(receiver, id, amount)
+        }
+        TransferFrom { sender, receiver, id, amount } -> bool
+        uses (root, ctx, mut mem, mut storage, mut log)
+        {
+            Claims { slot: root }.transfer_from(sender, receiver, id, amount)
+        }
+        Approve { spender, id, amount } -> bool uses (root, ctx, mut mem, mut storage, mut log) {
+            Claims { slot: root }.approve(spender, id, amount)
+        }
+        SetOperator { operator, approved } -> bool
+        uses (root, ctx, mut mem, mut storage, mut log)
+        {
+            Claims { slot: root }.set_operator(operator, approved)
+        }
+        Mint { receiver, id, amount } uses (root, ctx, mut mem, mut storage, mut log) {
+            Claims { slot: root }.mint(receiver, id, amount)
+        }
+        Burn { sender, id, amount } uses (root, ctx, mut mem, mut storage, mut log) {
+            Claims { slot: root }.burn(sender, id, amount)
+        }
+        BurnFrom { sender, id, amount } uses (root, ctx, mut mem, mut storage, mut log) {
+            Claims { slot: root }.burn_from(sender, id, amount)
+        }
+    }
+}

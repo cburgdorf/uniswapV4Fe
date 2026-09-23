@@ -1,0 +1,90 @@
+// SPDX-License-Identifier: MIT
+use std::abi::sol::{self, Uint24, Uint160}
+use std::evm::{Address, Ctx, RawMem, RawStorage, RawOps, Log, Call}
+use super::{protocol_fees::ProtocolFees, owned::Owned, pool_types::PoolKey, transient}
+msg ProtocolFeesMsg {
+    #[selector = sol("owner()")]
+    Owner {} -> Address,
+    #[selector = sol("transferOwnership(address)")]
+    TransferOwnership { newOwner: Address },
+    #[selector = sol("protocolFeesAccrued(address)")]
+    ProtocolFeesAccrued { currency: Address } -> u256,
+    #[selector = sol("protocolFeeController()")]
+    ProtocolFeeController {} -> Address,
+    #[selector = sol("setProtocolFeeController(address)")]
+    SetProtocolFeeController { controller: Address },
+    #[selector = sol(
+        "setProtocolFee((address,address,uint24,int24,address),uint24)",
+    )]
+    SetProtocolFee { key: PoolKey, newProtocolFee: Uint24 },
+    #[selector = sol("collectProtocolFees(address,address,uint256)")]
+    CollectProtocolFees { recipient: Address, currency: Address, amount: u256 } -> u256,
+    #[selector = sol("accrue(address,uint256)")]
+    Accrue { currency: Address, amount: u256 },
+    #[selector = sol("initializePool((address,address,uint24,int24,address))")]
+    InitializePool { key: PoolKey },
+    #[selector = sol("sync(address)")]
+    Sync { currency: Address },
+    #[selector = sol("setUnlocked(bool)")]
+    SetUnlocked { value: bool },
+}
+fn fees() -> ProtocolFees {
+    ProtocolFees { slot: 0, pools_slot: 3 }
+}
+pub contract ProtocolFeesHarness {
+    init(initialOwner: Address)
+    uses (storage: mut RawStorage, log: mut Log)
+    {
+        Owned { slot: 0 }.initialize(initialOwner)
+    }
+    recv ProtocolFeesMsg {
+        Owner {} -> Address uses (storage: RawStorage) {
+            Owned { slot: 0 }.owner()
+        }
+        TransferOwnership { newOwner } uses (ctx: Ctx, storage: mut RawStorage, log: mut Log) {
+            Owned { slot: 0 }.transfer_ownership(newOwner)
+        }
+        ProtocolFeesAccrued { currency } -> u256 uses (storage: RawStorage, mem: mut RawMem) {
+            fees().accrued(currency)
+        }
+        ProtocolFeeController {} -> Address uses (storage: RawStorage) {
+            fees().controller()
+        }
+        SetProtocolFeeController { controller } uses (
+            ctx: Ctx,
+            storage: mut RawStorage,
+            log: mut Log,
+        ) {
+            fees().set_controller(controller)
+        }
+        SetProtocolFee { key, newProtocolFee } uses (
+            ctx: Ctx,
+            storage: mut RawStorage,
+            mem: mut RawMem,
+            log: mut Log,
+        ) {
+            fees().set_protocol_fee(key, newProtocolFee)
+        }
+        CollectProtocolFees { recipient, currency, amount } -> u256
+        uses (ctx: Ctx, storage: mut RawStorage, ops: mut RawOps, mem: mut RawMem, call: mut Call)
+        {
+            fees().collect(recipient, currency, amount)
+        }
+        Accrue { currency, amount } uses (storage: mut RawStorage, mem: mut RawMem) {
+            fees().accrue(currency, amount)
+        }
+        InitializePool { key } uses (storage: mut RawStorage, mem: mut RawMem) {
+            fees().pool(key).initialize(Uint160 { val: 0x1000000000000000000000000 }, key.fee)
+        }
+        Sync { currency } uses (ops: mut RawOps) {
+            transient::sync_currency_and_reserves(currency, 0)
+        }
+        SetUnlocked { value } uses (ops: mut RawOps) {
+            if value {
+                transient::unlock()
+            } else {
+                transient::lock()
+            }
+        }
+    }
+}

@@ -1,0 +1,30 @@
+// SPDX-License-Identifier: MIT
+// EIP712_v4's domain intentionally omits a version. Its cache is chain-specific
+// but not delegate-address-specific, matching the pinned source's documented behavior.
+use std::abi::{Bytes, Bytes32}
+use std::evm::{Ctx, RawMem, crypto::keccak256}
+use std::evm::packed::keccak_packed
+// keccak256("EIP712Domain(string name,uint256 chainId,address verifyingContract)")
+const TYPE_HASH: u256 = 0x8cad95687ba82c2ce50e74f7b754645e5117c3a5bec8151c0726d5857980a866
+pub struct Domain {
+    pub name_hash: u256,
+    pub cached_chain: u256,
+    pub cached_separator: u256,
+}
+impl Copy for Domain {}
+impl Domain {
+    pub fn initialize(_ name: Bytes) -> Self uses (ctx: Ctx, mem: mut RawMem) {
+        let mut domain = Self { name_hash: keccak256(name.payload_span()), cached_chain: ctx.chainid(), cached_separator: 0 }
+        domain.cached_separator = domain.build()
+        domain
+    }
+    fn build(self) -> u256 uses (ctx: Ctx, mem: mut RawMem) {
+        keccak_packed((TYPE_HASH, self.name_hash, ctx.chainid(), ctx.address().inner))
+    }
+    pub fn separator(self) -> Bytes32 uses (ctx: Ctx, mem: mut RawMem) {
+        Bytes32 { val: if ctx.chainid() == self.cached_chain { self.cached_separator } else { self.build() } }
+    }
+    pub fn digest(self, _ data: Bytes32) -> Bytes32 uses (ctx: Ctx, mem: mut RawMem) {
+        Bytes32 { val: keccak_packed((0x1901 as u16, self.separator().val, data.val)) }
+    }
+}

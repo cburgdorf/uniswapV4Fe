@@ -1,0 +1,33 @@
+  [145194] PermitFoundationsParityTest::test_delegateCacheAndPayableRevocation()
+    ├─ [88941] → new DomainRelay@0xF62849F9A0B5Bf2913b396098F7c7019b51A820a
+    │   └─ ← [Return] 444 bytes of code
+    ├─ [3905] DomainRelay::invoke(0x5615dEB798BB3E4dFa0139dFa1b3D433Cc23b72f, 0x3644e515)
+    │   ├─ [319] 0x5615dEB798BB3E4dFa0139dFa1b3D433Cc23b72f::DOMAIN_SEPARATOR() [delegatecall]
+    │   │   └─ ← [Return] 0x804aca13adf3641963eef19fd0d4fc5ddb80f7a689457e779dc48a0c55e298bf
+    │   └─ ← [Return] 0x804aca13adf3641963eef19fd0d4fc5ddb80f7a689457e779dc48a0c55e298bf
+    ├─ [3826] DomainRelay::invoke(SolidityPermitFoundations: [0x2e234DAe75C793f67A35089C9d99245E1C58470b], 0x3644e515)
+    │   ├─ [240] SolidityPermitFoundations::DOMAIN_SEPARATOR() [delegatecall]
+    │   │   └─ ← [Return] 0x252b1c5f4e3265600c21d6a6e98d1e679544f2278e5ea20e2add0dbe281e19ee
+    │   └─ ← [Return] 0x252b1c5f4e3265600c21d6a6e98d1e679544f2278e5ea20e2add0dbe281e19ee
+    ├─ [0] VM::chainId(31338 [3.133e4])
+    │   └─ ← [Return]
+    ├─ [3372] DomainRelay::invoke(0x5615dEB798BB3E4dFa0139dFa1b3D433Cc23b72f, 0x3644e515)
+    │   ├─ [2286] 0x5615dEB798BB3E4dFa0139dFa1b3D433Cc23b72f::DOMAIN_SEPARATOR() [delegatecall]
+    │   │   └─ ← [Return] 0x7c20ea2c30cd277f4953ce01318355a056aa785e2e144e02072bc28f0fe1a32c
+    │   └─ ← [Return] 0x7c20ea2c30cd277f4953ce01318355a056aa785e2e144e02072bc28f0fe1a32c
+    └─ ← [Revert] Fe delegated rebuild
+
+Backtrace:
+  at PermitFoundationsParityTest.test_delegateCacheAndPayableRevocation
+
+Suite result: FAILED. 0 passed; 1 failed; 0 skipped; finished in 833.65µs (155.64µs CPU time)
+
+Ran 1 test suite in 3.67ms (833.65µs CPU time): 0 tests passed, 1 failed, 0 skipped (1 total tests)
+
+Failing tests:
+Encountered 1 failing test in test/PermitFoundationsParity.t.sol:PermitFoundationsParityTest
+[FAIL: Fe delegated rebuild] test_delegateCacheAndPayableRevocation() (gas: 145194)
+
+Encountered a total of 1 failing tests, 0 tests succeeded
+
+Tip: Run `forge test --rerun` to retry only the 1 failed test

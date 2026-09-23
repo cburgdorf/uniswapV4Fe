@@ -1,0 +1,109 @@
+{
+  "result": "shapes_and_events_pass_with_known_metadata_gaps",
+  "missing_errors": [
+    "InvalidCaller",
+    "ProtocolFeeCurrencySynced",
+    "ProtocolFeeTooLarge"
+  ],
+  "metadata_differences": [
+    {
+      "entry": [
+        "function",
+        "protocolFeesAccrued"
+      ],
+      "fe": {
+        "type": "function",
+        "name": "protocolFeesAccrued",
+        "inputs": [
+          {
+            "name": "currency",
+            "type": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "solidity": {
+        "type": "function",
+        "name": "protocolFeesAccrued",
+        "inputs": [
+          {
+            "name": "currency",
+            "type": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amount",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      }
+    },
+    {
+      "entry": [
+        "function",
+        "collectProtocolFees"
+      ],
+      "fe": {
+        "type": "function",
+        "name": "collectProtocolFees",
+        "inputs": [
+          {
+            "name": "recipient",
+            "type": "address"
+          },
+          {
+            "name": "currency",
+            "type": "address"
+          },
+          {
+            "name": "amount",
+            "type": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "solidity": {
+        "type": "function",
+        "name": "collectProtocolFees",
+        "inputs": [
+          {
+            "name": "recipient",
+            "type": "address"
+          },
+          {
+            "name": "currency",
+            "type": "address"
+          },
+          {
+            "name": "amount",
+            "type": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountCollected",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      }
+    }
+  ],
+  "fe_abi_sha256": "64358f9f628c070ea10a8bdef369d850dcfdbd88996e7b77088c1193513a36f8",
+  "solidity_artifact_sha256": "4fceb606688b2f46130462de672f770925425cc6ee3efd6decaece1ebc8df35d",
+  "checker_sha256": "af20f0ac55f697d3971f5f7a1510413f488cda3081e25e5b20656d3af37a4359"
+}

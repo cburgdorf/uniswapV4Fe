@@ -1,0 +1,24 @@
+Compiling 48 files with Solc 0.8.26
+Solc 0.8.26 finished in 7.59s
+Compiler run successful!
+
+Ran 16 tests for test/ManagerParity.t.sol:ManagerParityTest
+[PASS] testFuzz_callbackReturn(uint8,uint256,uint256,bool) (runs: 10000, μ: 117909, ~: 79570)
+[PASS] testFuzz_claims(uint64,bool,uint96) (runs: 10000, μ: 281418, ~: 279012)
+[PASS] testFuzz_hookLifecycle(uint32,uint16,bool,bool) (runs: 10000, μ: 1471943, ~: 1325525)
+[PASS] testFuzz_initialize(uint160,int24,uint24) (runs: 10000, μ: 41721, ~: 31108)
+[PASS] testFuzz_lifecycle(uint64,uint32,uint32,bool) (runs: 10000, μ: 805389, ~: 806787)
+[PASS] testFuzz_unlockEcho(bytes) (runs: 10000, μ: 134995, ~: 134870)
+[PASS] test_callbackAllocationPrecedesBounds() (gas: 218721)
+[PASS] test_dynamicLPFeeAuthorization() (gas: 134035)
+[PASS] test_hookFailureAndWrongSelectorRollBack() (gas: 1645439)
+[PASS] test_hookLifecycleSuccessAndExhaustion() (gas: 3225944)
+[PASS] test_hookReturnedDeltaAndSettlement() (gas: 1137580)
+[PASS] test_lockedMethodsAndDelegateCall() (gas: 277292)
+[PASS] test_protocolFeeAccrualAndCollection() (gas: 872940)
+[PASS] test_settleForAndClear() (gas: 163916)
+[PASS] test_shortUnpaddedCallbackReturn() (gas: 135200)
+[PASS] test_unlockRollbackAndReentry() (gas: 258441)
+Suite result: ok. 16 passed; 0 failed; 0 skipped; finished in 12.07s (26.65s CPU time)
+
+Ran 1 test suite in 12.07s (12.07s CPU time): 16 tests passed, 0 failed, 0 skipped (16 total tests)

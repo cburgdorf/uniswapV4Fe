@@ -1,0 +1,27 @@
+Parity artifacts: /tmp/fe-position-policy-regression-o1
+Compiler: fe 26.3.0 (31e5b965e); sha256=e1a92b53c0a5859da469e9d8e4c9830ec1d335c5357202ae7469471ca2c320cd
+Wrote /tmp/fe-position-policy-regression-o1/fe/PositionManager.bin
+Wrote /tmp/fe-position-policy-regression-o1/fe/PositionManager.runtime.bin
+Warning: skipping recv arm `multicall`: selector signature is unknown; use `#[selector = sol("name(types)")]` to include it in the ABI
+Wrote /tmp/fe-position-policy-regression-o1/fe/PositionManager.abi.json
+Compiling 107 files with Solc 0.8.26
+Solc 0.8.26 finished in 14.77s
+Compiler run successful with warnings:
+Warning (2018): Function state mutability can be restricted to view
+  --> test/PositionManagerWorkflows.t.sol:52:5:
+   |
+52 |     function notifySubscribe(uint256 id,bytes calldata) external {require(address(PositionManager(payable(msg.sender)).subscriber(id))==address(this));}
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+Ran 6 tests for test/PositionManagerWorkflows.t.sol:PositionManagerWorkflowsTest
+[PASS] testFuzz_creditAndNativeActions(uint128) (runs: 10000, μ: 52448248, ~: 52448248)
+[PASS] testFuzz_lifecycle(uint128,bool,bool,bool,uint64) (runs: 10000, μ: 52306014, ~: 52437346)
+[SKIP] testFuzz_realDescriptorLifecycle(uint128,bool,int16) (runs: 0, μ: 0, ~: 0)
+[PASS] test_externalUnlock() (gas: 51913509)
+[PASS] test_guardsAndPublicEntrypoints() (gas: 52412841)
+[PASS] test_referenceLifecycle() (gas: 64952470)
+Suite result: ok. 5 passed; 0 failed; 1 skipped; finished in 38.86s (76.17s CPU time)
+
+Ran 1 test suite in 38.86s (38.86s CPU time): 5 tests passed, 0 failed, 1 skipped (6 total tests)
+Verified protocol ABI: /tmp/fe-position-policy-regression-o1/fe/PositionManager.protocol.abi.json

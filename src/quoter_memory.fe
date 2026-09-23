@@ -1,0 +1,173 @@
+// SPDX-License-Identifier: MIT
+// Match solc 0.8.26's public memory-parameter validation order. In particular,
+// its allocator rejects enormous arrays/bytes before checking their payload.
+// Track the reference allocator separately from Fe's actual memory layout.
+use core::abi::{AbiSize, AbiDecoder, ByteInput, Decode, Encode, store_word}
+use core::ptr::{self, MemBuffer}
+use std::abi::{Bytes, DynArray, Sol, sol::{Uint24, Int24}}
+use std::evm::{Address, revert, revert_error, Panic, PANIC_OUT_OF_MEMORY}
+use super::{pool_types::PoolKey, path_key::PathKey, quoter::{QuoteSingle, QuoteMulti}, router_params}
+const LIMIT: u256 = 0xffffffffffffffff
+fn frame<I: ByteInput>(_ input: I, _ pos: u256, _ len: u256) {
+    if pos > input.len() || len > input.len() - pos { revert(()) }
+}
+fn allocate(_ free: u256, _ size: u256) -> u256 {
+    let next = free + size
+    if next > LIMIT { revert_error(Panic::from(PANIC_OUT_OF_MEMORY)) }
+    next
+}
+fn tail<I: ByteInput>(_ input: I, _ base: u256, _ head: u256) -> u256 {
+    let relative = input.word_at(base + head)
+    if relative > LIMIT { revert(()) }
+    base + relative
+}
+fn bytes_end<I: ByteInput>(_ input: I, _ pos: u256, _ free: u256) -> u256 {
+    frame(input, pos, 32)
+    let len = input.word_at(pos)
+    if len > LIMIT { revert_error(Panic::from(PANIC_OUT_OF_MEMORY)) }
+    let next = allocate(free, 32 + ((len + 31) & !(31 as u256)))
+    frame(input, pos + 32, len)
+    next
+}
+fn fee_spacing<I: ByteInput>(_ input: I, _ pos: u256) {
+    if input.word_at(pos) >> 24 != 0 { revert(()) }
+    let signed: i256 = input.word_at(pos + 32).downcast_truncate()
+    if signed < -8388608 || signed > 8388607 { revert(()) }
+}
+fn check_single<I: ByteInput>(_ input: I, _ pos: u256) {
+    frame(input, pos, 256)
+    let _ = router_params::address(input.word_at(pos))
+    let _ = router_params::address(input.word_at(pos + 32))
+    fee_spacing(input, pos + 64)
+    let _ = router_params::address(input.word_at(pos + 128))
+    let _ = router_params::boolean(input.word_at(pos + 160))
+    let _ = router_params::uint128(input.word_at(pos + 192))
+    // Initial free pointer + memory quote struct + nested PoolKey struct.
+    let _ = bytes_end(input, tail(input, pos, 224), 128 + 128 + 160)
+}
+fn check_multi<I: ByteInput>(_ input: I, _ pos: u256) {
+    frame(input, pos, 96)
+    let _ = router_params::address(input.word_at(pos))
+    let paths = tail(input, pos, 32)
+    frame(input, paths, 32)
+    let len = input.word_at(paths)
+    if len > LIMIT { revert_error(Panic::from(PANIC_OUT_OF_MEMORY)) }
+    let mut free = allocate(128 + 96, 32 + len * 32)
+    let base = paths + 32
+    frame(input, base, len * 32)
+    let mut i: u256 = 0
+    while i < len {
+        let item = tail(input, base, i * 32)
+        frame(input, item, 160)
+        free = allocate(free, 160)
+        let _ = router_params::address(input.word_at(item))
+        fee_spacing(input, item + 32)
+        let _ = router_params::address(input.word_at(item + 96))
+        free = bytes_end(input, tail(input, item, 128), free)
+        i += 1
+    }
+    let _ = router_params::uint128(input.word_at(pos + 64))
+}
+// Solidity memory decoding requires payload bytes, but not their trailing ABI
+// padding. The generic Bytes/DynArray decoder requires that padding, so build
+// normalized tails directly after the reference-compatible validation pass.
+fn read_bytes<I: ByteInput>(_ input: I, _ pos: u256) -> Bytes {
+    let len = input.word_at(pos)
+    let size = 32 + ((len + 31) & !(31 as u256))
+    let buffer = MemBuffer::alloc(size)
+    ptr::zero_bytes(buffer.ptr(), size)
+    store_word(ptr: buffer.ptr(), value: len)
+    input.copy_to_memory(dest: ptr::offset_bytes(buffer.ptr(), 32), src_offset: pos + 32, len)
+    Bytes::from_abi_tail(data: buffer.ptr(), len, size)
+}
+fn read_path<I: ByteInput>(_ input: I, _ pos: u256) -> PathKey {
+    let spacing: i256 = input.word_at(pos + 64).downcast_truncate()
+    PathKey {
+        intermediate_currency: Address { inner: input.word_at(pos) },
+        fee: Uint24 { val: input.word_at(pos + 32).downcast_truncate() },
+        tick_spacing: Int24 { val: spacing.downcast_truncate() },
+        hooks: Address { inner: input.word_at(pos + 96) },
+        hook_data: read_bytes(input, tail(input, pos, 128)),
+    }
+}
+fn read_paths<I: ByteInput>(_ input: I, _ pos: u256) -> DynArray<PathKey> {
+    let count = input.word_at(pos)
+    let base = pos + 32
+    let mut size = 32 + count * 32
+    let mut i: u256 = 0
+    while i < count {
+        let item = tail(input, base, i * 32)
+        let len = input.word_at(tail(input, item, 128))
+        size += 160 + 32 + ((len + 31) & !(31 as u256))
+        i += 1
+    }
+    let buffer = MemBuffer::alloc(size)
+    store_word(ptr: buffer.ptr(), value: count)
+    let mut end = 32 + count * 32
+    i = 0
+    while i < count {
+        let item = read_path(input, tail(input, base, i * 32))
+        let item_size = item.payload_size()
+        store_word(ptr: ptr::offset_bytes(buffer.ptr(), 32 + i * 32), value: end - 32)
+        <PathKey as Encode<Sol>>::encode(item, ptr::offset_bytes(buffer.ptr(), end))
+        end += item_size
+        i += 1
+    }
+    DynArray::from_abi_tail(data: buffer.ptr(), len: count, size)
+}
+pub struct Single {
+    pub poolKey: PoolKey,
+    pub zeroForOne: bool,
+    pub exactAmount: u128,
+    pub hookData: Bytes,
+}
+impl Single {
+    pub fn tuple(own self) -> QuoteSingle {
+        (self.poolKey, self.zeroForOne, self.exactAmount, self.hookData)
+    }
+}
+impl AbiSize for Single {
+    const HEAD_SIZE: u256 = 256
+    const IS_DYNAMIC: bool = true
+    fn payload_size(self) -> u256 { 256 + self.hookData.payload_size() }
+}
+impl Decode<Sol> for Single {
+    fn decode_payload<D: AbiDecoder<Sol>>(_ d: mut D) -> Self {
+        check_single(d.input(), d.pos())
+        let input = d.input()
+        let pos = d.pos()
+        let poolKey = <PoolKey as Decode<Sol>>::decode_from(input, pos)
+        let zeroForOne = input.word_at(pos + 160) != 0
+        let exactAmount: u128 = input.word_at(pos + 192).downcast_truncate()
+        let hookData = read_bytes(input, tail(input, pos, 224))
+        d.set_pos(pos + Self::HEAD_SIZE)
+        Self { poolKey, zeroForOne, exactAmount, hookData }
+    }
+}
+impl Encode<Sol> for Single {
+    fn encode(own self, _ ptr: *u8) { <QuoteSingle as Encode<Sol>>::encode(self.tuple(), ptr) }
+}
+pub struct Multi { pub exactCurrency: Address, pub path: DynArray<PathKey>, pub exactAmount: u128 }
+impl Multi {
+    pub fn tuple(own self) -> QuoteMulti { (self.exactCurrency, self.path, self.exactAmount) }
+}
+impl AbiSize for Multi {
+    const HEAD_SIZE: u256 = 96
+    const IS_DYNAMIC: bool = true
+    fn payload_size(self) -> u256 { 96 + self.path.payload_size() }
+}
+impl Decode<Sol> for Multi {
+    fn decode_payload<D: AbiDecoder<Sol>>(_ d: mut D) -> Self {
+        check_multi(d.input(), d.pos())
+        let input = d.input()
+        let pos = d.pos()
+        let exactCurrency = Address { inner: input.word_at(pos) }
+        let path = read_paths(input, tail(input, pos, 32))
+        let exactAmount: u128 = input.word_at(pos + 64).downcast_truncate()
+        d.set_pos(pos + Self::HEAD_SIZE)
+        Self { exactCurrency, path, exactAmount }
+    }
+}
+impl Encode<Sol> for Multi {
+    fn encode(own self, _ ptr: *u8) { <QuoteMulti as Encode<Sol>>::encode(self.tuple(), ptr) }
+}

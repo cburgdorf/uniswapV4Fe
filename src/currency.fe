@@ -1,0 +1,165 @@
+// SPDX-License-Identifier: MIT
+// Port of v4-core Currency.sol. Transfer semantics intentionally follow v4,
+// including successful empty returns from addresses without code.
+use core::ops::{Eq, Ord}
+use core::ptr::{self, MemBuffer, MemSpan}
+use std::abi::{Bytes, Bytes4, sol}
+use std::evm::{
+    Address,
+    Call,
+    Ctx,
+    RawMem,
+    copy_returndata,
+    bubble_last_revert,
+    revert,
+    revert_error,
+}
+
+pub struct Currency { pub address: Address }
+impl Copy for Currency {}
+pub const ADDRESS_ZERO: Currency = Currency { address: Address { inner: 0 } }
+const ADDRESS_MASK: u256 = 0xffffffffffffffffffffffffffffffffffffffff
+
+#[error]
+pub struct NativeTransferFailed {}
+#[error]
+pub struct ERC20TransferFailed {}
+#[error]
+pub struct WrappedError {
+    pub target: Address,
+    pub selector: Bytes4,
+    pub reason: Bytes,
+    pub details: Bytes,
+}
+
+/// ERC-7751 wrapper used by Currency and, later, hook dispatch.
+pub fn wrap_last_error(_ target: Address, _ selector: u32, _ context: u32) -> ! {
+    let reason = copy_returndata()
+    revert_error(
+        WrappedError {
+            target,
+            selector: Bytes4 { val: selector as u256 },
+            reason: Bytes::from_payload(source: reason.span()),
+            details: Bytes::from_word_prefix(word: (context as u256) << 224, len: 4),
+        },
+    )
+}
+
+impl Currency {
+    pub fn from_id(_ id: u256) -> Self {
+        Currency { address: Address { inner: id & ADDRESS_MASK } }
+    }
+    pub fn to_id(self) -> u256 {
+        self.address.inner & ADDRESS_MASK
+    }
+    pub fn is_address_zero(self) -> bool {
+        self.to_id() == 0
+    }
+    pub fn transfer(self, _ to: Address, _ amount: u256)
+    uses (ctx: Ctx, call: mut Call, mem: mut RawMem)
+    {
+        if self.is_address_zero() {
+            let mut ret = MemBuffer::empty()
+            let result = call
+                .raw_call(
+                    addr: to,
+                    gas: ctx.gas(),
+                    value: amount,
+                    args: MemSpan::empty(),
+                    ret: mut ret,
+                )
+            if !result.success() {
+                wrap_last_error(to, 0, sol("NativeTransferFailed()"))
+            }
+        } else {
+            let args = MemBuffer::alloc(68)
+            mem.mstore(
+                addr: args.ptr(),
+                value: (sol("transfer(address,uint256)") as u256) << 224,
+            )
+            mem.mstore(
+                addr: ptr::offset_bytes(args.ptr(), 4),
+                value: to.inner & ADDRESS_MASK,
+            )
+            mem.mstore(addr: ptr::offset_bytes(args.ptr(), 36), value: amount)
+            let mut ret = MemBuffer::with_capacity(32)
+            let result = call
+                .raw_call(
+                    addr: self.address,
+                    gas: ctx.gas(),
+                    value: 0,
+                    args: args.span(),
+                    ret: mut ret,
+                )
+            let accepted = result.returndata_len() == 0
+                || (result.returndata_len() >= 32 && mem.mload(ret.ptr()) == 1)
+            if !result.success() || !accepted {
+                wrap_last_error(
+                    self.address,
+                    sol("transfer(address,uint256)"),
+                    sol("ERC20TransferFailed()"),
+                )
+            }
+        }
+    }
+    pub fn balance_of(self, _ owner: Address) -> u256
+    uses (ctx: Ctx, call: mut Call, mem: mut RawMem)
+    {
+        if self.is_address_zero() {
+            return ctx.balance(owner)
+        }
+        let args = MemBuffer::alloc(36)
+        mem.mstore(
+            addr: args.ptr(),
+            value: (sol("balanceOf(address)") as u256) << 224,
+        )
+        mem.mstore(
+            addr: ptr::offset_bytes(args.ptr(), 4),
+            value: owner.inner & ADDRESS_MASK,
+        )
+        let mut ret = MemBuffer::with_capacity(32)
+        let result = call
+            .raw_staticcall(
+                addr: self.address,
+                gas: ctx.gas(),
+                args: args.span(),
+                ret: mut ret,
+            )
+        if !result.success() {
+            bubble_last_revert()
+        }
+        // Solidity accepts trailing bytes but rejects fewer than one ABI word.
+        if result.returndata_len() < 32 {
+            revert(())
+        }
+        mem.mload(ret.ptr())
+    }
+    pub fn balance_of_self(self) -> u256
+    uses (ctx: Ctx, call: mut Call, mem: mut RawMem)
+    {
+        if self.is_address_zero() {
+            ctx.selfbalance()
+        } else {
+            self.balance_of(ctx.address())
+        }
+    }
+}
+impl Eq for Currency {
+    fn eq(self, _ other: Currency) -> bool {
+        self.to_id() == other.to_id()
+    }
+}
+impl Ord for Currency {
+    fn lt(self, _ other: Currency) -> bool {
+        self.to_id() < other.to_id()
+    }
+    fn le(self, _ other: Currency) -> bool {
+        self.to_id() <= other.to_id()
+    }
+    fn gt(self, _ other: Currency) -> bool {
+        self.to_id() > other.to_id()
+    }
+    fn ge(self, _ other: Currency) -> bool {
+        self.to_id() >= other.to_id()
+    }
+}

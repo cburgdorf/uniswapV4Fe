@@ -1,0 +1,15 @@
+// Dynamic StorageMap view through StorPtr.read loses an inferred layout root.
+use std::evm::{RawStorage, StorageMap}
+msg M {
+    #[selector = 0x12345678]
+    Read { root: u256, key: i32 } -> u256,
+}
+fn read_map(_ key: i32) -> u256 uses (bitmap: StorageMap<i32, u256>) { bitmap.get(key) }
+pub contract DynamicBitmap uses (storage: RawStorage) {
+    recv M {
+        Read { root, key } -> u256 uses (storage) {
+            let bitmap = storage.stor_ptr<StorageMap<i32, u256>>(root).read()
+            with (bitmap) { read_map(key) }
+        }
+    }
+}

@@ -1,0 +1,11 @@
+Compiling 54 files with Solc 0.8.26
+Solc 0.8.26 finished in 2.29s
+Compiler run successful!
+
+Ran 3 tests for test/Permit2ForwarderParity.t.sol:Permit2ForwarderParityTest
+[PASS] testFuzz_batch(uint256,uint8,address,bytes,bytes,uint8) (runs: 10000, μ: 817500, ~: 726321)
+[PASS] testFuzz_single(address,address,uint160,uint48,uint48,address,uint256,bytes,bytes,uint8) (runs: 10000, μ: 474310, ~: 413586)
+[PASS] test_dirtyArrayElementAndNoCode() (gas: 1102635)
+Suite result: ok. 3 passed; 0 failed; 0 skipped; finished in 969.73ms (1.61s CPU time)
+
+Ran 1 test suite in 970.45ms (969.73ms CPU time): 3 tests passed, 0 failed, 0 skipped (3 total tests)

@@ -1,0 +1,459 @@
+diff --git a/foundry.toml b/foundry.toml
+index fc8fb42b..ca98ecf2 100644
+--- a/foundry.toml
++++ b/foundry.toml
+@@ -4,7 +4,8 @@ solc_version = '0.8.26'
+ optimizer_runs = 44444444
+ via_ir = true
+ ffi = true
+-fs_permissions = [{ access = "read-write", path = ".forge-snapshots/" }, { access = "read", path = "foundry-out/" }]
++fs_permissions = [{ access = "read-write", path = ".forge-snapshots/" }, { access = "read", path = "foundry-out/" }, { access = "read", path = "./fe-artifacts" }]
++disable_code_size_limit = true
+ evm_version = "cancun"
+ gas_limit = "3000000000"
+ fuzz_runs = 10_000
+diff --git a/test/ReservesLens.fuzz.t.sol b/test/ReservesLens.fuzz.t.sol
+index ad4d1137..4d8c735c 100644
+--- a/test/ReservesLens.fuzz.t.sol
++++ b/test/ReservesLens.fuzz.t.sol
+@@ -1,6 +1,7 @@
+ // SPDX-License-Identifier: MIT
+ pragma solidity ^0.8.20;
+ 
++import {Deploy} from "./shared/Deploy.sol";
+ import {Test} from "forge-std/Test.sol";
+ import {Deployers} from "@uniswap/v4-core/test/utils/Deployers.sol";
+ import {IHooks} from "@uniswap/v4-core/src/interfaces/IHooks.sol";
+@@ -21,7 +22,7 @@ contract ReservesLensFuzzTest is Test, Deployers {
+         deployMintAndApprove2Currencies();
+         key = PoolKey(currency0, currency1, 3000, 60, IHooks(address(0)));
+         manager.initialize(key, SQRT_PRICE_1_1);
+-        lens = new ReservesLens();
++        lens = ReservesLens(address(Deploy.reservesLens()));
+     }
+ 
+     function test_fuzz_matchesIndependentAggregate(
+diff --git a/test/ReservesLens.gas.t.sol b/test/ReservesLens.gas.t.sol
+index de8b68db..78032299 100644
+--- a/test/ReservesLens.gas.t.sol
++++ b/test/ReservesLens.gas.t.sol
+@@ -1,6 +1,7 @@
+ // SPDX-License-Identifier: MIT
+ pragma solidity ^0.8.20;
+ 
++import {Deploy} from "./shared/Deploy.sol";
+ import {Test} from "forge-std/Test.sol";
+ import {Deployers} from "@uniswap/v4-core/test/utils/Deployers.sol";
+ import {IHooks} from "@uniswap/v4-core/src/interfaces/IHooks.sol";
+@@ -15,7 +16,7 @@ contract ReservesLensGasTest is Test, Deployers {
+     function setUp() public {
+         deployFreshManagerAndRouters();
+         deployMintAndApprove2Currencies();
+-        lens = new ReservesLens();
++        lens = ReservesLens(address(Deploy.reservesLens()));
+     }
+ 
+     function test_gas_bytecodeSize() public {
+diff --git a/test/ReservesLens.hooks.t.sol b/test/ReservesLens.hooks.t.sol
+index bebbc7d4..881a98a1 100644
+--- a/test/ReservesLens.hooks.t.sol
++++ b/test/ReservesLens.hooks.t.sol
+@@ -1,6 +1,7 @@
+ // SPDX-License-Identifier: MIT
+ pragma solidity ^0.8.20;
+ 
++import {Deploy} from "./shared/Deploy.sol";
+ import {Test} from "forge-std/Test.sol";
+ import {Deployers} from "@uniswap/v4-core/test/utils/Deployers.sol";
+ import {Hooks} from "@uniswap/v4-core/src/libraries/Hooks.sol";
+@@ -17,7 +18,7 @@ contract ReservesLensHookTest is Test, Deployers {
+     function setUp() public {
+         deployFreshManagerAndRouters();
+         deployMintAndApprove2Currencies();
+-        lens = new ReservesLens();
++        lens = ReservesLens(address(Deploy.reservesLens()));
+         hookAddress = address(uint160(0x10000 | Hooks.BEFORE_SWAP_FLAG));
+     }
+ 
+diff --git a/test/ReservesLens.invariant.t.sol b/test/ReservesLens.invariant.t.sol
+index 264754ea..a62ccd4f 100644
+--- a/test/ReservesLens.invariant.t.sol
++++ b/test/ReservesLens.invariant.t.sol
+@@ -1,6 +1,7 @@
+ // SPDX-License-Identifier: MIT
+ pragma solidity ^0.8.20;
+ 
++import {Deploy} from "./shared/Deploy.sol";
+ import {StdInvariant} from "forge-std/StdInvariant.sol";
+ import {Test} from "forge-std/Test.sol";
+ import {Deployers} from "@uniswap/v4-core/test/utils/Deployers.sol";
+@@ -26,7 +27,7 @@ contract ReservesLensInvariantTest is StdInvariant, Test, Deployers {
+         deployMintAndApprove2Currencies();
+         key = PoolKey(currency0, currency1, 3000, 60, IHooks(address(0)));
+         manager.initialize(key, SQRT_PRICE_1_1);
+-        lens = new ReservesLens();
++        lens = ReservesLens(address(Deploy.reservesLens()));
+         _modify(-6000, 6000, int256(uint256(BASE_LIQUIDITY)));
+ 
+         bytes4[] memory selectors = new bytes4[](4);
+diff --git a/test/ReservesLens.t.sol b/test/ReservesLens.t.sol
+index 12363526..92a33159 100644
+--- a/test/ReservesLens.t.sol
++++ b/test/ReservesLens.t.sol
+@@ -26,7 +26,7 @@ contract ReservesLensTest is Test, Deployers {
+         deployMintAndApprove2Currencies();
+         key = PoolKey(currency0, currency1, 3000, 60, IHooks(address(0)));
+         manager.initialize(key, SQRT_PRICE_1_1);
+-        lens = new ReservesLens();
++        lens = ReservesLens(address(Deploy.reservesLens()));
+     }
+ 
+     function test_emptyInitializedPool() public view {
+@@ -49,7 +49,7 @@ contract ReservesLensTest is Test, Deployers {
+ 
+     function test_constructorFreeCreate2Deployment() public {
+         bytes32 salt = keccak256("RESERVES_LENS_V1");
+-        bytes memory initcode = vm.getCode("ReservesLens.sol:ReservesLens");
++        bytes memory initcode = Deploy.getCode("ReservesLens.sol:ReservesLens");
+         address expected = vm.computeCreate2Address(salt, keccak256(initcode), address(this));
+         IReservesLens deployed = Deploy.reservesLens(salt);
+         assertEq(address(deployed), expected);
+diff --git a/test/UniswapV4DeployerCompetition.t.sol b/test/UniswapV4DeployerCompetition.t.sol
+index 265d3b6f..fc96daa2 100644
+--- a/test/UniswapV4DeployerCompetition.t.sol
++++ b/test/UniswapV4DeployerCompetition.t.sol
+@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
+ 
+ import {Owned} from "solmate/src/auth/Owned.sol";
+ import {Test} from "forge-std/Test.sol";
++import {Deploy} from "./shared/Deploy.sol";
+ import {PoolManager} from "@uniswap/v4-core/src/PoolManager.sol";
+ import {UniswapV4DeployerCompetition} from "../src/UniswapV4DeployerCompetition.sol";
+ import {TickMath} from "@uniswap/v4-core/src/libraries/TickMath.sol";
+@@ -30,9 +31,16 @@ contract UniswapV4DeployerCompetitionTest is Test {
+         winner = makeAddr("Winner");
+         deployer = makeAddr("Deployer");
+         vm.prank(deployer);
+-        initCodeHash = keccak256(abi.encodePacked(type(PoolManager).creationCode, uint256(uint160(v4Owner))));
+-        competition =
+-            new UniswapV4DeployerCompetition(initCodeHash, competitionDeadline, deployer, exclusiveDeployLength);
++        initCodeHash = keccak256(abi.encodePacked(Deploy.getCode("PoolManager.sol:PoolManager"), uint256(uint160(v4Owner))));
++        competition = UniswapV4DeployerCompetition(
++            Deploy.create2(
++                abi.encodePacked(
++                    Deploy.getCode("UniswapV4DeployerCompetition.sol:UniswapV4DeployerCompetition"),
++                    abi.encode(initCodeHash, competitionDeadline, deployer, exclusiveDeployLength)
++                ),
++                bytes32(0)
++            )
++        );
+         defaultAddress = Create2.computeAddress(bytes32(0), initCodeHash, address(competition));
+     }
+ 
+@@ -44,7 +52,7 @@ contract UniswapV4DeployerCompetitionTest is Test {
+         assertEq(defaultAddress.code.length, 0);
+         vm.warp(competition.competitionDeadline() + 1);
+         vm.prank(deployer);
+-        competition.deploy(abi.encodePacked(type(PoolManager).creationCode, uint256(uint160(v4Owner))));
++        competition.deploy(abi.encodePacked(Deploy.getCode("PoolManager.sol:PoolManager"), uint256(uint160(v4Owner))));
+         assertFalse(defaultAddress.code.length == 0);
+         assertEq(Owned(defaultAddress).owner(), v4Owner);
+     }
+@@ -72,7 +80,7 @@ contract UniswapV4DeployerCompetitionTest is Test {
+         assertEq(v4Core.code.length, 0);
+         vm.warp(competition.competitionDeadline() + 1);
+         vm.prank(deployer);
+-        competition.deploy(abi.encodePacked(type(PoolManager).creationCode, uint256(uint160(v4Owner))));
++        competition.deploy(abi.encodePacked(Deploy.getCode("PoolManager.sol:PoolManager"), uint256(uint160(v4Owner))));
+         assertFalse(v4Core.code.length == 0);
+         assertEq(Owned(v4Core).owner(), v4Owner);
+         assertEq(address(competition).balance, 0 ether);
+@@ -137,7 +145,7 @@ contract UniswapV4DeployerCompetitionTest is Test {
+ 
+         vm.warp(competition.competitionDeadline() + 1);
+         vm.prank(deployer);
+-        competition.deploy(abi.encodePacked(type(PoolManager).creationCode, uint256(uint160(v4Owner))));
++        competition.deploy(abi.encodePacked(Deploy.getCode("PoolManager.sol:PoolManager"), uint256(uint160(v4Owner))));
+         assertFalse(v4Core.code.length == 0);
+         assertEq(Owned(v4Core).owner(), v4Owner);
+         assertEq(TickMath.MAX_TICK_SPACING, type(int16).max);
+@@ -151,14 +159,14 @@ contract UniswapV4DeployerCompetitionTest is Test {
+                 IUniswapV4DeployerCompetition.CompetitionNotOver.selector, timestamp, competition.competitionDeadline()
+             )
+         );
+-        competition.deploy(abi.encodePacked(type(PoolManager).creationCode, uint256(uint160(v4Owner))));
++        competition.deploy(abi.encodePacked(Deploy.getCode("PoolManager.sol:PoolManager"), uint256(uint160(v4Owner))));
+     }
+ 
+     function test_deploy_reverts_InvalidBytecode() public {
+         vm.expectRevert(IUniswapV4DeployerCompetition.InvalidBytecode.selector);
+         vm.prank(deployer);
+         // set the owner as the winner not the correct owner
+-        competition.deploy(abi.encodePacked(type(PoolManager).creationCode, uint256(uint160(winner))));
++        competition.deploy(abi.encodePacked(Deploy.getCode("PoolManager.sol:PoolManager"), uint256(uint160(winner))));
+     }
+ 
+     function test_deploy_reverts_NotAllowedToDeploy() public {
+@@ -167,12 +175,12 @@ contract UniswapV4DeployerCompetitionTest is Test {
+         vm.expectRevert(
+             abi.encodeWithSelector(IUniswapV4DeployerCompetition.NotAllowedToDeploy.selector, address(1), deployer)
+         );
+-        competition.deploy(abi.encodePacked(type(PoolManager).creationCode, uint256(uint160(v4Owner))));
++        competition.deploy(abi.encodePacked(Deploy.getCode("PoolManager.sol:PoolManager"), uint256(uint160(v4Owner))));
+     }
+ 
+     function test_deploy_succeeds_afterExcusiveDeployDeadline() public {
+         vm.warp(competition.exclusiveDeployDeadline() + 1);
+         vm.prank(address(1));
+-        competition.deploy(abi.encodePacked(type(PoolManager).creationCode, uint256(uint160(v4Owner))));
++        competition.deploy(abi.encodePacked(Deploy.getCode("PoolManager.sol:PoolManager"), uint256(uint160(v4Owner))));
+     }
+ }
+diff --git a/test/hooks/permissionedPools/PermissionsAdapter.t.sol b/test/hooks/permissionedPools/PermissionsAdapter.t.sol
+index 20a74989..f00cbe3e 100644
+--- a/test/hooks/permissionedPools/PermissionsAdapter.t.sol
++++ b/test/hooks/permissionedPools/PermissionsAdapter.t.sol
+@@ -1,6 +1,7 @@
+ // SPDX-License-Identifier: UNLICENSED
+ pragma solidity ^0.8.20;
+ 
++import {Deploy} from "../../shared/Deploy.sol";
+ import {
+     IPermissionsAdapter,
+     IAllowlistChecker
+@@ -22,7 +23,7 @@ contract PermissionsAdapterTest is PermissionedPoolsBase {
+         mockPoolManager = makeAddr("mockPoolManager");
+         owner = makeAddr("owner");
+         bytes memory args = abi.encode(permissionedToken, mockPoolManager, owner, allowlistChecker);
+-        bytes memory initcode = abi.encodePacked(vm.getCode("PermissionsAdapter.sol:PermissionsAdapter"), args);
++        bytes memory initcode = abi.encodePacked(Deploy.getCode("PermissionsAdapter.sol:PermissionsAdapter"), args);
+         assembly {
+             sstore(permissionsAdapter.slot, create(0, add(initcode, 0x20), mload(initcode)))
+         }
+@@ -159,7 +160,7 @@ contract PermissionsAdapterTest is PermissionedPoolsBase {
+     function test_DepositForVerification_NonReturningUnderlying() public {
+         NonReturningToken usdtLike = new NonReturningToken();
+         bytes memory args = abi.encode(IERC20(address(usdtLike)), mockPoolManager, owner, allowlistChecker);
+-        bytes memory initcode = abi.encodePacked(vm.getCode("PermissionsAdapter.sol:PermissionsAdapter"), args);
++        bytes memory initcode = abi.encodePacked(Deploy.getCode("PermissionsAdapter.sol:PermissionsAdapter"), args);
+         address adapter;
+         assembly {
+             adapter := create(0, add(initcode, 0x20), mload(initcode))
+@@ -367,7 +368,7 @@ contract PermissionsAdapterTest is PermissionedPoolsBase {
+ 
+     function _deployAdapterForToken(IERC20 token) internal returns (IPermissionsAdapter adapter) {
+         bytes memory args = abi.encode(token, mockPoolManager, owner, allowlistChecker);
+-        bytes memory initcode = abi.encodePacked(vm.getCode("PermissionsAdapter.sol:PermissionsAdapter"), args);
++        bytes memory initcode = abi.encodePacked(Deploy.getCode("PermissionsAdapter.sol:PermissionsAdapter"), args);
+         address deployed;
+         assembly {
+             deployed := create(0, add(initcode, 0x20), mload(initcode))
+diff --git a/test/hooks/permissionedPools/PermissionsAdapterFactory.t.sol b/test/hooks/permissionedPools/PermissionsAdapterFactory.t.sol
+index f7b9e2e8..d864bd94 100644
+--- a/test/hooks/permissionedPools/PermissionsAdapterFactory.t.sol
++++ b/test/hooks/permissionedPools/PermissionsAdapterFactory.t.sol
+@@ -1,6 +1,7 @@
+ // SPDX-License-Identifier: UNLICENSED
+ pragma solidity ^0.8.20;
+ 
++import {Deploy} from "../../shared/Deploy.sol";
+ import {
+     IPermissionsAdapter,
+     IAllowlistChecker
+@@ -22,7 +23,7 @@ contract PermissionsAdapterFactoryTest is PermissionedPoolsBase {
+         mockPoolManager = makeAddr("mockPoolManager");
+         bytes memory args = abi.encode(mockPoolManager);
+         bytes memory initcode =
+-            abi.encodePacked(vm.getCode("PermissionsAdapterFactory.sol:PermissionsAdapterFactory"), args);
++            abi.encodePacked(Deploy.getCode("PermissionsAdapterFactory.sol:PermissionsAdapterFactory"), args);
+         assembly {
+             sstore(permissionsAdapterFactory.slot, create(0, add(initcode, 0x20), mload(initcode)))
+         }
+diff --git a/test/hooks/permissionedPools/shared/PermissionedDeployers.sol b/test/hooks/permissionedPools/shared/PermissionedDeployers.sol
+index ac36b4c0..5339d888 100644
+--- a/test/hooks/permissionedPools/shared/PermissionedDeployers.sol
++++ b/test/hooks/permissionedPools/shared/PermissionedDeployers.sol
+@@ -106,7 +106,14 @@ contract PermissionedDeployers is Test {
+     }
+ 
+     function deployFreshManager() internal virtual {
+-        manager = new PoolManager(address(this));
++        bytes memory code = Deploy.getCode("PoolManager.sol:PoolManager");
++        code = bytes.concat(code, abi.encode(address(this)));
++        IPoolManager deployed;
++        assembly ("memory-safe") {
++            deployed := create(0, add(code, 32), mload(code))
++        }
++        require(address(deployed) != address(0), "PoolManager deployment failed");
++        manager = deployed;
+     }
+ 
+     function deployFreshManagerAndRouters() internal {
+@@ -177,7 +184,7 @@ contract PermissionedDeployers is Test {
+         returns (address deployedAddr)
+     {
+         bytes memory routerBytecode = abi.encodePacked(
+-            vm.getCode("MockPermissionedRouter.sol:MockPermissionedRouter"),
++            Deploy.getCode("MockPermissionedRouter.sol:MockPermissionedRouter"),
+             abi.encode(
+                 manager,
+                 IAllowanceTransfer(permit2_),
+@@ -194,7 +201,7 @@ contract PermissionedDeployers is Test {
+ 
+         address permissionsAdapterFactoryAddress = Deploy.create2(
+             abi.encodePacked(
+-                vm.getCode("PermissionsAdapterFactory.sol:PermissionsAdapterFactory"), abi.encode(address(manager))
++                Deploy.getCode("PermissionsAdapterFactory.sol:PermissionsAdapterFactory"), abi.encode(address(manager))
+             ),
+             keccak256("permissionsAdapterFactory")
+         );
+diff --git a/test/hooks/permissionedPools/shared/PermissionedRoutingTestHelpers.sol b/test/hooks/permissionedPools/shared/PermissionedRoutingTestHelpers.sol
+index 2db512ac..8d235578 100644
+--- a/test/hooks/permissionedPools/shared/PermissionedRoutingTestHelpers.sol
++++ b/test/hooks/permissionedPools/shared/PermissionedRoutingTestHelpers.sol
+@@ -390,7 +390,7 @@ contract PermissionedRoutingTestHelpers is PermissionedDeployers, DeployPermit2
+ 
+     function _deployPermissionsAdapterFactory() private {
+         bytes memory permissionsAdapterFactoryBytecode = abi.encodePacked(
+-            vm.getCode("PermissionsAdapterFactory.sol:PermissionsAdapterFactory"), abi.encode(address(manager))
++            Deploy.getCode("PermissionsAdapterFactory.sol:PermissionsAdapterFactory"), abi.encode(address(manager))
+         );
+         permissionsAdapterFactory = IPermissionsAdapterFactory(
+             Deploy.create2(permissionsAdapterFactoryBytecode, keccak256("permissionsAdapterFactory"))
+@@ -407,7 +407,7 @@ contract PermissionedRoutingTestHelpers is PermissionedDeployers, DeployPermit2
+ 
+     function _deployMockPermissionedRouter() private {
+         bytes memory routerBytecode = abi.encodePacked(
+-            vm.getCode("MockPermissionedRouter.sol:MockPermissionedRouter"),
++            Deploy.getCode("MockPermissionedRouter.sol:MockPermissionedRouter"),
+             abi.encode(manager, permit2, permissionsAdapterFactory, weth9)
+         );
+         permissionedRouter =
+@@ -416,7 +416,7 @@ contract PermissionedRoutingTestHelpers is PermissionedDeployers, DeployPermit2
+ 
+     function _deployPositionManager() private {
+         bytes memory posmBytecode = abi.encodePacked(
+-            vm.getCode("PermissionedPositionManager.sol:PermissionedPositionManager"),
++            Deploy.getCode("PermissionedPositionManager.sol:PermissionedPositionManager"),
+             abi.encode(
+                 manager, permit2, 1e18, address(tokenDescriptor), address(weth9), permissionsAdapterFactory, 100_000
+             )
+diff --git a/test/shared/Deploy.sol b/test/shared/Deploy.sol
+index 3d1376d0..85dd29dc 100644
+--- a/test/shared/Deploy.sol
++++ b/test/shared/Deploy.sol
+@@ -12,6 +12,25 @@ import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transpa
+ library Deploy {
+     Vm internal constant vm = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
+ 
++    /// @dev Fe port conformance: uses Fe creation bytecode from $FE_ARTIFACTS/<Contract>.bin when present.
++    function getCode(string memory artifact) internal returns (bytes memory) {
++        string memory dir = vm.envOr("FE_ARTIFACTS", string(""));
++        if (bytes(dir).length != 0) {
++            bytes memory full = bytes(artifact);
++            uint256 start;
++            for (uint256 i; i < full.length; i++) {
++                if (full[i] == ":") start = i + 1;
++            }
++            bytes memory name = new bytes(full.length - start);
++            for (uint256 i; i < name.length; i++) {
++                name[i] = full[start + i];
++            }
++            string memory path = string.concat(dir, "/", string(name), ".bin");
++            if (vm.exists(path)) return vm.parseBytes(vm.readFile(path));
++        }
++        return vm.getCode(artifact);
++    }
++
+     function positionManager(
+         address poolManager,
+         address permit2,
+@@ -21,7 +40,7 @@ library Deploy {
+         bytes memory salt
+     ) internal returns (IPositionManager manager) {
+         bytes memory args = abi.encode(poolManager, permit2, unsubscribeGasLimit, positionDescriptor_, wrappedNative);
+-        bytes memory initcode = abi.encodePacked(vm.getCode("PositionManager.sol:PositionManager"), args);
++        bytes memory initcode = abi.encodePacked(getCode("PositionManager.sol:PositionManager"), args);
+         assembly {
+             manager := create2(0, add(initcode, 0x20), mload(initcode), salt)
+         }
+@@ -47,7 +66,7 @@ library Deploy {
+             deliveryGasLimit
+         );
+         bytes memory initcode =
+-            abi.encodePacked(vm.getCode("PermissionedPositionManager.sol:PermissionedPositionManager"), args);
++            abi.encodePacked(getCode("PermissionedPositionManager.sol:PermissionedPositionManager"), args);
+         assembly {
+             manager := create2(0, add(initcode, 0x20), mload(initcode), salt)
+         }
+@@ -55,7 +74,7 @@ library Deploy {
+ 
+     function stateView(address poolManager, bytes memory salt) internal returns (IStateView stateView_) {
+         bytes memory args = abi.encode(poolManager);
+-        bytes memory initcode = abi.encodePacked(vm.getCode("StateView.sol:StateView"), args);
++        bytes memory initcode = abi.encodePacked(getCode("StateView.sol:StateView"), args);
+         assembly {
+             stateView_ := create2(0, add(initcode, 0x20), mload(initcode), salt)
+         }
+@@ -63,14 +82,22 @@ library Deploy {
+ 
+     function v4Quoter(address poolManager, bytes memory salt) internal returns (IV4Quoter quoter) {
+         bytes memory args = abi.encode(poolManager);
+-        bytes memory initcode = abi.encodePacked(vm.getCode("V4Quoter.sol:V4Quoter"), args);
++        bytes memory initcode = abi.encodePacked(getCode("V4Quoter.sol:V4Quoter"), args);
+         assembly {
+             quoter := create2(0, add(initcode, 0x20), mload(initcode), salt)
+         }
+     }
+ 
++    function reservesLens() internal returns (IReservesLens lens) {
++        bytes memory initcode = getCode("ReservesLens.sol:ReservesLens");
++        assembly {
++            lens := create(0, add(initcode, 0x20), mload(initcode))
++        }
++        require(address(lens) != address(0), "ReservesLens deployment failed");
++    }
++
+     function reservesLens(bytes32 salt) internal returns (IReservesLens lens) {
+-        bytes memory initcode = vm.getCode("ReservesLens.sol:ReservesLens");
++        bytes memory initcode = getCode("ReservesLens.sol:ReservesLens");
+         lens = IReservesLens(create2(initcode, salt));
+     }
+ 
+@@ -93,7 +120,7 @@ library Deploy {
+         bytes memory salt
+     ) internal returns (IPositionDescriptor descriptor) {
+         bytes memory args = abi.encode(poolManager, wrappedNative, nativeCurrencyLabelBytes);
+-        bytes memory initcode = abi.encodePacked(vm.getCode("PositionDescriptor.sol:PositionDescriptor"), args);
++        bytes memory initcode = abi.encodePacked(getCode("PositionDescriptor.sol:PositionDescriptor"), args);
+         assembly {
+             descriptor := create2(0, add(initcode, 0x20), mload(initcode), salt)
+         }
+diff --git a/test/shared/RoutingTestHelpers.sol b/test/shared/RoutingTestHelpers.sol
+index 75dffee1..7f5e06af 100644
+--- a/test/shared/RoutingTestHelpers.sol
++++ b/test/shared/RoutingTestHelpers.sol
+@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
+ import "forge-std/Test.sol";
+ import {PoolModifyLiquidityTest} from "@uniswap/v4-core/src/test/PoolModifyLiquidityTest.sol";
+ import {MockV4Router} from "../mocks/MockV4Router.sol";
++import {Deploy} from "./Deploy.sol";
+ import {Plan, Planner} from "../shared/Planner.sol";
+ import {MockERC20} from "solmate/src/test/utils/mocks/MockERC20.sol";
+ import {IHooks} from "@uniswap/v4-core/src/interfaces/IHooks.sol";
+@@ -42,7 +43,14 @@ contract RoutingTestHelpers is Test, Deployers {
+     function setupRouterCurrenciesAndPoolsWithLiquidity() public {
+         deployFreshManager();
+ 
+-        router = new MockV4Router(manager);
++        router = MockV4Router(
++            payable(
++                Deploy.create2(
++                    abi.encodePacked(Deploy.getCode("MockV4Router.sol:MockV4Router"), abi.encode(manager)),
++                    keccak256("MockV4Router")
++                )
++            )
++        );
+         positionManager = new PoolModifyLiquidityTest(manager);
+ 
+         MockERC20[] memory tokens = deployTokensMintAndApprove(4);

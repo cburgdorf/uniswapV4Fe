@@ -1,0 +1,12 @@
+use std::evm::{Address, revert_error}
+#[error]
+pub struct PermissionsAdapterAlreadyVerified { pub permissionsAdapter: Address }
+msg M {
+    #[selector = 1]
+    Run {},
+}
+pub contract Repro {
+    recv M {
+        Run {} { revert_error(PermissionsAdapterAlreadyVerified { permissionsAdapter: Address::zero() }) }
+    }
+}

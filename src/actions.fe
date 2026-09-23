@@ -1,0 +1,35 @@
+// SPDX-License-Identifier: MIT
+// Pinned v4-periphery action codes. Individual routers accept only their
+// documented subset. The deprecated FROM_DELTAS codes remain reserved.
+pub const INCREASE_LIQUIDITY: u256 = 0x00
+pub const DECREASE_LIQUIDITY: u256 = 0x01
+pub const MINT_POSITION: u256 = 0x02
+pub const BURN_POSITION: u256 = 0x03
+pub const INCREASE_LIQUIDITY_FROM_DELTAS: u256 = 0x04
+pub const MINT_POSITION_FROM_DELTAS: u256 = 0x05
+pub const SWAP_EXACT_IN_SINGLE: u256 = 0x06
+pub const SWAP_EXACT_IN: u256 = 0x07
+pub const SWAP_EXACT_OUT_SINGLE: u256 = 0x08
+pub const SWAP_EXACT_OUT: u256 = 0x09
+pub const DONATE: u256 = 0x0a
+pub const SETTLE: u256 = 0x0b
+pub const SETTLE_ALL: u256 = 0x0c
+pub const SETTLE_PAIR: u256 = 0x0d
+pub const TAKE: u256 = 0x0e
+pub const TAKE_ALL: u256 = 0x0f
+pub const TAKE_PORTION: u256 = 0x10
+pub const TAKE_PAIR: u256 = 0x11
+pub const CLOSE_CURRENCY: u256 = 0x12
+pub const CLEAR_OR_TAKE: u256 = 0x13
+pub const SWEEP: u256 = 0x14
+pub const WRAP: u256 = 0x15
+pub const UNWRAP: u256 = 0x16
+pub const MINT_6909: u256 = 0x17
+pub const BURN_6909: u256 = 0x18
+pub const UNWIND_WITH_FALLBACK: u256 = 0x19
+
+// ActionConstants.sol sentinel values.
+pub const OPEN_DELTA: u128 = 0
+pub const CONTRACT_BALANCE: u256 = 1 << 255
+pub const MSG_SENDER: u256 = 1
+pub const ADDRESS_THIS: u256 = 2

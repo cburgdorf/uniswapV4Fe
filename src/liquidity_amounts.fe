@@ -1,0 +1,37 @@
+// SPDX-License-Identifier: MIT
+// v4-periphery LiquidityAmounts.sol at the pinned reference revision.
+use std::abi::sol::Uint160
+use super::{full_math, fixed_point, safe_cast}
+
+pub fn for_amount0(_ a: Uint160, _ b: Uint160, _ amount: u256) -> u128 {
+    let lower = if a.val < b.val { a.val } else { b.val }
+    let upper = if a.val < b.val { b.val } else { a.val }
+    let intermediate = full_math::mul_div(lower, upper, fixed_point::Q96)
+    safe_cast::to_uint128(full_math::mul_div(amount, intermediate, upper - lower))
+}
+pub fn for_amount1(_ a: Uint160, _ b: Uint160, _ amount: u256) -> u128 {
+    let lower = if a.val < b.val { a.val } else { b.val }
+    let upper = if a.val < b.val { b.val } else { a.val }
+    safe_cast::to_uint128(
+        full_math::mul_div(amount, fixed_point::Q96, upper - lower),
+    )
+}
+pub fn for_amounts(
+    _ price: Uint160,
+    _ a: Uint160,
+    _ b: Uint160,
+    _ amount0: u256,
+    _ amount1: u256,
+) -> u128 {
+    let lower = if a.val < b.val { a } else { b }
+    let upper = if a.val < b.val { b } else { a }
+    if price.val <= lower.val {
+        return for_amount0(lower, upper, amount0)
+    }
+    if price.val < upper.val {
+        let l0 = for_amount0(price, upper, amount0)
+        let l1 = for_amount1(lower, price, amount1)
+        return if l0 < l1 { l0 } else { l1 }
+    }
+    for_amount1(lower, upper, amount1)
+}

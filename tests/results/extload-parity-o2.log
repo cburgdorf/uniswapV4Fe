@@ -1,0 +1,15 @@
+Compiling 5 files with Solc 0.8.30
+Solc 0.8.30 finished in 98.75ms
+Compiler run successful!
+
+Ran 7 tests for test/ExtloadParity.t.sol:ExtloadParityTest
+[PASS] testFuzz_malformed(uint256,uint256,uint8,bool) (runs: 10000, μ: 15175, ~: 14867)
+[PASS] testFuzz_range(bytes32,uint8,bytes32) (runs: 10000, μ: 512702, ~: 340140)
+[PASS] testFuzz_single(bytes32,bytes32,bytes32) (runs: 10000, μ: 61897, ~: 61897)
+[PASS] testFuzz_sparse(bytes32,uint8,bool) (runs: 10000, μ: 154886, ~: 86952)
+[PASS] testFuzz_wrappedLength(uint8,uint8,bytes32) (runs: 10000, μ: 302431, ~: 246274)
+[PASS] test_dynamicCalldataBoundaries() (gas: 3731431)
+[PASS] test_extremeLengthsAndWraparound() (gas: 6441485)
+Suite result: ok. 7 passed; 0 failed; 0 skipped; finished in 866.60ms (2.61s CPU time)
+
+Ran 1 test suite in 867.89ms (866.60ms CPU time): 7 tests passed, 0 failed, 0 skipped (7 total tests)

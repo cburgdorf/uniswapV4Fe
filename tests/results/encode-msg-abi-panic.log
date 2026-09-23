@@ -1,0 +1,19 @@
+
+thread 'main' (448770) panicked at crates/hir/src/analysis/ty/binder.rs:136:24:
+index out of bounds: the len is 1 but the index is 1
+stack backtrace:
+   0: __rustc::rust_begin_unwind
+   1: core::panicking::panic_fmt
+   2: core::panicking::panic_bounds_check
+   3: <fe_hir::analysis::ty::binder::InstantiateFolder as fe_hir::analysis::ty::fold::TyFolder>::fold_ty
+   4: <fe_hir::analysis::ty::trait_def::TraitInstId as fe_hir::analysis::ty::fold::TyFoldable>::super_fold_with::<fe_hir::analysis::ty::binder::InstantiateFolder>
+   5: <fe_hir::analysis::ty::trait_resolution::PredicateListId as fe_hir::analysis::ty::fold::TyFoldable>::super_fold_with::<fe_hir::analysis::ty::binder::InstantiateFolder>
+   6: fe::abi::instantiate_callable_typed_body
+   7: fe::abi::collect_typed_body_event_structs
+   8: fe::abi::generate_contract_abi
+   9: fe::build::write_abi_artifacts
+  10: fe::build::build_top_mod
+  11: fe::build::build
+  12: fe::run
+  13: fe::main
+note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.

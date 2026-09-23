@@ -1,0 +1,30 @@
+{
+  "fe_abi_sha256": "18a9554c6c42fe3ced3c6685ba7760619e813f097d2cc3d55ef22f3c02900268",
+  "reference_artifact_sha256": "f1dcca46f65cc104500807a871c9ef09c506360d4ede856b59c29b8074735617",
+  "protocol_abi_sha256": "f9535a3c047e7ed2091727513310648e9aa9d798e9819e140b998f1be3df99a1",
+  "adapter_sha256": "ffd85641a3d37178f97aa5a389d46f40711c1195e658e97af9fb028f0812d3e5",
+  "callable_and_event_layouts": "compatible",
+  "reference_metadata_applied": [
+    "constructor:(address)",
+    "function:POOL_MANAGER()",
+    "function:createPermissionsAdapter(address,address,address)",
+    "function:permissionsAdapterOf(address)",
+    "function:verifiedPermissionsAdapterOf(address)",
+    "function:verifyPermissionsAdapter(address)",
+    "event:PermissionsAdapterCreated(address,address)",
+    "event:PermissionsAdapterVerified(address,address)"
+  ],
+  "explicit_fallback_receive": false,
+  "explicit_lazy_multicall": false,
+  "explicit_flat_dynamic_returns": [],
+  "fe_error_signatures": [
+    "error:PermissionsAdapterAlreadyVerified(address)",
+    "error:PermissionsAdapterNotFound(address)",
+    "error:PermissionsAdapterNotVerified(address)"
+  ],
+  "reference_error_signatures": [
+    "error:PermissionsAdapterAlreadyVerified(address)",
+    "error:PermissionsAdapterNotFound(address)",
+    "error:PermissionsAdapterNotVerified(address)"
+  ]
+}

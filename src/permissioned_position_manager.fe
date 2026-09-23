@@ -1,0 +1,221 @@
+use super::multicall::Calls
+// SPDX-License-Identifier: MIT
+// Concrete permissioned NFT manager. Shared base logic remains in the action,
+// token, permit and notification modules; only reference overrides differ here.
+use std::abi::{Bytes, Bytes4, Bytes25, Bytes32, DynString, DynArray, sol::{self, Uint24, Int24, Uint160}}
+use std::evm::{Address, Ctx, Call, CallData, RawMem, RawStorage, RawOps, Log, encode_msg_calldata, staticcall_decode, revert, revert_error}
+use core::abi::ByteInput
+use super::{erc721::{self, Tokens}, erc721_permit, storage_string, eip712::Domain, unordered_nonce::Nonces, position_manager_actions::Config, position_manager_state as state, pool_types::PoolKey, pool_initializer, native_wrapper, multicall, router_params, calldata_decoder::{argument_bytes, ActionsView}, permit2_forwarder::{self, Single, Batch}}
+use super::{position_manager::{PositionManagerMsg, UnlockMsg, DescriptorMsg, locker, begin_lock, end_lock, DeadlinePassed, NotPoolManager}, permissioned_position_policy::{PermissionedPositionPolicy, TransferDisabled}, permissioned_position_unwind::Exit}
+msg PermissionedPositionMsg {
+    #[selector = sol("PERMISSIONS_ADAPTER_FACTORY()")]
+    Factory {} -> Address,
+    #[selector = sol("DELIVERY_GAS_LIMIT()")]
+    DeliveryGas {} -> u256,
+    #[selector = sol("unwindPosition(uint256,uint128,uint128,bytes)")]
+    Unwind { tokenId: u256, amount0Min: u128, amount1Min: u128, hookData: Bytes },
+    #[selector = sol("withdrawClaim(address,uint256,address)")]
+    Withdraw { currency: Address, amount: u256, to: Address },
+}
+pub contract PermissionedPositionManager {
+    factory: Address,
+    delivery_gas: u256,
+    manager: Address,
+    permit2: Address,
+    unsubscribe_gas_limit: u256,
+    descriptor: Address,
+    weth: Address,
+    name_hash: u256,
+    cached_chain: u256,
+    cached_separator: u256,
+    init(_poolManager: Address, _permit2: Address, _unsubscribeGasLimit: u256, _tokenDescriptor: Address, _weth9: Address, _permissionsAdapterFactory: Address, _deliveryGasLimit: u256)
+    uses (mut factory, mut delivery_gas, mut manager, mut permit2, mut unsubscribe_gas_limit, mut descriptor, mut weth, mut name_hash, mut cached_chain, mut cached_separator, ctx: Ctx, mem: mut RawMem, storage: mut RawStorage) {
+        factory = _permissionsAdapterFactory
+        delivery_gas = _deliveryGasLimit
+        manager = _poolManager
+        permit2 = _permit2
+        unsubscribe_gas_limit = _unsubscribeGasLimit
+        descriptor = _tokenDescriptor
+        weth = _weth9
+        let name = Bytes::from_word_prefix(word: 0x556e697377617020763420506f736974696f6e73204e46540000000000000000, len: 24)
+        let symbol = Bytes::from_word_prefix(word: 0x554e492d56342d5045524d2d504f534d00000000000000000000000000000000, len: 16)
+        let display_name = std::abi::bytes_from_words_prefix<37, 2>([0x556e6973776170207634205065726d697373696f6e656420506f736974696f6e, 0x73204e4654000000000000000000000000000000000000000000000000000000])
+        storage_string::initialize(0, display_name)
+        storage_string::initialize(1, symbol)
+        let domain = Domain::initialize(name)
+        name_hash = domain.name_hash
+        cached_chain = domain.cached_chain
+        cached_separator = domain.cached_separator
+        storage.sstore(slot: 8, value: 1)
+    }
+    recv {
+        PermissionedPositionMsg::Factory {} -> Address uses (factory) { factory }
+        PermissionedPositionMsg::DeliveryGas {} -> u256 uses (delivery_gas) { delivery_gas }
+        PermissionedPositionMsg::Unwind { tokenId, amount0Min, amount1Min, hookData }
+        uses (factory, delivery_gas, manager, permit2, weth, unsubscribe_gas_limit, ctx: Ctx, call: mut Call, ops: mut RawOps, storage: mut RawStorage, mem: mut RawMem, log: mut Log) {
+            begin_lock()
+            Exit { config: Config { manager, permit2, weth, unsubscribe_gas: unsubscribe_gas_limit }, policy: PermissionedPositionPolicy { factory, permit2, actor: locker() }, delivery_gas }.unwind(tokenId, amount0Min, amount1Min, hookData)
+            end_lock()
+        }
+        PermissionedPositionMsg::Withdraw { currency, amount, to }
+        uses (factory, delivery_gas, manager, permit2, weth, unsubscribe_gas_limit, ctx: Ctx, call: mut Call, ops: mut RawOps, log: mut Log) {
+            begin_lock()
+            Exit { config: Config { manager, permit2, weth, unsubscribe_gas: unsubscribe_gas_limit }, policy: PermissionedPositionPolicy { factory, permit2, actor: locker() }, delivery_gas }.withdraw(currency, amount, to)
+            end_lock()
+        }
+
+        PositionManagerMsg::Name {  } -> DynString uses (storage: RawStorage, mem: mut RawMem) {
+            storage_string::load(0)
+        }
+        PositionManagerMsg::Symbol {  } -> DynString uses (storage: RawStorage, mem: mut RawMem) {
+            storage_string::load(1)
+        }
+        PositionManagerMsg::Owner { id } -> Address uses (storage: RawStorage, mem: mut RawMem) {
+            Tokens { slot: 0 }.owner_of(id)
+        }
+        PositionManagerMsg::Balance { owner } -> u256 uses (storage: RawStorage, mem: mut RawMem) {
+            Tokens { slot: 0 }.balance_of(owner)
+        }
+        PositionManagerMsg::Approved { id } -> Address uses (storage: RawStorage, mem: mut RawMem) {
+            Tokens { slot: 0 }.approved(id)
+        }
+        PositionManagerMsg::Operator { owner, operator } -> bool uses (storage: RawStorage, mem: mut RawMem) {
+            Tokens { slot: 0 }.operator(owner, operator)
+        }
+        PositionManagerMsg::Supports { id } -> bool uses (ctx: Ctx) {
+            erc721::supports_interface(id)
+        }
+        PositionManagerMsg::Approve { spender, id } uses (ctx: Ctx, storage: mut RawStorage, mem: mut RawMem, log: mut Log) {
+            Tokens { slot: 0 }.approve(spender, id)
+        }
+        PositionManagerMsg::ApproveAll { operator, approved } uses (ctx: Ctx, storage: mut RawStorage, mem: mut RawMem, log: mut Log) {
+            Tokens { slot: 0 }.approve_for_all(ctx.caller(), operator, approved)
+        }
+        // Retain the inherited nonpayable effect contract, even though this override reverts.
+        PositionManagerMsg::Transfer { from, to, id } uses (manager, permit2, weth, unsubscribe_gas_limit, ctx: Ctx, storage: mut RawStorage) {
+            Config { manager, permit2, weth, unsubscribe_gas: unsubscribe_gas_limit }.require_locked()
+            revert_error(TransferDisabled {})
+        }
+        PositionManagerMsg::SafeTransfer { from, to, id } {
+            revert_error(TransferDisabled {})
+        }
+        PositionManagerMsg::SafeTransferData { from, to, id, data } {
+            revert_error(TransferDisabled {})
+        }
+        PositionManagerMsg::Separator {  } -> Bytes32 uses (name_hash, cached_chain, cached_separator, ctx: Ctx, mem: mut RawMem) {
+            Domain { name_hash, cached_chain, cached_separator }.separator()
+        }
+        PositionManagerMsg::Bitmap { owner, word } -> u256 uses (storage: RawStorage, mem: mut RawMem) {
+            Nonces { slot: 6 }.bitmap(owner, word)
+        }
+        #[payable]
+        PositionManagerMsg::Revoke { nonce } uses (ctx: Ctx, storage: mut RawStorage, mem: mut RawMem) {
+            Nonces { slot: 6 }.consume(ctx.caller(), nonce)
+        }
+        #[payable]
+        PositionManagerMsg::Permit { spender, id, deadline, nonce, signature } uses (name_hash, cached_chain, cached_separator, ctx: Ctx, call: Call, storage: mut RawStorage, mem: mut RawMem, log: mut Log) {
+            erc721_permit::permit(Tokens { slot: 0 }, Nonces { slot: 6 }, Domain { name_hash, cached_chain, cached_separator }, spender, id, deadline, nonce, signature)
+        }
+        #[payable]
+        PositionManagerMsg::PermitAll { owner, operator, approved, deadline, nonce, signature } uses (name_hash, cached_chain, cached_separator, ctx: Ctx, call: Call, storage: mut RawStorage, mem: mut RawMem, log: mut Log) {
+            erc721_permit::permit_for_all(Tokens { slot: 0 }, Nonces { slot: 6 }, Domain { name_hash, cached_chain, cached_separator }, owner, operator, approved, deadline, nonce, signature)
+        }
+        PositionManagerMsg::Manager {  } -> Address uses (manager) {
+            manager
+        }
+        PositionManagerMsg::Permit2 {  } -> Address uses (permit2) {
+            permit2
+        }
+        PositionManagerMsg::Weth {  } -> Address uses (weth) {
+            weth
+        }
+        PositionManagerMsg::Descriptor {  } -> Address uses (descriptor) {
+            descriptor
+        }
+        PositionManagerMsg::GasLimit {  } -> u256 uses (unsubscribe_gas_limit) {
+            unsubscribe_gas_limit
+        }
+        PositionManagerMsg::Next {  } -> u256 uses (storage: RawStorage) {
+            storage.sload(8)
+        }
+        PositionManagerMsg::Sender {  } -> Address uses (ops: RawOps) {
+            locker()
+        }
+        PositionManagerMsg::PositionInfo { id } -> u256 uses (storage: RawStorage, mem: mut RawMem) {
+            state::info(id).bits
+        }
+        PositionManagerMsg::StoredPoolKey { id } -> (Address, Address, Uint24, Int24, Address) uses (storage: RawStorage, mem: mut RawMem) {
+            let key = state::pool_key(Bytes32 { val: id.val << 56 })
+            (key.currency0, key.currency1, key.fee, key.tickSpacing, key.hooks)
+        }
+        PositionManagerMsg::PoolAndInfo { id } -> (PoolKey, u256) uses (storage: RawStorage, mem: mut RawMem) {
+            let (key, info) = state::pool_and_info(id)
+            (key, info.bits)
+        }
+        PositionManagerMsg::Liquidity { id } -> u128 uses (manager, permit2, weth, unsubscribe_gas_limit, ctx: Ctx, storage: RawStorage, mem: mut RawMem) {
+            let (key, info) = state::pool_and_info(id)
+            Config { manager, permit2, weth, unsubscribe_gas: unsubscribe_gas_limit }.liquidity(id, key, info)
+        }
+        PositionManagerMsg::Subscriber { id } -> Address uses (manager, permit2, weth, unsubscribe_gas_limit, storage: RawStorage, mem: mut RawMem) {
+            Config { manager, permit2, weth, unsubscribe_gas: unsubscribe_gas_limit }.notifications().subscriber(id)
+        }
+        #[payable]
+        PositionManagerMsg::Subscribe { id, target, data } uses (manager, permit2, weth, unsubscribe_gas_limit, ctx: Ctx, call: mut Call, storage: mut RawStorage, mem: mut RawMem, log: mut Log) {
+            let config = Config { manager, permit2, weth, unsubscribe_gas: unsubscribe_gas_limit }
+            config.require_locked()
+            config.require_approved(ctx.caller(), id)
+            config.notifications().subscribe(id, target, data)
+        }
+        #[payable]
+        PositionManagerMsg::Unsubscribe { id } uses (manager, permit2, weth, unsubscribe_gas_limit, ctx: Ctx, call: mut Call, storage: mut RawStorage, mem: mut RawMem, log: mut Log) {
+            let config = Config { manager, permit2, weth, unsubscribe_gas: unsubscribe_gas_limit }
+            config.require_locked()
+            config.require_approved(ctx.caller(), id)
+            config.notifications().unsubscribe(id)
+        }
+        #[payable]
+        PositionManagerMsg::Initialize { key, sqrtPriceX96 } -> Int24 uses (manager, ctx: Ctx, call: mut Call) {
+            pool_initializer::initialize(manager, key, sqrtPriceX96)
+        }
+        PositionManagerMsg::TokenURI { id } -> DynString uses (descriptor, ctx: Ctx) {
+            let args = encode_msg_calldata(DescriptorMsg::URI { positionManager: ctx.address(), tokenId: id })
+            staticcall_decode(addr: descriptor, gas: ctx.gas(), args: args.span())
+        }
+        #[payable]
+        PositionManagerMsg::multicall { data } -> DynArray<Bytes> uses (ctx: Ctx, call: mut Call) {
+            multicall::execute(data)
+        }
+        #[payable]
+        PositionManagerMsg::ForwardSingle { owner, permitSingle, signature } -> Bytes uses (permit2, ctx: Ctx, call: mut Call) {
+            permit2_forwarder::single(permit2, owner, permitSingle, signature)
+        }
+        #[payable]
+        PositionManagerMsg::ForwardBatch { owner, permitBatch, signature } -> Bytes uses (permit2, ctx: Ctx, call: mut Call) {
+            permit2_forwarder::batch(permit2, owner, permitBatch, signature)
+        }
+        #[payable]
+        PositionManagerMsg::Modify { unlockData, deadline } uses (manager, ctx: Ctx, call: mut Call, ops: mut RawOps) {
+            begin_lock()
+            if ctx.timestamp() > deadline { revert_error(DeadlinePassed { deadline }) }
+            let _ = call.call(addr: manager, gas: ctx.gas(), value: 0, message: UnlockMsg::Unlock { data: unlockData })
+            end_lock()
+        }
+        #[payable]
+        PositionManagerMsg::WithoutUnlock { actions, params } uses (factory, manager, permit2, weth, unsubscribe_gas_limit, ctx: Ctx, call: mut Call, ops: mut RawOps, storage: mut RawStorage, mem: mut RawMem, log: mut Log) {
+            begin_lock()
+            let parameters = router_params::array(4, 32, 32)
+            Config { manager, permit2, weth, unsubscribe_gas: unsubscribe_gas_limit }.execute_with(PermissionedPositionPolicy { factory, permit2, actor: locker() }, locker(), ActionsView { actions: argument_bytes(0), params_offset: parameters.offset, params_len: parameters.len })
+            end_lock()
+        }
+        PositionManagerMsg::Callback { data } -> Bytes uses (factory, manager, permit2, weth, unsubscribe_gas_limit, ctx: Ctx, call: mut Call, ops: RawOps, storage: mut RawStorage, mem: mut RawMem, log: mut Log) {
+            if ctx.caller().inner != manager.inner { revert_error(NotPoolManager {}) }
+            Config { manager, permit2, weth, unsubscribe_gas: unsubscribe_gas_limit }.execute_with(PermissionedPositionPolicy { factory, permit2, actor: locker() }, locker(), argument_bytes(0).decode_actions())
+            Bytes::empty()
+        }
+        #[payable]
+        _ uses (weth, manager, ctx: Ctx) {
+            if CallData::new().len() != 0 { revert(()) }
+            native_wrapper::check_sender(weth, manager)
+        }
+    }
+}

@@ -1,0 +1,14 @@
+// SPDX-License-Identifier: MIT
+// Port of Uniswap v4-core UnsafeMath.sol; EVM division by zero returns zero.
+pub fn div_rounding_up(_ x: u256, _ y: u256) -> u256 {
+    if y == 0 { return 0 }
+    x / y + (if x % y > 0 { 1 } else { 0 })
+}
+
+#[arithmetic(unchecked)]
+pub fn simple_mul_div(_ a: u256, _ b: u256, _ denominator: u256) -> u256 {
+    if denominator == 0 {
+        return 0
+    }
+    (a * b) / denominator
+}

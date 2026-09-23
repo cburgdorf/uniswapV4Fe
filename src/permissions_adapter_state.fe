@@ -1,0 +1,116 @@
+// SPDX-License-Identifier: MIT
+// Solidity-compatible OZ5 ERC20 / Ownable2Step storage for PermissionsAdapter.
+use std::evm::{Address, Ctx, RawStorage, RawMem, Log, revert_error}
+use std::evm::packed::keccak_packed
+const MASK: u256 = 0xffffffffffffffffffffffffffffffffffffffff
+#[error]
+pub struct OwnableUnauthorizedAccount { pub account: Address }
+#[error]
+pub struct OwnableInvalidOwner { pub owner: Address }
+#[error]
+pub struct ERC20InvalidSender { pub sender: Address }
+#[error]
+pub struct ERC20InvalidReceiver { pub receiver: Address }
+#[error]
+pub struct ERC20InvalidApprover { pub approver: Address }
+#[error]
+pub struct ERC20InvalidSpender { pub spender: Address }
+#[error]
+pub struct ERC20InsufficientBalance { pub sender: Address, pub balance: u256, pub needed: u256 }
+#[error]
+pub struct ERC20InsufficientAllowance { pub spender: Address, pub allowance: u256, pub needed: u256 }
+#[event]
+pub struct Transfer {
+    #[indexed]
+    pub from: Address,
+    #[indexed]
+    pub to: Address,
+    pub value: u256,
+}
+#[event]
+pub struct Approval {
+    #[indexed]
+    pub owner: Address,
+    #[indexed]
+    pub spender: Address,
+    pub value: u256,
+}
+#[event]
+pub struct OwnershipTransferred {
+    #[indexed]
+    pub previousOwner: Address,
+    #[indexed]
+    pub newOwner: Address,
+}
+#[event]
+pub struct OwnershipTransferStarted {
+    #[indexed]
+    pub previousOwner: Address,
+    #[indexed]
+    pub newOwner: Address,
+}
+pub fn address_at(_ slot: u256) -> Address uses (storage: RawStorage) {
+    Address { inner: storage.sload(slot) & MASK }
+}
+pub fn write_address(_ slot: u256, _ value: Address) uses (storage: mut RawStorage) {
+    storage.sstore(slot: slot, value: (storage.sload(slot) & !MASK) | value.inner)
+}
+pub fn map_slot(_ base: u256, _ account: Address) -> u256 uses (mem: mut RawMem) {
+    keccak_packed((account.inner, base))
+}
+pub fn flag(_ base: u256, _ account: Address) -> bool uses (storage: RawStorage, mem: mut RawMem) {
+    storage.sload(map_slot(base, account)) & 255 != 0
+}
+pub fn set_flag(_ base: u256, _ account: Address, _ value: bool) uses (storage: mut RawStorage, mem: mut RawMem) {
+    let slot = map_slot(base, account)
+    storage.sstore(slot: slot, value: (storage.sload(slot) & !(255 as u256)) | (if value { 1 } else { 0 }))
+}
+pub fn balance(_ account: Address) -> u256 uses (storage: RawStorage, mem: mut RawMem) {
+    storage.sload(map_slot(0, account))
+}
+pub fn allowance(_ owner: Address, _ spender: Address) -> u256 uses (storage: RawStorage, mem: mut RawMem) {
+    storage.sload(map_slot(map_slot(1, owner), spender))
+}
+pub fn approve(_ owner: Address, _ spender: Address, _ value: u256, _ emit_event: bool)
+uses (storage: mut RawStorage, mem: mut RawMem, log: mut Log)
+{
+    if owner.inner == 0 { revert_error(ERC20InvalidApprover { approver: owner }) }
+    if spender.inner == 0 { revert_error(ERC20InvalidSpender { spender }) }
+    storage.sstore(slot: map_slot(map_slot(1, owner), spender), value)
+    if emit_event { log.emit(Approval { owner, spender, value }) }
+}
+pub fn spend(_ owner: Address, _ spender: Address, _ value: u256)
+uses (storage: mut RawStorage, mem: mut RawMem, log: mut Log)
+{
+    let available = allowance(owner, spender)
+    if available != !(0 as u256) {
+        if available < value { revert_error(ERC20InsufficientAllowance { spender, allowance: available, needed: value }) }
+        approve(owner, spender, available - value, false)
+    }
+}
+pub fn update(_ from: Address, _ to: Address, _ value: u256)
+uses (storage: mut RawStorage, mem: mut RawMem, log: mut Log)
+{
+    if from.inner == 0 {
+        storage.sstore(slot: 2, value: storage.sload(2) + value)
+    } else {
+        let available = balance(from)
+        if available < value { revert_error(ERC20InsufficientBalance { sender: from, balance: available, needed: value }) }
+        storage.sstore(slot: map_slot(0, from), value: available - value)
+    }
+    if to.inner == 0 {
+        storage.sstore(slot: 2, value: storage.sload(2).wrapping_sub(value))
+    } else {
+        storage.sstore(slot: map_slot(0, to), value: balance(to).wrapping_add(value))
+    }
+    log.emit(Transfer { from, to, value })
+}
+pub fn check_owner() uses (storage: RawStorage, ctx: Ctx) {
+    if ctx.caller().inner != address_at(5).inner { revert_error(OwnableUnauthorizedAccount { account: ctx.caller() }) }
+}
+pub fn transfer_owner(_ next: Address) uses (storage: mut RawStorage, log: mut Log) {
+    let previous = address_at(5)
+    write_address(6, Address::zero())
+    write_address(5, next)
+    log.emit(OwnershipTransferred { previousOwner: previous, newOwner: next })
+}

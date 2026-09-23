@@ -1,0 +1,79 @@
+Parity artifacts: /tmp/fe-permissioned-position-fixed-o1
+Compiler: fe 26.3.0 (702686c98); sha256=f3aaead7171e522c76b07fba14d25b70997fe3251a952686b0ad9c918aebac44
+Wrote /tmp/fe-permissioned-position-fixed-o1/fe/PermissionedPositionManager.bin
+Wrote /tmp/fe-permissioned-position-fixed-o1/fe/PermissionedPositionManager.runtime.bin
+Warning: skipping recv arm `multicall`: selector signature is unknown; use `#[selector = sol("name(types)")]` to include it in the ABI
+Wrote /tmp/fe-permissioned-position-fixed-o1/fe/PermissionedPositionManager.abi.json
+Compiling 116 files with Solc 0.8.26
+Solc 0.8.26 finished in 15.82s
+Compiler run successful with warnings:
+Warning (5740): Unreachable code.
+   --> test/reference/solmate/src/tokens/ERC721.sol:118:9:
+    |
+118 |         require(
+    |         ^ (Relevant source part starts here and spans across multiple lines).
+
+Warning (5740): Unreachable code.
+   --> test/reference/solmate/src/tokens/ERC721.sol:134:9:
+    |
+134 |         require(
+    |         ^ (Relevant source part starts here and spans across multiple lines).
+
+Warning (5667): Unused function parameter. Remove or comment out the variable name to silence this warning.
+   --> test/periphery/src/hooks/permissionedPools/PermissionedPositionManager.sol:144:27:
+    |
+144 |     function transferFrom(address from, address to, uint256 id) public override onlyIfPoolManagerLocked {
+    |                           ^^^^^^^^^^^^
+
+Warning (5667): Unused function parameter. Remove or comment out the variable name to silence this warning.
+   --> test/periphery/src/hooks/permissionedPools/PermissionedPositionManager.sol:144:41:
+    |
+144 |     function transferFrom(address from, address to, uint256 id) public override onlyIfPoolManagerLocked {
+    |                                         ^^^^^^^^^^
+
+Warning (5667): Unused function parameter. Remove or comment out the variable name to silence this warning.
+   --> test/periphery/src/hooks/permissionedPools/PermissionedPositionManager.sol:144:53:
+    |
+144 |     function transferFrom(address from, address to, uint256 id) public override onlyIfPoolManagerLocked {
+    |                                                     ^^^^^^^^^^
+
+Warning (2018): Function state mutability can be restricted to view
+   --> test/periphery/src/hooks/permissionedPools/PermissionedPositionManager.sol:144:5:
+    |
+144 |     function transferFrom(address from, address to, uint256 id) public override onlyIfPoolManagerLocked {
+    |     ^ (Relevant source part starts here and spans across multiple lines).
+
+
+Ran 11 tests for test/PermissionedPositionManagerWorkflows.t.sol:PermissionedPositionManagerWorkflowsTest
+[PASS] testFuzz_forcedExit(uint128,bool,uint8,bool) (runs: 10000, μ: 66248176, ~: 66159994)
+[PASS] testFuzz_lifecycle(uint128,bool,uint8) (runs: 10000, μ: 65723412, ~: 65721899)
+[PASS] testFuzz_stateful(uint256,bool) (runs: 10000, μ: 70943415, ~: 70880452)
+[PASS] testFuzz_strayClaims(uint128,bool,bool) (runs: 10000, μ: 66048510, ~: 66096137)
+[PASS] test_admission() (gas: 172930282)
+[PASS] test_claimActionsAndRawRecipient() (gas: 34516934)
+[PASS] test_increaseAuthorizationOrder() (gas: 34947285)
+[PASS] test_isolatedMaliciousNativeDelivery() (gas: 71299048)
+[PASS] test_permissionReadResponses() (gas: 423807387)
+[PASS] test_subscriberReattachmentCleanup() (gas: 35623221)
+[PASS] test_transferGuardsAndDomain() (gas: 34872053)
+Suite result: ok. 11 passed; 0 failed; 0 skipped; finished in 162.32s (320.93s CPU time)
+
+Ran 1 test suite in 162.32s (162.32s CPU time): 11 tests passed, 0 failed, 0 skipped (11 total tests)
+Traceback (most recent call last):
+  File "/home/cburgdorf/Documents/hacking/fe/uniswap_v4_demo/tests/export_protocol_abi.py", line 140, in <module>
+    main()
+    ~~~~^^
+  File "/home/cburgdorf/Documents/hacking/fe/uniswap_v4_demo/tests/export_protocol_abi.py", line 120, in main
+    result, adaptations = export(fe, reference, args.flatten_dynamic_output, args.fallback_receive, args.lazy_multicall)
+                          ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cburgdorf/Documents/hacking/fe/uniswap_v4_demo/tests/export_protocol_abi.py", line 97, in export
+    raise ValueError(f'Incompatible mutability: {key}: {am} / {em}')
+ValueError: Incompatible mutability: function:transferFrom(address,address,uint256): view / nonpayable
+Traceback (most recent call last):
+  File "/home/cburgdorf/Documents/hacking/fe/uniswap_v4_demo/tests/run_math_parity.py", line 566, in <module>
+    subprocess.run(export_command, check=True)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/linuxbrew/.linuxbrew/Cellar/python@3.14/3.14.4/lib/python3.14/subprocess.py", line 578, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['/home/linuxbrew/.linuxbrew/opt/python@3.14/bin/python3.14', '/home/cburgdorf/Documents/hacking/fe/uniswap_v4_demo/tests/export_protocol_abi.py', '/tmp/fe-permissioned-position-fixed-o1/fe/PermissionedPositionManager.abi.json', '/tmp/fe-permissioned-position-fixed-o1/out/PermissionedPositionManager.sol/PermissionedPositionManager.json', '--output', '/tmp/fe-permissioned-position-fixed-o1/fe/PermissionedPositionManager.protocol.abi.json', '--fallback-receive', '--lazy-multicall']' returned non-zero exit status 1.

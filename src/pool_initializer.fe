@@ -1,0 +1,20 @@
+// SPDX-License-Identifier: MIT
+// PoolInitializer_v4: failed calls return int24.max, malformed successful
+// returndata still reverts in the caller (outside Solidity's try/catch).
+use core::abi::Decode
+use core::ptr::MemBuffer
+use std::abi::{Sol, sol::{self, Int24, Uint160}}
+use std::evm::{Address, Ctx, Call, encode_msg_calldata}
+use super::pool_types::PoolKey
+msg InitializeMsg {
+    #[selector = sol("initialize((address,address,uint24,int24,address),uint160)")]
+    Initialize { key: PoolKey, sqrtPriceX96: Uint160 } -> Int24,
+}
+pub fn initialize(_ manager: Address, _ key: PoolKey, _ price: Uint160) -> Int24
+uses (ctx: Ctx, call: mut Call) {
+    let args = encode_msg_calldata(InitializeMsg::Initialize { key, sqrtPriceX96: price })
+    let mut ret = MemBuffer::with_capacity(32)
+    let outcome = call.raw_call(addr: manager, gas: ctx.gas(), value: 0, args: args.span(), ret: mut ret)
+    if !outcome.success() { return Int24 { val: 8388607 } }
+    <Int24 as Decode<Sol>>::decode_from_bounded(ret.span(), 0, ret.len())
+}

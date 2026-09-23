@@ -1,0 +1,26 @@
+// SPDX-License-Identifier: MIT
+use std::abi::{DynString, sol::{self, Int24, Uint24}}
+use std::evm::{Address, RawMem}
+use super::{descriptor::{self, ConstructTokenURIParams}, descriptor_image}
+
+msg DescriptorMsg {
+    #[selector = sol("render(bool,uint256,address,address,string,string,uint8,uint8,bool,int24,int24,int24,int24,uint24,address,address)")]
+    Render { image: bool, id: u256, quote: Address, base: Address, quote_symbol: DynString, base_symbol: DynString, quote_decimals: u8, base_decimals: u8, flip: bool, lower: Int24, upper: Int24, current: Int24, spacing: Int24, fee: Uint24, manager: Address, hooks: Address } -> DynString,
+    #[selector = sol("circle(uint256,uint256,uint256)")]
+    Circle { currency: u256, offset: u256, id: u256 } -> u256,
+}
+pub contract DescriptorHarness {
+    recv DescriptorMsg {
+        Render { image, id, quote, base, quote_symbol, base_symbol, quote_decimals, base_decimals, flip, lower, upper, current, spacing, fee, manager, hooks } -> DynString uses (mem: mut RawMem) {
+            let params = ConstructTokenURIParams {
+                tokenId: id, quoteCurrency: quote, baseCurrency: base,
+                quoteCurrencySymbol: quote_symbol, baseCurrencySymbol: base_symbol,
+                quoteCurrencyDecimals: quote_decimals, baseCurrencyDecimals: base_decimals,
+                flipRatio: flip, tickLower: lower, tickUpper: upper, tickCurrent: current,
+                tickSpacing: spacing, fee, poolManager: manager, hooks,
+            }
+            if image { descriptor_image::generateSVGImage(params) } else { descriptor::constructTokenURI(params) }
+        }
+        Circle { currency, offset, id } -> u256 { descriptor_image::getCircleCoord(currency, offset, id) }
+    }
+}

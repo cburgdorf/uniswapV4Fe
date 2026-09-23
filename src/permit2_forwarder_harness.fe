@@ -1,0 +1,27 @@
+// SPDX-License-Identifier: MIT
+use std::abi::{Bytes, sol}
+use std::evm::{Address, Ctx, Call}
+use super::permit2_forwarder::{self, Single, Batch}
+msg ForwarderMsg {
+    #[selector = sol("permit2()")]
+    Target {} -> Address,
+    #[selector = sol("permit(address,((address,uint160,uint48,uint48),address,uint256),bytes)")]
+    ForwardSingle { owner: Address, permitSingle: Single, signature: Bytes } -> Bytes,
+    #[selector = sol("permitBatch(address,((address,uint160,uint48,uint48)[],address,uint256),bytes)")]
+    ForwardBatch { owner: Address, permitBatch: Batch, signature: Bytes } -> Bytes,
+}
+pub contract Permit2ForwarderHarness {
+    target: Address,
+    init(_target: Address) uses (mut target) { target = _target }
+    recv ForwarderMsg {
+        Target {} -> Address uses (target) { target }
+        #[payable]
+        ForwardSingle { owner, permitSingle, signature } -> Bytes uses (target, ctx: Ctx, call: mut Call) {
+            permit2_forwarder::single(target, owner, permitSingle, signature)
+        }
+        #[payable]
+        ForwardBatch { owner, permitBatch, signature } -> Bytes uses (target, ctx: Ctx, call: mut Call) {
+            permit2_forwarder::batch(target, owner, permitBatch, signature)
+        }
+    }
+}

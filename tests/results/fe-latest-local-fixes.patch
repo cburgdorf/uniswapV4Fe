@@ -1,0 +1,948 @@
+diff --git a/crates/contract-harness/src/lib.rs b/crates/contract-harness/src/lib.rs
+index 2db4fe312..3ed9c39d0 100644
+--- a/crates/contract-harness/src/lib.rs
++++ b/crates/contract-harness/src/lib.rs
+@@ -3660,7 +3660,11 @@ pub contract FixedDynamicArrayBoundary {{
+         let mut truncated =
+             encode_function_call("ok(string)", &[Token::String("hello".to_string())])
+                 .expect("calldata should encode");
+-        truncated.truncate(truncated.len() - 1);
++        truncated.truncate(4 + 32 + 32 + 5);
++        harness
++            .call_raw(&truncated, ExecutionOptions::default())
++            .expect("string without trailing padding should decode");
++        truncated.pop();
+         let err = harness
+             .call_raw(&truncated, ExecutionOptions::default())
+             .expect_err("truncated string tail should revert during decode");
+diff --git a/crates/fe/src/abi.rs b/crates/fe/src/abi.rs
+index c1af60adf..bb43308f3 100644
+--- a/crates/fe/src/abi.rs
++++ b/crates/fe/src/abi.rs
+@@ -1566,6 +1566,34 @@ pub contract Bar {
+         assert_eq!(ping["stateMutability"], "nonpayable");
+     }
+ 
++    #[test]
++    fn raw_staticcall_supports_view_abi_with_readonly_call_effect() {
++        let code = r#"
++use core::ptr::MemBuffer
++use std::abi::sol
++use std::evm::{Address, Call}
++msg ProbeMsg {
++    #[selector = sol("probe(address)")]
++    Probe { target: Address } -> bool,
++}
++pub contract Probe {
++    recv ProbeMsg {
++        Probe { target } -> bool uses (call: Call) {
++            let args = MemBuffer::alloc(0)
++            let mut ret = MemBuffer::with_capacity(64)
++            call.raw_staticcall(addr: target, gas: 30000, args: args.span(), ret: mut ret).success()
++        }
++    }
++}
++"#;
++        let entries = abi_entries(code, "Probe");
++        let probe = entries
++            .iter()
++            .find(|e| e["name"] == "probe")
++            .expect("probe entry");
++        assert_eq!(probe["stateMutability"], "view");
++    }
++
+     #[test]
+     fn payable_constructor_and_recv_arms_preserve_abi_mutability_and_array_inputs() {
+         let code = r#"
+diff --git a/crates/fe/tests/cli_output.rs b/crates/fe/tests/cli_output.rs
+index f0977132d..d5f6bf087 100644
+--- a/crates/fe/tests/cli_output.rs
++++ b/crates/fe/tests/cli_output.rs
+@@ -4345,3 +4345,54 @@ fn wide_function_arguments_at_all_optimization_levels() {
+         assert_eq!(exit_code, 0, "wide calls failed at -O {level}:\n{output}");
+     }
+ }
++
++#[test]
++fn payable_returns_at_all_optimization_levels() {
++    let fixture =
++        Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/fe_test/payable_return.fe");
++    // The fixture test covers the default level (1).
++    for level in ["0", "2", "s"] {
++        let (output, exit_code) = run_fe_main(&[
++            "test",
++            "--jobs",
++            "1",
++            "--optimize",
++            level,
++            fixture.to_str().expect("fixture path utf8"),
++        ]);
++        assert_eq!(
++            exit_code, 0,
++            "payable returns failed at -O {level}:\n{output}"
++        );
++    }
++}
++
++#[test]
++fn test_cli_build_payable_return_abi() {
++    let fixture =
++        Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/fe_test/payable_return.fe");
++    let out = tempdir().expect("output directory");
++    let (output, exit_code) = run_fe_main(&[
++        "build",
++        "--standalone",
++        "--out-dir",
++        out.path().to_str().unwrap(),
++        fixture.to_str().unwrap(),
++    ]);
++    assert_eq!(exit_code, 0, "payable build failed:\n{output}");
++    let abi: Value = serde_json::from_str(
++        &fs::read_to_string(out.path().join("PayableReturnBox.abi.json")).unwrap(),
++    )
++    .unwrap();
++    let deposit = abi
++        .as_array()
++        .unwrap()
++        .iter()
++        .find(|entry| entry["type"] == "function" && entry["name"] == "deposit")
++        .expect("deposit ABI entry");
++    assert_eq!(deposit["stateMutability"], "payable");
++    assert_eq!(
++        deposit["outputs"],
++        serde_json::json!([{"name": "", "type": "uint256"}])
++    );
++}
+diff --git a/crates/fe/tests/differential_deposit/gas_report.snap b/crates/fe/tests/differential_deposit/gas_report.snap
+index e5f2e459b..336e6fe5a 100644
+--- a/crates/fe/tests/differential_deposit/gas_report.snap
++++ b/crates/fe/tests/differential_deposit/gas_report.snap
+@@ -5,13 +5,13 @@ expression: report
+ bytecode size
+ path         fe-O2        sol     sol-IR   fe vs sol-IR
+ -----------------------------------------------------------
+-init          2489       4819       3082  -593 (-19.2%)
+-runtime       2407       4445       2844  -437 (-15.4%)
++init          2613       4819       3082  -469 (-15.2%)
++runtime       2531       4445       2844  -313 (-11.0%)
+ 
+ deployment gas
+-path        fe-O2        sol     sol-IR     fe vs sol-IR
+-------------------------------------------------------------
+-deploy    1274476    1738847    1379411  -104935 (-7.6%)
++path        fe-O2        sol     sol-IR    fe vs sol-IR
++-----------------------------------------------------------
++deploy    1301293    1738847    1379411  -78118 (-5.7%)
+ 
+ call gas
+ path                            fe-O2        sol     sol-IR    fe vs sol-IR
+@@ -21,13 +21,13 @@ supportsInterface(deposit)      21600      21641      21600      +0 (+0.0%)
+ supportsInterface(unknown)      21600      21641      21600      +0 (+0.0%)
+ get_deposit_root(empty)        102788     117558     109178   -6390 (-5.9%)
+ get_deposit_count(empty)        23607      24510      24099    -492 (-2.0%)
+-deposit#0                       79772      84626      81089   -1317 (-1.6%)
++deposit#0                       80133      84626      81089    -956 (-1.2%)
+ get_deposit_root(after#0)      102796     117570     109174   -6378 (-5.8%)
+ get_deposit_count(after#0)      23607      24510      24099    -492 (-2.0%)
+-deposit#1                       65136      70411      66629   -1493 (-2.2%)
++deposit#1                       65497      70411      66629   -1132 (-1.7%)
+ get_deposit_root(after#1)      102796     117570     109174   -6378 (-5.8%)
+ get_deposit_count(after#1)      23607      24510      24099    -492 (-2.0%)
+-deposit#2                       45560      50414      46877   -1317 (-2.8%)
++deposit#2                       45921      50414      46877    -956 (-2.0%)
+ get_deposit_root(after#2)      102804     117582     109170   -6366 (-5.8%)
+ get_deposit_count(after#2)      23607      24510      24099    -492 (-2.0%)
+-TOTAL                          760880     838656     792487  -31607 (-4.0%)
++TOTAL                          761963     838656     792487  -30524 (-3.9%)
+diff --git a/crates/fe/tests/fixtures/fe_test/abi_unpadded_dynamic_payload.fe b/crates/fe/tests/fixtures/fe_test/abi_unpadded_dynamic_payload.fe
+new file mode 100644
+index 000000000..f977fe9c0
+--- /dev/null
++++ b/crates/fe/tests/fixtures/fe_test/abi_unpadded_dynamic_payload.fe
+@@ -0,0 +1,177 @@
++use core::abi::{Abi, AbiDecoder, AbiSize, ByteInput, Decode, Encode, store_word}
++use core::ptr::{self, MemSpan}
++use std::abi::{Sol, Bytes, DynString, DynArray}
++
++fn input(_ size: u256) -> MemSpan {
++    let p = ptr::alloc_bytes(96)
++    store_word(ptr: p, value: 33)
++    store_word(ptr: ptr::offset_bytes(p, 32), value: 0x1111111111111111111111111111111111111111111111111111111111111111)
++    store_word(ptr: ptr::offset_bytes(p, 64), value: 0x22ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff)
++    MemSpan::from_raw_parts(ptr: p, len: size)
++}
++fn check(_ bytes: Bytes) {
++    assert!(bytes.len() == 33)
++    assert!(bytes.encoded_size() == 96)
++    assert!(bytes.byte_at(32) == 0x22)
++    assert!(bytes.encoded_span().word_at(64) == (0x22 as u256) << 248)
++}
++#[test]
++fn unpadded_bytes_all_decode_paths() {
++    let data = input(65)
++    check(<Bytes as Decode<Sol>>::decode_from(data, 0))
++    check(<Bytes as Decode<Sol>>::decode_from_bounded(input(96), 0, 65))
++    check(<Bytes as Decode<Sol>>::decode_from_prechecked_head(data, 0, 65))
++    let mut d = Sol::decoder_with_base(data, 0)
++    check(<Bytes as Decode<Sol>>::decode_payload(mut d))
++}
++#[test]
++fn dirty_padding_is_cleared() {
++    check(<Bytes as Decode<Sol>>::decode_from(input(96), 0))
++}
++#[test]
++fn unpadded_strings() {
++    let data = input(65)
++    let text = <DynString as Decode<Sol>>::decode_from(data, 0)
++    assert!(text.len() == 33)
++    assert!(text.encoded_span().word_at(64) == (0x22 as u256) << 248)
++    let p = ptr::alloc_bytes(64)
++    store_word(ptr: p, value: 1)
++    store_word(ptr: ptr::offset_bytes(p, 32), value: (0x61 as u256) << 248)
++    let short = MemSpan::from_raw_parts(ptr: p, len: 33)
++    assert!(<String<1> as Decode<Sol>>::decode_from(short, 0) == "a")
++}
++fn array_input(_ size: u256) -> MemSpan {
++    let p = ptr::alloc_bytes(128)
++    store_word(ptr: p, value: 1)
++    store_word(ptr: ptr::offset_bytes(p, 32), value: 32)
++    store_word(ptr: ptr::offset_bytes(p, 64), value: 1)
++    store_word(ptr: ptr::offset_bytes(p, 96), value: 0xaaffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff)
++    MemSpan::from_raw_parts(ptr: p, len: size)
++}
++#[test]
++fn unpadded_nested_bytes() {
++    let array = <DynArray<Bytes> as Decode<Sol>>::decode_from(array_input(97), 0)
++    assert!(array.len() == 1)
++    assert!(array.encoded_size() == 128)
++    assert!(array.encoded_span().word_at(96) == (0xaa as u256) << 248)
++    let leaf = <Bytes as Decode<Sol>>::decode_from(array.encoded_span(), 64)
++    assert!(leaf.byte_at(0) == 0xaa)
++    assert!(leaf.encoded_span().word_at(32) == (0xaa as u256) << 248)
++}
++#[test(should_revert)]
++fn missing_actual_bytes_rejected() {
++    let _ = <Bytes as Decode<Sol>>::decode_from(input(64), 0)
++}
++#[test(should_revert)]
++fn missing_nested_bytes_rejected() {
++    let _ = <DynArray<Bytes> as Decode<Sol>>::decode_from(array_input(96), 0)
++}
++#[test]
++fn aligned_and_empty_bytes() {
++    let p = ptr::alloc_bytes(64)
++    store_word(ptr: p, value: 32)
++    store_word(ptr: ptr::offset_bytes(p, 32), value: 123)
++    let data = MemSpan::from_raw_parts(ptr: p, len: 64)
++    let bytes = <Bytes as Decode<Sol>>::decode_from(data, 0)
++    assert!(bytes.len() == 32)
++    assert!(bytes.encoded_span().word_at(32) == 123)
++    store_word(ptr: p, value: 0)
++    let empty = <Bytes as Decode<Sol>>::decode_from(MemSpan::from_raw_parts(ptr: p, len: 32), 0)
++    assert!(empty.len() == 0)
++    assert!(empty.encoded_size() == 32)
++}
++#[test]
++fn canonical_array_keeps_full_span() {
++    let array = <DynArray<Bytes> as Decode<Sol>>::decode_from(array_input(128), 0)
++    assert!(array.encoded_size() == 128)
++}
++#[test(should_revert)]
++fn missing_length_word_rejected() {
++    let _ = <Bytes as Decode<Sol>>::decode_from(input(31), 0)
++}
++#[test(should_revert)]
++fn overflowing_length_rejected() {
++    let p = ptr::alloc_bytes(32)
++    store_word(ptr: p, value: 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff)
++    let _ = <Bytes as Decode<Sol>>::decode_from(MemSpan::from_raw_parts(ptr: p, len: 32), 0)
++}
++
++fn check_array_reencoding(_ array: own DynArray<Bytes>) {
++    assert!(array.encoded_size() == 128)
++    assert!(array.encoded_span().word_at(96) == (0xaa as u256) << 248)
++    let pair = (array, Bytes::from_word_prefix(word: 0, len: 1))
++    let size = pair.payload_size()
++    assert!(size == 256)
++    let output = ptr::alloc_bytes(size)
++    <(DynArray<Bytes>, Bytes) as Encode<Sol>>::encode(pair, output)
++    let encoded = MemSpan::from_raw_parts(ptr: output, len: size)
++    assert!(encoded.word_at(0) == 64)
++    assert!(encoded.word_at(32) == 192)
++    assert!(encoded.word_at(160) == (0xaa as u256) << 248)
++    assert!(encoded.word_at(192) == 1)
++    let decoded = <(DynArray<Bytes>, Bytes) as Decode<Sol>>::decode_from(encoded, 0)
++    assert!(decoded.0.len() == 1)
++    assert!(decoded.1.len() == 1)
++    assert!(decoded.1.byte_at(0) == 0)
++}
++#[test]
++fn unpadded_array_all_decode_paths_reencode_aligned() {
++    check_array_reencoding(<DynArray<Bytes> as Decode<Sol>>::decode_from(array_input(97), 0))
++    check_array_reencoding(<DynArray<Bytes> as Decode<Sol>>::decode_from_bounded(array_input(128), 0, 97))
++    check_array_reencoding(<DynArray<Bytes> as Decode<Sol>>::decode_from_prechecked_head(array_input(128), 0, 97))
++    let mut d = Sol::decoder_with_base(array_input(97), 0)
++    check_array_reencoding(<DynArray<Bytes> as Decode<Sol>>::decode_payload(mut d))
++}
++
++// Enforce the input extent even on an EVM, where an out-of-range MLOAD
++// would otherwise silently read adjacent memory instead of trapping.
++struct BoundedInput { span: MemSpan }
++impl Copy for BoundedInput {}
++impl ByteInput for BoundedInput {
++    fn len(self) -> u256 { self.span.len() }
++    fn word_at(self, _ offset: u256) -> u256 {
++        assert!(offset <= self.len() && 32 <= self.len() - offset)
++        self.span.word_at(offset)
++    }
++    fn byte_at(self, _ offset: u256) -> u8 {
++        assert!(offset < self.len())
++        *ptr::offset_bytes(self.span.ptr(), offset)
++    }
++    fn copy_to_memory(self, dest: *u8, src_offset: u256, len: u256) {
++        self.span.copy_to_memory(dest: dest, src_offset: src_offset, len: len)
++    }
++}
++#[test]
++fn short_string_all_decode_paths_respect_input_extent() {
++    let p = ptr::alloc_bytes(33)
++    store_word(ptr: p, value: 1)
++    *ptr::offset_bytes(p, 32) = 0x61
++    let data = BoundedInput { span: MemSpan::from_raw_parts(ptr: p, len: 33) }
++    assert!(<String<1> as Decode<Sol>>::decode_from(data, 0) == "a")
++    assert!(<String<1> as Decode<Sol>>::decode_from_bounded(data, 0, 33) == "a")
++    assert!(<String<1> as Decode<Sol>>::decode_from_prechecked_head(data, 0, 33) == "a")
++    let mut d = Sol::decoder_with_base(data, 0)
++    assert!(<String<1> as Decode<Sol>>::decode_payload(mut d) == "a")
++}
++
++#[test]
++fn partially_padded_array_all_decode_paths_clear_padding() {
++    check_array_reencoding(<DynArray<Bytes> as Decode<Sol>>::decode_from(array_input(110), 0))
++    check_array_reencoding(<DynArray<Bytes> as Decode<Sol>>::decode_from_bounded(array_input(128), 0, 110))
++    check_array_reencoding(<DynArray<Bytes> as Decode<Sol>>::decode_from_prechecked_head(array_input(128), 0, 110))
++    let mut d = Sol::decoder_with_base(array_input(110), 0)
++    check_array_reencoding(<DynArray<Bytes> as Decode<Sol>>::decode_payload(mut d))
++    check_array_reencoding(<DynArray<Bytes> as Decode<Sol>>::decode_from(array_input(128), 0))
++}
++
++#[test]
++fn deeply_nested_array_clears_partial_padding() {
++    let p = ptr::alloc_bytes(192)
++    store_word(ptr: p, value: 1)
++    store_word(ptr: ptr::offset_bytes(p, 32), value: 32)
++    array_input(128).copy_to_memory(dest: ptr::offset_bytes(p, 64), src_offset: 0, len: 128)
++    let data = MemSpan::from_raw_parts(ptr: p, len: 174)
++    let array = <DynArray<DynArray<Bytes>> as Decode<Sol>>::decode_from(data, 0)
++    assert!(array.encoded_size() == 192)
++    assert!(array.encoded_span().word_at(160) == (0xaa as u256) << 248)
++}
+diff --git a/crates/fe/tests/fixtures/fe_test/composed_abi_decoder.fe b/crates/fe/tests/fixtures/fe_test/composed_abi_decoder.fe
+new file mode 100644
+index 000000000..41bff7e08
+--- /dev/null
++++ b/crates/fe/tests/fixtures/fe_test/composed_abi_decoder.fe
+@@ -0,0 +1,77 @@
++use core::abi::{AbiSize, AbiSpan, AbiDecoder, ByteInput, Decode, Encode}
++use std::abi::{Sol, sol}
++use std::evm::Address
++pub struct Pair { pub a: Address, pub b: Address }
++impl Copy for Pair {}
++impl AbiSize for Pair {
++    const HEAD_SIZE: u256 = 64
++    const IS_DYNAMIC: bool = false
++}
++impl AbiSpan<Sol> for Pair {
++    fn payload_end<I: ByteInput>(_: I, base: u256, pos: u256) -> u256 {
++        pos + 64
++    }
++}
++impl Decode<Sol> for Pair {
++    fn decode_payload<D: AbiDecoder<Sol>>(_ d: mut D) -> Self {
++        let a = <Address as Decode<Sol>>::decode_payload(mut d)
++        let b = <Address as Decode<Sol>>::decode_payload(mut d)
++        Self { a, b }
++    }
++}
++impl Encode<Sol> for Pair {
++    fn encode(own self, _ ptr: *u8) {
++        <(Address, Address) as Encode<Sol>>::encode((self.a, self.b), ptr)
++    }
++}
++msg PairMsg {
++    #[selector = 0x11223344]
++    Echo { pair: Pair } -> Pair,
++}
++pub contract PairProbe {
++    recv PairMsg {
++        Echo { pair } -> Pair {
++            pair
++        }
++    }
++}
++
++use core::ptr::{self, MemBuffer}
++use std::evm::{Evm, RawMem, Call}
++fn check_pair(_ a: u256, _ b: u256, _ valid: bool) uses (evm: mut Evm) {
++    let receiver = evm.create2<PairProbe>(value: 0, args: (), salt: 0)
++    assert!(receiver.inner != 0)
++    let data = MemBuffer::alloc(68)
++    evm.mstore(addr: data.ptr(), value: (0x11223344 as u256) << 224)
++    evm.mstore(addr: ptr::offset_bytes(data.ptr(), 4), value: a)
++    evm.mstore(addr: ptr::offset_bytes(data.ptr(), 36), value: b)
++    let mut ret = MemBuffer::alloc(64)
++    let outcome = evm
++        .raw_call(
++            addr: receiver,
++            gas: 1000000,
++            value: 0,
++            args: data.span(),
++            ret: mut ret,
++        )
++    assert!(outcome.success() == valid)
++    if valid {
++        assert!(outcome.returndata_len() == 64)
++        assert!(evm.mload(ret.ptr()) == a)
++        assert!(evm.mload(ptr::offset_bytes(ret.ptr(), 32)) == b)
++    } else {
++        assert!(outcome.returndata_len() == 0)
++    }
++}
++#[test]
++fn composed_addresses_roundtrip() uses (evm: mut Evm) {
++    check_pair(0x1234, ((1 as u256) << 160) - 1, true)
++}
++#[test]
++fn composed_first_address_rejects_noncanonical_word() uses (evm: mut Evm) {
++    check_pair((1 as u256) << 160, 0, false)
++}
++#[test]
++fn composed_second_address_rejects_noncanonical_word() uses (evm: mut Evm) {
++    check_pair(0, (1 as u256) << 160, false)
++}
+diff --git a/crates/fe/tests/fixtures/fe_test/payable_return.fe b/crates/fe/tests/fixtures/fe_test/payable_return.fe
+new file mode 100644
+index 000000000..52a21347b
+--- /dev/null
++++ b/crates/fe/tests/fixtures/fe_test/payable_return.fe
+@@ -0,0 +1,58 @@
++use std::evm::{Ctx, Evm}
++
++msg PayableReturnMsg {
++    #[selector = sol("deposit()")]
++    Deposit -> u256,
++    #[selector = sol("pair(uint256)")]
++    Pair { value: u256 } -> (u256, u256),
++    #[selector = sol("label()")]
++    Label -> String<7>,
++}
++
++pub contract PayableReturnBox uses (ctx: Ctx) {
++    recv PayableReturnMsg {
++        #[payable]
++        Deposit -> u256 uses ctx { ctx.value() }
++
++        #[payable]
++        Pair { value } -> (u256, u256) uses ctx { (value, ctx.value()) }
++
++        #[payable]
++        Label -> String<7> { "deposit" }
++    }
++}
++
++#[test]
++fn test_payable_scalar_zero_value() uses (evm: mut Evm) {
++    let addr = evm.create2<PayableReturnBox>(value: 0, args: (), salt: 0)
++    let received = evm.call(addr, gas: 100000, value: 0, message: PayableReturnMsg::Deposit {})
++    assert!(received == 0)
++}
++
++#[test(balance = 1000)]
++fn test_payable_scalar_with_value() uses (evm: mut Evm) {
++    let addr = evm.create2<PayableReturnBox>(value: 0, args: (), salt: 0)
++    let received = evm.call(addr, gas: 100000, value: 123, message: PayableReturnMsg::Deposit {})
++    assert!(received == 123)
++    assert!(evm.balance(addr) == 123)
++}
++
++#[test(balance = 1000)]
++fn test_payable_tuple_with_value() uses (evm: mut Evm) {
++    let addr = evm.create2<PayableReturnBox>(value: 0, args: (), salt: 0)
++    let (value, received) = evm.call(
++        addr, gas: 100000, value: 456, message: PayableReturnMsg::Pair { value: 42 },
++    )
++    assert!(value == 42)
++    assert!(received == 456)
++    assert!(evm.balance(addr) == 456)
++}
++
++#[test(balance = 1000)]
++fn test_payable_dynamic_return() uses (evm: mut Evm) {
++    let addr = evm.create2<PayableReturnBox>(value: 0, args: (), salt: 0)
++    let label = evm.call(addr, gas: 100000, value: 7, message: PayableReturnMsg::Label {})
++    let expected: String<7> = "deposit"
++    assert!(label == expected)
++    assert!(evm.balance(addr) == 7)
++}
+diff --git a/crates/fe/tests/fixtures/fe_test/precompile_wrappers.fe b/crates/fe/tests/fixtures/fe_test/precompile_wrappers.fe
+index 9011be767..2c21e1187 100644
+--- a/crates/fe/tests/fixtures/fe_test/precompile_wrappers.fe
++++ b/crates/fe/tests/fixtures/fe_test/precompile_wrappers.fe
+@@ -221,10 +221,10 @@ uses (evm: mut Evm)
+ 
+ #[test]
+ fn test_raw_staticcall_copies_to_output_buffer()
+-uses (evm: mut Evm)
++uses (evm: Evm)
+ {
+     let ptr = ptr::alloc_bytes(64)
+-    zero_memory(ptr, len: 64)
++    ptr::zero_bytes(ptr, 64)
+     let mut ret = MemBuffer::with_capacity(32)
+     let outcome = evm.raw_staticcall(
+         addr: Address { inner: 4 },
+diff --git a/crates/fe/tests/fixtures/fe_test/record_literal_implicit_borrow.fe b/crates/fe/tests/fixtures/fe_test/record_literal_implicit_borrow.fe
+new file mode 100644
+index 000000000..69e86385d
+--- /dev/null
++++ b/crates/fe/tests/fixtures/fe_test/record_literal_implicit_borrow.fe
+@@ -0,0 +1,32 @@
++use core::ops::Eq
++use std::evm::Address
++
++#[test]
++fn address_equality_borrows_record_literal() {
++    let zero = Address { inner: 0 }
++    let other = Address { inner: 17 }
++    assert!(zero == (Address { inner: 0 }))
++    assert!(other != (Address { inner: 0 }))
++    assert!((Address { inner: 17 }) == other)
++}
++
++struct Pair { first: u256, second: u256 }
++impl Pair {
++    fn difference(self) -> u256 { self.second - self.first }
++}
++enum Choice { Pair { first: u256, second: u256 } }
++impl Choice {
++    fn difference(self) -> u256 {
++        match self {
++            Self::Pair { first, second } => second - first,
++        }
++    }
++}
++#[test]
++fn borrowed_record_literal_preserves_field_order() {
++    assert!(Pair { second: 23, first: 19 }.difference() == 4)
++}
++#[test]
++fn borrowed_record_variant_preserves_field_order() {
++    assert!(Choice::Pair { second: 23, first: 19 }.difference() == 4)
++}
+diff --git a/crates/hir/src/analysis/semantic/borrowck/inventory.rs b/crates/hir/src/analysis/semantic/borrowck/inventory.rs
+index 1c864f562..6dbffba74 100644
+--- a/crates/hir/src/analysis/semantic/borrowck/inventory.rs
++++ b/crates/hir/src/analysis/semantic/borrowck/inventory.rs
+@@ -36,6 +36,7 @@ use crate::{
+             },
+         },
+         ty::{
++            ProviderAddressSpace,
+             corelib::{is_std_evm_effect_method, is_std_evm_effect_trait},
+             ty_check::BodyOwner,
+             ty_def::{BorrowKind, TyId},
+@@ -584,7 +585,12 @@ impl<'db> InputBuilder<'db> {
+         let value = self
+             .values
+             .from_shape(shape, scope, |semantics, path, scope| {
+-                let contract = match referent_contract(db, instance, semantics) {
++                let contract = match match &origin {
++                    InputOrigin::Parameter(param) => {
++                        input_referent_contract(db, instance, semantics, *param)
++                    }
++                    InputOrigin::Referent(_) => referent_contract(db, instance, semantics),
++                } {
+                     Ok(contract) => contract,
+                     Err(error) => {
+                         failure = Some(error);
+@@ -687,6 +693,25 @@ impl<'db> InputBuilder<'db> {
+     }
+ }
+ 
++/// Ordinary mutable arguments carry the memory transport precondition checked
++/// at each call. Receivers and effects retain their provider's address space.
++pub(super) fn input_referent_contract<'db>(
++    db: &'db dyn HirAnalysisDb,
++    instance: SemanticInstance<'db>,
++    semantics: CapabilitySemantics<'db>,
++    param: u32,
++) -> Result<ReferentContract<'db>, ShapeError<'db>> {
++    let mut contract = referent_contract(db, instance, semantics)?;
++    if semantics.class == CapabilityClass::Borrow(BorrowKind::Mut)
++        && let BodyOwner::Func(func) = instance.key(db).owner(db)
++        && (param as usize) < func.params(db).count()
++        && !(param == 0 && func.receiver_ty(db).is_some())
++    {
++        contract.address_space = HandleAddressSpace::Known(ProviderAddressSpace::Memory);
++    }
++    Ok(contract)
++}
++
+ pub(super) fn referent_contract<'db>(
+     db: &'db dyn HirAnalysisDb,
+     instance: SemanticInstance<'db>,
+diff --git a/crates/hir/src/analysis/semantic/borrowck/summary.rs b/crates/hir/src/analysis/semantic/borrowck/summary.rs
+index e3383b799..eae713332 100644
+--- a/crates/hir/src/analysis/semantic/borrowck/summary.rs
++++ b/crates/hir/src/analysis/semantic/borrowck/summary.rs
+@@ -1092,8 +1092,13 @@ impl<'db> Borrowck<'db> {
+                         }
+                     }
+                     .ok_or_else(|| invalid("input source does not select a capability"))?;
+-                    let contract = referent_contract(db, self.instance, semantics)
+-                        .map_err(|_| invalid("input referent contract is unresolved"))?;
++                    let contract = super::inventory::input_referent_contract(
++                        db,
++                        self.instance,
++                        semantics,
++                        input.param(),
++                    )
++                    .map_err(|_| invalid("input referent contract is unresolved"))?;
+                     (contract.ty, semantics.class, contract.address_space)
+                 }
+             }
+diff --git a/crates/hir/src/analysis/semantic/lower/body.rs b/crates/hir/src/analysis/semantic/lower/body.rs
+index f36bf7727..1ef05fdee 100644
+--- a/crates/hir/src/analysis/semantic/lower/body.rs
++++ b/crates/hir/src/analysis/semantic/lower/body.rs
+@@ -960,6 +960,10 @@ impl<'a, 'db> SmirLowerCtxt<'a, 'db> {
+         _: Partial<PathId<'db>>,
+         fields: &[HirField<'db>],
+     ) -> SValueId {
++        // An implicit borrow applies to the constructed value, not to the
++        // aggregate representation used for field lookup and initialization.
++        let ty = self.expr_ty(expr);
++        let ty = ty.as_view(self.db).unwrap_or(ty);
+         match self
+             .typed_body
+             .record_init_lowering(expr)
+@@ -978,9 +982,9 @@ impl<'a, 'db> SmirLowerCtxt<'a, 'db> {
+                 }
+                 self.emit_expr_with_origin(
+                     SemOrigin::Expr(expr),
+-                    self.expr_ty(expr),
++                    ty,
+                     SExpr::EnumMake {
+-                        enum_ty: self.expr_ty(expr),
++                        enum_ty: ty,
+                         variant: VariantIndex(variant.variant.idx),
+                         fields: values
+                             .into_iter()
+@@ -990,7 +994,6 @@ impl<'a, 'db> SmirLowerCtxt<'a, 'db> {
+                 )
+             }
+             RecordInitLowering::Struct => {
+-                let ty = self.expr_ty(expr);
+                 let mut values = vec![None; fields.len()];
+                 for field in fields {
+                     let Some(label) = field.label_eagerly(self.db, self.body) else {
+diff --git a/crates/hir/src/analysis/ty/ty_check/mod.rs b/crates/hir/src/analysis/ty/ty_check/mod.rs
+index 3b114c50d..80ede6e3f 100644
+--- a/crates/hir/src/analysis/ty/ty_check/mod.rs
++++ b/crates/hir/src/analysis/ty/ty_check/mod.rs
+@@ -3915,7 +3915,10 @@ impl<'db> TypedBody<'db> {
+                 .forwarded_return_param_sources_from_expr(db, body, *inner, seen, visited_locals),
+             Expr::RecordInit(_, fields) => {
+                 let (record_like, variant) = match self.record_init_lowering(expr)? {
+-                    RecordInitLowering::Struct => (RecordLike::Type(self.expr_ty(db, expr)), None),
++                    RecordInitLowering::Struct => {
++                        let ty = self.expr_ty(db, expr);
++                        (RecordLike::Type(ty.as_view(db).unwrap_or(ty)), None)
++                    }
+                     RecordInitLowering::EnumVariant(variant) => {
+                         (RecordLike::from_variant(variant), Some(variant.variant.idx))
+                     }
+diff --git a/crates/mir/src/verify/package.rs b/crates/mir/src/verify/package.rs
+index 70f9eac05..19928d813 100644
+--- a/crates/mir/src/verify/package.rs
++++ b/crates/mir/src/verify/package.rs
+@@ -200,10 +200,14 @@ fn verify_synthetic_function<'db>(
+             RuntimeSyntheticSpec::ContractInitRoot { .. } => {
+                 verify_has_terminator(body, |term| matches!(term, RTerminator::ReturnData { .. }))
+             }
++            // Value-returning ABI wrappers terminate through ContractHost::return_value.
++            // verify_runtime_body has already checked that terminal calls target a
++            // non-returning callee with a matching signature.
+             RuntimeSyntheticSpec::ContractRecvAbi { .. } => verify_has_terminator(body, |term| {
+                 matches!(
+                     term,
+                     RTerminator::ReturnData { .. }
++                        | RTerminator::TerminalCall { .. }
+                         | RTerminator::Revert { .. }
+                         | RTerminator::RevertEmpty
+                 )
+diff --git a/crates/uitest/fixtures/ty_check/error_unsupported_field_type.snap b/crates/uitest/fixtures/ty_check/error_unsupported_field_type.snap
+index 25f434f2b..fb6c71efc 100644
+--- a/crates/uitest/fixtures/ty_check/error_unsupported_field_type.snap
++++ b/crates/uitest/fixtures/ty_check/error_unsupported_field_type.snap
+@@ -12,9 +12,9 @@ error[6-0003]: trait bound is not satisfied
+   6 │ │ }
+     │ ╰─^ `StorageMap<Address, u256, 0>` doesn't implement `AbiSize`
+     │
+-    ┌─ src/abi.fe:290:32
++    ┌─ src/abi.fe:292:32
+     │
+-290 │ pub fn dynamic_payload_size<T: AbiSize>(_ value: T) -> u256 {
++292 │ pub fn dynamic_payload_size<T: AbiSize>(_ value: T) -> u256 {
+     │                                ------- required by this bound on `dynamic_payload_size`
+ 
+ error[6-0003]: trait bound is not satisfied
+@@ -26,9 +26,9 @@ error[6-0003]: trait bound is not satisfied
+   6 │ │ }
+     │ ╰─^ `StorageMap<Address, u256, 0>` doesn't implement `Encode<Sol>`
+     │
+-    ┌─ src/abi.fe:389:14
++    ┌─ src/abi.fe:391:14
+     │
+-389 │     where T: Encode<A> + AbiSize
++391 │     where T: Encode<A> + AbiSize
+     │              --------- required by this bound on `encode_field_at`
+ 
+ error[6-0003]: trait bound is not satisfied
+@@ -40,7 +40,7 @@ error[6-0003]: trait bound is not satisfied
+   6 │ │ }
+     │ ╰─^ `StorageMap<Address, u256, 0>` doesn't implement `AbiSize`
+     │
+-    ┌─ src/abi.fe:389:26
++    ┌─ src/abi.fe:391:26
+     │
+-389 │     where T: Encode<A> + AbiSize
++391 │     where T: Encode<A> + AbiSize
+     │                          ------- required by this bound on `encode_field_at`
+diff --git a/ingots/core/src/abi.fe b/ingots/core/src/abi.fe
+index 454502812..2e43d8203 100644
+--- a/ingots/core/src/abi.fe
++++ b/ingots/core/src/abi.fe
+@@ -167,6 +167,8 @@ pub trait AbiSize {
+     }
+ }
+ 
++/// End of the required input bytes; byte and string tails exclude trailing padding.
++/// Owned dynamic arrays round this extent up and initialize their final padding.
+ pub trait AbiSpan<A: Abi>: AbiSize {
+     fn payload_end<I: ByteInput>(_: I, base: u256, pos: u256) -> u256
+ 
+@@ -477,11 +479,13 @@ fn round_up_words(_ len: u256) -> u256 {
+ #[inline(always)]
+ fn checked_dynamic_payload_after_head<A: Abi, I: ByteInput>(_ input: I, _ pos: u256, _ input_len: u256) -> (u256, u256) {
+     let data_len = input.word_at(pos)
+-    let payload_size = 32 + round_up_words(data_len)
+-    let payload_end = pos + payload_size
+-    if payload_end < pos || payload_end > input_len {
++    // Solidity requires the actual bytes, but accepts omitted trailing padding.
++    checked_frame_end<A>(pos + 32, data_len, input_len)
++    let rounded = round_up_words(data_len)
++    if rounded < data_len || rounded > 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffdf {
+         A::decode_error()
+     }
++    let payload_size = 32 + rounded
+ 
+     (data_len, payload_size)
+ }
+@@ -508,13 +512,28 @@ fn copy_dynamic_payload_from<A: Abi, I: ByteInput>(_ input: I, _ pos: u256) -> (
+     copy_dynamic_payload_from_with_input_len<A, I>(input, pos, input_len)
+ }
+ 
++// Copy only validated payload bytes and clear the final allocated padding word.
++// In particular, a bounded memory input may have unrelated data after its end.
++fn copy_dynamic_bytes<I: ByteInput>(_ input: I, _ pos: u256, _ dest: *u8, _ data_len: u256, _ size: u256) {
++    copy_padded_payload(input, pos, dest, 32 + data_len, size)
++}
++
++fn copy_padded_payload<I: ByteInput>(_ input: I, _ pos: u256, _ dest: *u8, _ actual_size: u256, _ size: u256) {
++    if actual_size % 32 == 0 {
++        input.copy_to_memory_unchecked_aligned(dest: dest, src_offset: pos, len: actual_size)
++    } else {
++        store_word(ptr: ptr_offset(dest, size - 32), value: 0)
++        input.copy_to_memory(dest: dest, src_offset: pos, len: actual_size)
++    }
++}
++
+ fn copy_dynamic_payload_from_with_input_len<A: Abi, I: ByteInput>(_ input: I, _ pos: u256, _ input_len: u256) -> (*u8, u256, u256) {
+     let payload: (u256, u256) = checked_dynamic_payload_with_input_len<A, I>(input, pos, input_len)
+     let data_len = payload.0
+     let payload_size = payload.1
+     let data_ptr = A::alloc(payload_size)
+ 
+-    input.copy_to_memory_unchecked_aligned(dest: data_ptr, src_offset: pos, len: payload_size)
++    copy_dynamic_bytes(input, pos, data_ptr, data_len, payload_size)
+ 
+     (data_ptr, data_len, payload_size)
+ }
+@@ -547,8 +566,16 @@ fn decode_string_payload_after_head<A: Abi, I: ByteInput, const N: usize>(_ inpu
+     let packed = if data_len == 0 {
+         0
+     } else {
+-        let shift = if data_len >= 32 { 0 } else { (32 - data_len) * 8 }
+-        input.word_at(data_start) >> shift
++        if data_len == 32 {
++            input.word_at(data_start)
++        } else {
++            // The input may end immediately after the last string byte.
++            // Load from a full scratch word only after a bounded copy.
++            let scratch = A::alloc(32)
++            store_word(ptr: scratch, value: 0)
++            input.copy_to_memory(dest: scratch, src_offset: data_start, len: data_len)
++            mem_word_at(base: scratch, offset: 0) >> ((32 - data_len) * 8)
++        }
+     }
+ 
+     packed as String<N>
+@@ -1650,7 +1677,7 @@ impl<A: Abi, const N: usize> AbiSpan<A> for String<N> {
+     fn payload_end_with_input_len<I: ByteInput>(_ input: I, base: u256, pos: u256, input_len: u256) -> u256 {
+         let _ = base
+         let payload = checked_dynamic_payload_with_input_len<A, I>(input, pos, input_len)
+-        pos + payload.1
++        pos + 32 + payload.0
+     }
+ }
+ 
+@@ -1663,7 +1690,7 @@ impl<A: Abi> AbiSpan<A> for Bytes {
+     fn payload_end_with_input_len<I: ByteInput>(_ input: I, base: u256, pos: u256, input_len: u256) -> u256 {
+         let _ = base
+         let payload = checked_dynamic_payload_with_input_len<A, I>(input, pos, input_len)
+-        pos + payload.1
++        pos + 32 + payload.0
+     }
+ }
+ 
+@@ -1676,7 +1703,7 @@ impl<A: Abi> AbiSpan<A> for DynString {
+     fn payload_end_with_input_len<I: ByteInput>(_ input: I, base: u256, pos: u256, input_len: u256) -> u256 {
+         let _ = base
+         let payload = checked_dynamic_payload_with_input_len<A, I>(input, pos, input_len)
+-        pos + payload.1
++        pos + 32 + payload.0
+     }
+ }
+ 
+@@ -1841,7 +1868,7 @@ impl<A: Abi> Decode<A> for DynString {
+         let payload: (u256, u256) = checked_dynamic_payload_with_input_len<A, D::Input>(input, payload_at, input.len())
+         let data_ptr = d.alloc(payload.1)
+ 
+-        input.copy_to_memory_unchecked_aligned(dest: data_ptr, src_offset: payload_at, len: payload.1)
++        copy_dynamic_bytes(input, payload_at, data_ptr, payload.0, payload.1)
+ 
+         DynString::from_validated_abi_tail(
+             data: data_ptr,
+@@ -1870,7 +1897,7 @@ impl<A: Abi> Decode<A> for DynString {
+         let payload: (u256, u256) = checked_dynamic_payload_after_head<A, I>(input, pos, input_len)
+         let data_ptr = A::alloc(payload.1)
+ 
+-        input.copy_to_memory_unchecked_aligned(dest: data_ptr, src_offset: pos, len: payload.1)
++        copy_dynamic_bytes(input, pos, data_ptr, payload.0, payload.1)
+ 
+         DynString::from_validated_abi_tail(
+             data: data_ptr,
+@@ -2166,7 +2193,7 @@ impl<A: Abi> Decode<A> for Bytes {
+         let payload: (u256, u256) = checked_dynamic_payload_with_input_len<A, D::Input>(input, payload_at, input.len())
+         let data_ptr = d.alloc(payload.1)
+ 
+-        input.copy_to_memory_unchecked_aligned(dest: data_ptr, src_offset: payload_at, len: payload.1)
++        copy_dynamic_bytes(input, payload_at, data_ptr, payload.0, payload.1)
+ 
+         Bytes::from_validated_abi_tail(
+             data: data_ptr,
+@@ -2195,7 +2222,7 @@ impl<A: Abi> Decode<A> for Bytes {
+         let payload: (u256, u256) = checked_dynamic_payload_after_head<A, I>(input, pos, input_len)
+         let data_ptr = A::alloc(payload.1)
+ 
+-        input.copy_to_memory_unchecked_aligned(dest: data_ptr, src_offset: pos, len: payload.1)
++        copy_dynamic_bytes(input, pos, data_ptr, payload.0, payload.1)
+ 
+         Bytes::from_validated_abi_tail(
+             data: data_ptr,
+@@ -2282,6 +2309,14 @@ fn dyn_array_payload_end_with_input_len<A: Abi, T, I>(_ input: I, tail_at: u256,
+     max_u256(a: head_end, b: prev_end)
+ }
+ 
++// Owned tails must remain word-aligned when embedded before another field.
++fn checked_padded_size<A: Abi>(_ size: u256) -> u256 {
++    if size > 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0 {
++        A::decode_error()
++    }
++    round_up_words(size)
++}
++
+ impl<A: Abi, T> Decode<A> for DynArray<T>
+     where T: AbiSpan<A> + AbiSize
+ {
+@@ -2292,10 +2327,15 @@ impl<A: Abi, T> Decode<A> for DynArray<T>
+         checked_frame_end<A>(payload_at, Self::HEAD_SIZE, input_len)
+         let elem_count = input.word_at(payload_at)
+         let payload_end = dyn_array_payload_end_with_input_len<A, T, D::Input>(input, tail_at: payload_at, elem_count: elem_count, input_len: input_len)
+-        let payload_size = payload_end - payload_at
++        let actual_size = payload_end - payload_at
++        let payload_size = if T::IS_DYNAMIC { checked_padded_size<A>(actual_size) } else { actual_size }
+         let data_ptr = d.alloc(payload_size)
+ 
+-        input.copy_to_memory_unchecked_aligned(dest: data_ptr, src_offset: payload_at, len: payload_size)
++        if T::IS_DYNAMIC {
++            copy_padded_payload(input, payload_at, data_ptr, actual_size, payload_size)
++        } else {
++            input.copy_to_memory_unchecked_aligned(dest: data_ptr, src_offset: payload_at, len: payload_size)
++        }
+ 
+         DynArray::from_validated_abi_tail(
+             data: data_ptr,
+@@ -2319,10 +2359,15 @@ impl<A: Abi, T> Decode<A> for DynArray<T>
+         let elem_count = input.word_at(pos)
+         let payload_end = dyn_array_payload_end_with_input_len<A, T, I>(input, tail_at: pos, elem_count: elem_count, input_len: input_len)
+ 
+-        let payload_size = payload_end - pos
++        let actual_size = payload_end - pos
++        let payload_size = if T::IS_DYNAMIC { checked_padded_size<A>(actual_size) } else { actual_size }
+         let data_ptr = A::alloc(payload_size)
+ 
+-        input.copy_to_memory_unchecked_aligned(dest: data_ptr, src_offset: pos, len: payload_size)
++        if T::IS_DYNAMIC {
++            copy_padded_payload(input, pos, data_ptr, actual_size, payload_size)
++        } else {
++            input.copy_to_memory_unchecked_aligned(dest: data_ptr, src_offset: pos, len: payload_size)
++        }
+ 
+         DynArray::from_validated_abi_tail(
+             data: data_ptr,
+diff --git a/ingots/std/src/evm/effects.fe b/ingots/std/src/evm/effects.fe
+index 809d4f793..9087b3dd7 100644
+--- a/ingots/std/src/evm/effects.fe
++++ b/ingots/std/src/evm/effects.fe
+@@ -598,7 +598,7 @@ pub trait Call: EvmCapabilitySeal {
+     /// The output buffer receives at most its capacity; the outcome retains
+     /// the full returndata length.
+     fn raw_staticcall(
+-        mut self,
++        self,
+         addr: Address,
+         gas: u256,
+         args: MemSpan,
+diff --git a/newsfragments/+record-literal-borrow-panic.bugfix.md b/newsfragments/+record-literal-borrow-panic.bugfix.md
+new file mode 100644
+index 000000000..3f1febef6
+--- /dev/null
++++ b/newsfragments/+record-literal-borrow-panic.bugfix.md
+@@ -0,0 +1 @@
++Fix a compiler panic when implicitly borrowing a record literal, such as an Address literal used in an equality comparison.
+diff --git a/newsfragments/1575.bugfix.md b/newsfragments/1575.bugfix.md
+new file mode 100644
+index 000000000..0bb58bb03
+--- /dev/null
++++ b/newsfragments/1575.bugfix.md
+@@ -0,0 +1 @@
++Fix false borrow conflicts in composed ABI decoders by preserving the memory address-space contract of ordinary mutable arguments.
+diff --git a/newsfragments/1587.bugfix.md b/newsfragments/1587.bugfix.md
+new file mode 100644
+index 000000000..4d39fe579
+--- /dev/null
++++ b/newsfragments/1587.bugfix.md
+@@ -0,0 +1 @@
++Accept ABI dynamic byte and string payloads without trailing padding while preserving bounded reads and copies, zeroing owned padding, and keeping decoded arrays word-aligned for re-encoding.

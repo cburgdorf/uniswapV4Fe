@@ -1,0 +1,37 @@
+Parity artifacts: /tmp/fe-deployer-competition-test-o1
+Compiler: fe 26.3.0 (91d3e8215); sha256=fb65ef0e54fcfeb4875b987d2fa2e8bd7da020295670f7e940efe1476066f264
+Wrote /tmp/fe-deployer-competition-test-o1/fe/UniswapV4DeployerCompetition.bin
+Wrote /tmp/fe-deployer-competition-test-o1/fe/UniswapV4DeployerCompetition.runtime.bin
+Wrote /tmp/fe-deployer-competition-test-o1/fe/UniswapV4DeployerCompetition.abi.json
+Compiling 13 files with Solc 0.8.26
+Solc 0.8.26 finished in 1.19s
+Compiler run successful!
+
+Ran 7 tests for test/DeployerCompetitionParity.t.sol:DeployerCompetitionParityTest
+[PASS] testFuzz_constructor(bytes32,uint256,address,uint256) (runs: 100, μ: 2150699, ~: 2266964)
+[PASS] testFuzz_deploy(uint64,address,bool) (runs: 100, μ: 414713, ~: 414854)
+[PASS] testFuzz_sequences(uint96,uint8) (runs: 100, μ: 4411828, ~: 3987385)
+[PASS] testFuzz_updates(bytes32,address,uint16) (runs: 100, μ: 2936381, ~: 2918496)
+[FAIL: constructor status] test_create2FailuresAndEmptyRuntime() (gas: 1073717781)
+[FAIL: EvmError: OutOfGas] test_deadlinesAuthorizationAndDeployment() (gas: 1073720760)
+[PASS] test_nonpayableAndMalformedCalls() (gas: 10514355)
+Suite result: FAILED. 5 passed; 2 failed; 0 skipped; finished in 163.46ms (358.52ms CPU time)
+
+Ran 1 test suite in 164.06ms (163.46ms CPU time): 5 tests passed, 2 failed, 0 skipped (7 total tests)
+
+Failing tests:
+Encountered 2 failing tests in test/DeployerCompetitionParity.t.sol:DeployerCompetitionParityTest
+[FAIL: constructor status] test_create2FailuresAndEmptyRuntime() (gas: 1073717781)
+[FAIL: EvmError: OutOfGas] test_deadlinesAuthorizationAndDeployment() (gas: 1073720760)
+
+Encountered a total of 2 failing tests, 5 tests succeeded
+
+Tip: Run `forge test --rerun` to retry only the 2 failed tests
+Traceback (most recent call last):
+  File "/home/cburgdorf/Documents/hacking/fe/uniswap_v4_demo/tests/run_math_parity.py", line 487, in <module>
+    result.check_returncode()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/home/linuxbrew/.linuxbrew/Cellar/python@3.14/3.14.4/lib/python3.14/subprocess.py", line 509, in check_returncode
+    raise CalledProcessError(self.returncode, self.args, self.stdout,
+                             self.stderr)
+subprocess.CalledProcessError: Command '['forge', 'test', '--root', '/tmp/fe-deployer-competition-test-o1', '--fuzz-runs', '100', '-vv']' returned non-zero exit status 1.

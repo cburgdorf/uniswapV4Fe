@@ -1,0 +1,21 @@
+Parity artifacts: /tmp/fe-permissions-adapter-ready-o1
+Compiler: fe 26.3.0 (91d3e8215); sha256=fb65ef0e54fcfeb4875b987d2fa2e8bd7da020295670f7e940efe1476066f264
+Wrote /tmp/fe-permissions-adapter-ready-o1/fe/PermissionsAdapter.bin
+Wrote /tmp/fe-permissions-adapter-ready-o1/fe/PermissionsAdapter.runtime.bin
+Wrote /tmp/fe-permissions-adapter-ready-o1/fe/PermissionsAdapter.abi.json
+Compiling 41 files with Solc 0.8.26
+Solc 0.8.26 finished in 16.00ms
+Error: Compiler run failed:
+Error (2314): Expected ';' but got ')'
+   --> test/PermissionsAdapterParity.t.sol:118:127:
+    |
+118 |                 h=keccak256(abi.encode(h,vm.load(a,keccak256(abi.encode(accounts[j],keccak256(abi.encode(who,uint256(1)))))))));
+    |                                                                                                                               ^
+Traceback (most recent call last):
+  File "/home/cburgdorf/Documents/hacking/fe/uniswap_v4_demo/tests/run_math_parity.py", line 511, in <module>
+    result.check_returncode()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/home/linuxbrew/.linuxbrew/Cellar/python@3.14/3.14.4/lib/python3.14/subprocess.py", line 509, in check_returncode
+    raise CalledProcessError(self.returncode, self.args, self.stdout,
+                             self.stderr)
+subprocess.CalledProcessError: Command '['forge', 'test', '--root', '/tmp/fe-permissions-adapter-ready-o1', '--fuzz-runs', '100', '-vv']' returned non-zero exit status 1.

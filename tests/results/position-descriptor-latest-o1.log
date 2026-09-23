@@ -1,0 +1,22 @@
+Parity artifacts: /tmp/fe-position-descriptor-latest-o1
+Compiler: fe 26.3.0 (702686c98); sha256=f3aaead7171e522c76b07fba14d25b70997fe3251a952686b0ad9c918aebac44
+Wrote /tmp/fe-position-descriptor-latest-o1/fe/PositionDescriptor.bin
+Wrote /tmp/fe-position-descriptor-latest-o1/fe/PositionDescriptor.runtime.bin
+Wrote /tmp/fe-position-descriptor-latest-o1/fe/PositionDescriptor.abi.json
+Compiling 66 files with Solc 0.8.26
+Solc 0.8.26 finished in 2.17s
+Compiler run successful!
+
+Ran 8 tests for test/PositionDescriptorParity.t.sol:PositionDescriptorParityTest
+[PASS] testFuzz_configuration(address,bytes32,address,address,uint64) (runs: 10000, μ: 21425633, ~: 21433446)
+[PASS] testFuzz_externalReturns(bytes,bool,uint8) (runs: 10000, μ: 6180245, ~: 193530)
+[PASS] testFuzz_tokenURI(uint64,int24,bool,bool,uint24) (runs: 10000, μ: 12041828, ~: 12293746)
+[PASS] test_delegatecallUsesConstructorConfiguration() (gas: 13430118)
+[PASS] test_dispatchAndValueGuards() (gas: 1319610)
+[PASS] test_invalidIdAndReturnBoundaries() (gas: 16900341)
+[PASS] test_metadataAndTickBoundaries() (gas: 105727602)
+[PASS] test_priorityMatrixAndLabels() (gas: 620777612)
+Suite result: ok. 8 passed; 0 failed; 0 skipped; finished in 170.30s (269.46s CPU time)
+
+Ran 1 test suite in 170.30s (170.30s CPU time): 8 tests passed, 0 failed, 0 skipped (8 total tests)
+Verified protocol ABI: /tmp/fe-position-descriptor-latest-o1/fe/PositionDescriptor.protocol.abi.json

@@ -1,0 +1,58 @@
+diff --git a/foundry.toml b/foundry.toml
+index ef26ef24..97ea8e80 100644
+--- a/foundry.toml
++++ b/foundry.toml
+@@ -2,7 +2,8 @@
+ optimizer_runs = 44444444
+ via_ir = true
+ ffi = true
+-fs_permissions = [{ access = "read-write", path = ".forge-snapshots/"}, { access = "read", path = "./out"}, {access = "read", path = "./test/bin"}]
++fs_permissions = [{ access = "read-write", path = ".forge-snapshots/"}, { access = "read", path = "./out"}, {access = "read", path = "./test/bin"}, {access = "read", path = "./fe-artifacts"}]
++disable_code_size_limit = true
+ solc = "0.8.26"
+ evm_version = "cancun"
+ gas_limit = "300000000"
+diff --git a/test/NoDelegateCall.t.sol b/test/NoDelegateCall.t.sol
+index 624552a3..cf3bde72 100644
+--- a/test/NoDelegateCall.t.sol
++++ b/test/NoDelegateCall.t.sol
+@@ -13,7 +13,7 @@ import {Deployers} from "./utils/Deployers.sol";
+ contract TestDelegateCall is Test, Deployers {
+     // override to use ProxyPoolManager
+     function deployFreshManager() internal virtual override {
+-        IPoolManager delegateManager = new PoolManager(address(this));
++        IPoolManager delegateManager = deployPoolManager(address(this));
+         manager = new ProxyPoolManager(address(delegateManager));
+     }
+ 
+diff --git a/test/utils/Deployers.sol b/test/utils/Deployers.sol
+index c0ddadd0..c7db13b6 100644
+--- a/test/utils/Deployers.sol
++++ b/test/utils/Deployers.sol
+@@ -85,7 +85,25 @@ contract Deployers is Test {
+     }
+ 
+     function deployFreshManager() internal virtual {
+-        manager = new PoolManager(address(this));
++        manager = deployPoolManager(address(this));
++    }
++
++    /// @dev Fe port conformance: uses Fe creation bytecode from $FE_ARTIFACTS/<Contract>.bin when present.
++    function feCode(string memory name) internal returns (bytes memory code) {
++        string memory dir = vm.envOr("FE_ARTIFACTS", string(""));
++        if (bytes(dir).length == 0) return code;
++        string memory path = string.concat(dir, "/", name, ".bin");
++        if (vm.exists(path)) code = vm.parseBytes(vm.readFile(path));
++    }
++
++    function deployPoolManager(address initialOwner) internal returns (IPoolManager deployed) {
++        bytes memory code = feCode("PoolManager");
++        if (code.length == 0) return new PoolManager(initialOwner);
++        code = bytes.concat(code, abi.encode(initialOwner));
++        assembly ("memory-safe") {
++            deployed := create(0, add(code, 32), mload(code))
++        }
++        require(address(deployed) != address(0), "Fe PoolManager deployment failed");
+     }
+ 
+     function deployFreshManagerAndRouters() internal {

@@ -1,0 +1,16 @@
+Parity artifacts: /tmp/fe-permissioned-router-reference-o1
+Compiler: fe 26.3.0 (31e5b965e); sha256=e1a92b53c0a5859da469e9d8e4c9830ec1d335c5357202ae7469471ca2c320cd
+Wrote /tmp/fe-permissioned-router-reference-o1/fe/PermissionedRouterHarness.bin
+Wrote /tmp/fe-permissioned-router-reference-o1/fe/PermissionedRouterHarness.runtime.bin
+Wrote /tmp/fe-permissioned-router-reference-o1/fe/PermissionedRouterHarness.abi.json
+Traceback (most recent call last):
+  File "/home/cburgdorf/Documents/hacking/fe/uniswap_v4_demo/tests/run_math_parity.py", line 342, in <module>
+    'src/libraries/SlippageCheck.sol']
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/linuxbrew/.linuxbrew/Cellar/python@3.14/3.14.4/lib/python3.14/pathlib/__init__.py", line 777, in read_bytes
+    with self.open(mode='rb', buffering=0) as f:
+         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/linuxbrew/.linuxbrew/Cellar/python@3.14/3.14.4/lib/python3.14/pathlib/__init__.py", line 771, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/fe-permissioned-reference/src/libraries/BipsLibrary.sol'

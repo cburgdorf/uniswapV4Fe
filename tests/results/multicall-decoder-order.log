@@ -1,0 +1,25 @@
+  [17133] MulticallDecoderOrderTest::test_decoderOrder()
+    ├─ [2153] 0x5615dEB798BB3E4dFa0139dFa1b3D433Cc23b72f::multicall()
+    │   └─ ← [Revert] EvmError: Revert
+    ├─ [2044] SolidityMulticall::multicall()
+    │   ├─ [599] SolidityMulticall::fail(0x66697273742063616c6c206661696c6564) [delegatecall]
+    │   │   └─ ← [Revert] first call failed
+    │   └─ ← [Revert] first call failed
+    └─ ← [Revert] multicall result
+
+Backtrace:
+  at SolidityMulticall.fail
+  at SolidityMulticall.multicall
+  at MulticallDecoderOrderTest.test_decoderOrder
+
+Suite result: FAILED. 0 passed; 1 failed; 0 skipped; finished in 543.19µs (91.36µs CPU time)
+
+Ran 1 test suite in 6.62ms (543.19µs CPU time): 0 tests passed, 1 failed, 0 skipped (1 total tests)
+
+Failing tests:
+Encountered 1 failing test in test/MulticallDecoderOrder.t.sol:MulticallDecoderOrderTest
+[FAIL: multicall result] test_decoderOrder() (gas: 17133)
+
+Encountered a total of 1 failing tests, 0 tests succeeded
+
+Tip: Run `forge test --rerun` to retry only the 1 failed test

@@ -1,0 +1,24 @@
+Compiling 26 files with Solc 0.8.30
+Solc 0.8.30 finished in 140.05ms
+Compiler run successful with warnings:
+Warning (5740): Unreachable code.
+  --> test/periphery/src/base/DeltaResolver.sol:46:13:
+   |
+46 |             poolManager.settle();
+   |             ^^^^^^^^^^^^^^^^^^^^
+
+Warning (2018): Function state mutability can be restricted to pure
+  --> test/DeltaResolverParity.t.sol:17:5:
+   |
+17 |     function _pay(Currency,address,uint256) internal override {revert("not exposed");}
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+Ran 4 tests for test/DeltaResolverParity.t.sol:DeltaResolverParityTest
+[PASS] testFuzz_amounts(int256,uint256,uint256,bool,uint8) (runs: 10000, μ: 147720, ~: 145704)
+[PASS] testFuzz_providerFailures(bytes,bool,uint8) (runs: 10000, μ: 106262, ~: 99609)
+[PASS] testFuzz_reads(address,address,uint256,uint256,uint256,int256,uint256) (runs: 10000, μ: 166586, ~: 168538)
+[PASS] test_boundariesAndShortCircuit() (gas: 165474)
+Suite result: ok. 4 passed; 0 failed; 0 skipped; finished in 1.49s (2.92s CPU time)
+
+Ran 1 test suite in 1.49s (1.49s CPU time): 4 tests passed, 0 failed, 0 skipped (4 total tests)

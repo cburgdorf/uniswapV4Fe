@@ -1,0 +1,177 @@
+// SPDX-License-Identifier: MIT
+// Ports of v4-core ERC6909.sol and ERC6909Claims.sol (derived from Solmate).
+use core::ops::Eq
+use std::abi::Bytes4
+use std::evm::{Address, Ctx, RawMem, RawStorage, Log}
+use std::evm::packed::keccak_packed
+
+#[event]
+pub struct OperatorSet {
+    #[indexed]
+    pub owner: Address,
+    #[indexed]
+    pub operator: Address,
+    pub approved: bool,
+}
+#[event]
+pub struct Approval {
+    #[indexed]
+    pub owner: Address,
+    #[indexed]
+    pub spender: Address,
+    #[indexed]
+    pub id: u256,
+    pub amount: u256,
+}
+#[event]
+pub struct Transfer {
+    pub caller: Address,
+    #[indexed]
+    pub from: Address,
+    #[indexed]
+    pub to: Address,
+    #[indexed]
+    pub id: u256,
+    pub amount: u256,
+}
+
+/// Exact three-mapping ERC6909 storage layout at the supplied root.
+pub struct Claims { pub slot: u256 }
+impl Copy for Claims {}
+
+pub fn supports_interface(_ id: Bytes4) -> bool {
+    id.val == 0x01ffc9a7 || id.val == 0x0f632fb3
+}
+#[arithmetic(unchecked)]
+fn offset(_ root: u256, _ delta: u256) -> u256 {
+    root + delta
+}
+
+impl Claims {
+    pub fn operator_slot(self, _ owner: Address, _ operator: Address) -> u256
+    uses (mem: mut RawMem)
+    {
+        keccak_packed((operator.inner, keccak_packed((owner.inner, self.slot))))
+    }
+    pub fn balance_slot(self, _ owner: Address, _ id: u256) -> u256
+    uses (mem: mut RawMem)
+    {
+        keccak_packed((id, keccak_packed((owner.inner, offset(self.slot, 1)))))
+    }
+    pub fn allowance_slot(self, _ owner: Address, _ spender: Address, _ id: u256) -> u256
+    uses (mem: mut RawMem)
+    {
+        keccak_packed(
+            (
+                id,
+                keccak_packed(
+                    (spender.inner, keccak_packed((owner.inner, offset(self.slot, 2)))),
+                ),
+            ),
+        )
+    }
+    pub fn is_operator(self, _ owner: Address, _ operator: Address) -> bool
+    uses (mem: mut RawMem, storage: RawStorage)
+    {
+        storage.sload(self.operator_slot(owner, operator)) & 0xff != 0
+    }
+    pub fn balance_of(self, _ owner: Address, _ id: u256) -> u256
+    uses (mem: mut RawMem, storage: RawStorage)
+    {
+        storage.sload(self.balance_slot(owner, id))
+    }
+    pub fn allowance(self, _ owner: Address, _ spender: Address, _ id: u256) -> u256
+    uses (mem: mut RawMem, storage: RawStorage)
+    {
+        storage.sload(self.allowance_slot(owner, spender, id))
+    }
+    pub fn set_operator(self, _ operator: Address, _ approved: bool) -> bool
+    uses (ctx: Ctx, mem: mut RawMem, storage: mut RawStorage, log: mut Log)
+    {
+        let owner = ctx.caller()
+        let slot = self.operator_slot(owner, operator)
+        let value = (storage.sload(slot) & !(0xff as u256)) | if approved { 1 } else { 0 }
+        storage.sstore(slot: slot, value: value)
+        log.emit(OperatorSet { owner, operator, approved })
+        true
+    }
+    pub fn approve(self, _ spender: Address, _ id: u256, _ amount: u256) -> bool
+    uses (ctx: Ctx, mem: mut RawMem, storage: mut RawStorage, log: mut Log)
+    {
+        let owner = ctx.caller()
+        storage.sstore(
+                slot: self.allowance_slot(owner, spender, id),
+                value: amount,
+            )
+        log.emit(Approval { owner, spender, id, amount })
+        true
+    }
+    fn spend_allowance(self, _ owner: Address, _ id: u256, _ amount: u256)
+    uses (ctx: Ctx, mem: mut RawMem, storage: mut RawStorage)
+    {
+        let caller = ctx.caller()
+        if owner == caller || self.is_operator(owner, caller) {
+            return
+        }
+        let slot = self.allowance_slot(owner, caller, id)
+        let allowed = storage.sload(slot)
+        if allowed != !(0 as u256) {
+            storage.sstore(slot: slot, value: allowed - amount)
+        }
+    }
+    fn move_balance(self, _ sender: Address, _ receiver: Address, _ id: u256, _ amount: u256)
+    uses (ctx: Ctx, mem: mut RawMem, storage: mut RawStorage, log: mut Log)
+    {
+        let from_slot = self.balance_slot(sender, id)
+        storage.sstore(slot: from_slot, value: storage.sload(from_slot) - amount)
+        // Read after subtracting: self-transfer must restore the original balance.
+        let to_slot = self.balance_slot(receiver, id)
+        storage.sstore(slot: to_slot, value: storage.sload(to_slot) + amount)
+        log.emit(
+            Transfer { caller: ctx.caller(), from: sender, to: receiver, id, amount },
+        )
+    }
+    pub fn transfer(self, _ receiver: Address, _ id: u256, _ amount: u256) -> bool
+    uses (ctx: Ctx, mem: mut RawMem, storage: mut RawStorage, log: mut Log)
+    {
+        self.move_balance(ctx.caller(), receiver, id, amount)
+        true
+    }
+    pub fn transfer_from(
+        self,
+        _ sender: Address,
+        _ receiver: Address,
+        _ id: u256,
+        _ amount: u256,
+    ) -> bool
+    uses (ctx: Ctx, mem: mut RawMem, storage: mut RawStorage, log: mut Log)
+    {
+        self.spend_allowance(sender, id, amount)
+        self.move_balance(sender, receiver, id, amount)
+        true
+    }
+    pub fn mint(self, _ receiver: Address, _ id: u256, _ amount: u256)
+    uses (ctx: Ctx, mem: mut RawMem, storage: mut RawStorage, log: mut Log)
+    {
+        let slot = self.balance_slot(receiver, id)
+        storage.sstore(slot: slot, value: storage.sload(slot) + amount)
+        log.emit(
+            Transfer { caller: ctx.caller(), from: Address::zero(), to: receiver, id, amount },
+        )
+    }
+    pub fn burn(self, _ sender: Address, _ id: u256, _ amount: u256)
+    uses (ctx: Ctx, mem: mut RawMem, storage: mut RawStorage, log: mut Log)
+    {
+        let slot = self.balance_slot(sender, id)
+        storage.sstore(slot: slot, value: storage.sload(slot) - amount)
+        log.emit(
+            Transfer { caller: ctx.caller(), from: sender, to: Address::zero(), id, amount },
+        )
+    }
+    pub fn burn_from(self, _ sender: Address, _ id: u256, _ amount: u256)
+    uses (ctx: Ctx, mem: mut RawMem, storage: mut RawStorage, log: mut Log)
+    {
+        self.spend_allowance(sender, id, amount)
+        self.burn(sender, id, amount)
+    }
+}

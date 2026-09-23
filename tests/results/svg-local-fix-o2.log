@@ -1,0 +1,11 @@
+Compiling 33 files with Solc 0.8.26
+Solc 0.8.26 finished in 745.47ms
+Compiler run successful!
+
+Ran 3 tests for test/SvgParity.t.sol:SvgParityTest
+[PASS] testFuzz_generate(uint256,address,int24,int24,int24,int8,string) (runs: 10000, μ: 1810008, ~: 1776729)
+[PASS] testFuzz_helpers(uint256,address,int24,int24,int24,string,uint8,uint8) (runs: 10000, μ: 54527, ~: 51148)
+[PASS] test_boundaries() (gas: 11304008)
+Suite result: ok. 3 passed; 0 failed; 0 skipped; finished in 27.54s (28.27s CPU time)
+
+Ran 1 test suite in 27.54s (27.54s CPU time): 3 tests passed, 0 failed, 0 skipped (3 total tests)

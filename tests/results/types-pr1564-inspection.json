@@ -1,0 +1,65 @@
+{
+  "timestamp_utc": "2026-09-22T11:36:22.479692+00:00",
+  "url": "https://github.com/argotorg/fe/pull/1564",
+  "head": "d883c2102488dbf65540235f1e93d42cc81c84e0",
+  "title": "Preserve effect provider identity across repeated calls",
+  "scope": "Inspected changed files and added semantic_borrowck tests; no composed ABI decoder test found; not merged or tested as a fix.",
+  "changed_files": [
+    {
+      "path": "crates/codegen/tests/runtime_handle_preservation.rs",
+      "patch_sha256": "10efacc0d826c52c55bfceeb1bc54e9af513506619f89bb2264e6b492f726028"
+    },
+    {
+      "path": "crates/fe/tests/fixtures/fe_test/trait_provider_identity.fe",
+      "patch_sha256": "0706093811b9cf7fd5bcc24b1aa5b684c1a09908f0c5a8236323673cc43dead7"
+    },
+    {
+      "path": "crates/hir/src/analysis/semantic/lower/body.rs",
+      "patch_sha256": "1afb6c0079c7d6a85e1a86bdb71ffa26ca30d5ee27bfd1a9d0764d6ddc223ab3"
+    },
+    {
+      "path": "crates/hir/src/analysis/semantic/lower/effects.rs",
+      "patch_sha256": "bdda2725943420e1662095a0a09238e1b48d65046353cc8e50ad1dcc30c29594"
+    },
+    {
+      "path": "crates/hir/src/analysis/semantic/lower/place.rs",
+      "patch_sha256": "a023ac46cf099b6824222e63894ff0e7bfcc6d6934ff3f4abb1a92b5abc57fae"
+    },
+    {
+      "path": "crates/hir/src/analysis/semantic/normalized/normalize.rs",
+      "patch_sha256": "487b552d38c9ce360ff2a7f67d0773c62def6b06db8181d430decaf0e589895c"
+    },
+    {
+      "path": "crates/hir/src/analysis/semantic/normalized/verify.rs",
+      "patch_sha256": "69ac6d84912fc0026a0a0384f7f8375ccdce8019817486014daca6a92adfd635"
+    },
+    {
+      "path": "crates/hir/src/analysis/ty/fold.rs",
+      "patch_sha256": "1ddc0488f5de5bd9ff27b5c579e1a7bb50fad3f3072c33554dcf333fe0fa744b"
+    },
+    {
+      "path": "crates/hir/src/analysis/ty/ty_check/expr.rs",
+      "patch_sha256": "72e90a84b457d044f66efa8bf73aa740daba3e28b5fabf51b897c6dbd2477aba"
+    },
+    {
+      "path": "crates/hir/src/analysis/ty/ty_check/mod.rs",
+      "patch_sha256": "7decec69a66233173a6f6b2b5f6fe85984c3049f69f0f70db8ea38669bbcfe3d"
+    },
+    {
+      "path": "crates/hir/tests/semantic_borrowck.rs",
+      "patch_sha256": "2e413fca22e5c698c7b8ef39f3521ac56a717e33bf7dcfd2f7d24a8532b1a650"
+    },
+    {
+      "path": "crates/hir/tests/semantic_ctfe.rs",
+      "patch_sha256": "ec44b23818866289acaf44374ef72897e730e343cfcdeae434d3d2fdbed9f779"
+    },
+    {
+      "path": "crates/mir/src/runtime/lower/arg_selector.rs",
+      "patch_sha256": "09fdfdec4b34dc023061d26456734c9984ee012c46be2a1795c8fc8f1c5760c8"
+    },
+    {
+      "path": "crates/mir/src/runtime/lower/call_input.rs",
+      "patch_sha256": "82134e49e53a5eae8885b55a648bfee975237c0d13b9f2e03008266058bf558c"
+    }
+  ]
+}

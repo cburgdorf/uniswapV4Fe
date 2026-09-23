@@ -1,0 +1,19 @@
+running `fe test` for 3 inputs (jobs=8)
+
+COMPILING        abi_array_overflow.. crates/fe/tests/fixtures/fe_test/abi_array_overflow_revert.fe
+COMPILING        unchecked_signed_n.. crates/fe/tests/fixtures/fe_test/unchecked_signed_negation.fe
+COMPILING        composed_abi_decoder crates/fe/tests/fixtures/fe_test/composed_abi_decoder.fe
+READY [2.2224s]  unchecked_signed_n.. running 1 test
+PASS  [0.0002s]  unchecked_signed_n.. wrapping_negation_roundtrip
+READY [2.2582s]  composed_abi_decoder running 3 tests
+PASS  [0.0002s]  composed_abi_decoder composed_addresses_roundtrip
+PASS  [0.0002s]  composed_abi_decoder composed_first_address_rejects_noncanonical_word
+PASS  [0.0002s]  composed_abi_decoder composed_second_address_rejects_noncanonical_word
+READY [3.6133s]  abi_array_overflow.. running 5 tests
+PASS  [0.0001s]  abi_array_overflow.. overflowing_tail_head_reverts_empty
+PASS  [0.0001s]  abi_array_overflow.. overflowing_array_end_reverts_empty
+PASS  [0.0001s]  abi_array_overflow.. overflowing_relative_tail_reverts_empty
+PASS  [0.0002s]  abi_array_overflow.. overflowing_array_multiplication_reverts_empty
+PASS  [0.0002s]  abi_array_overflow.. overflowing_dynamic_element_tail_reverts_empty
+
+test result: ok. 9 passed; 0 failed

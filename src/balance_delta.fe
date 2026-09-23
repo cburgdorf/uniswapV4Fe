@@ -1,0 +1,44 @@
+// SPDX-License-Identifier: MIT
+// Port of Uniswap v4-core BalanceDelta.sol.
+use core::ops::{Add, Sub, Eq}
+use super::safe_cast::to_int128
+
+pub struct BalanceDelta { pub bits: i256 }
+impl Copy for BalanceDelta {}
+
+pub const ZERO_DELTA: BalanceDelta = BalanceDelta { bits: 0 }
+
+pub fn to_balance_delta(_ amount0: i128, _ amount1: i128) -> BalanceDelta {
+    let high = (amount0 as i256) << 128
+    let low = (amount1 as i256) & 0xffffffffffffffffffffffffffffffff
+    BalanceDelta { bits: high | low }
+}
+
+impl BalanceDelta {
+    pub fn amount0(self) -> i128 {
+        (self.bits >> 128).downcast_truncate()
+    }
+    pub fn amount1(self) -> i128 {
+        self.bits.downcast_truncate()
+    }
+}
+
+impl Add for BalanceDelta {
+    fn add(own self, _ other: own Self) -> Self {
+        let a = (self.amount0() as i256) + (other.amount0() as i256)
+        let b = (self.amount1() as i256) + (other.amount1() as i256)
+        to_balance_delta(to_int128(a), to_int128(b))
+    }
+}
+impl Sub for BalanceDelta {
+    fn sub(own self, _ other: own Self) -> Self {
+        let a = (self.amount0() as i256) - (other.amount0() as i256)
+        let b = (self.amount1() as i256) - (other.amount1() as i256)
+        to_balance_delta(to_int128(a), to_int128(b))
+    }
+}
+impl Eq for BalanceDelta {
+    fn eq(self, _ other: Self) -> bool {
+        self.bits == other.bits
+    }
+}

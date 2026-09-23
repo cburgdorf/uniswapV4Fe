@@ -1,0 +1,47 @@
+Parity artifacts: /tmp/fe-position-descriptor-first-o1
+Compiler: fe 26.3.0 (91d3e8215); sha256=fb65ef0e54fcfeb4875b987d2fa2e8bd7da020295670f7e940efe1476066f264
+Wrote /tmp/fe-position-descriptor-first-o1/fe/PositionDescriptor.bin
+Wrote /tmp/fe-position-descriptor-first-o1/fe/PositionDescriptor.runtime.bin
+Wrote /tmp/fe-position-descriptor-first-o1/fe/PositionDescriptor.abi.json
+2026-09-23T20:09:34.978086Z ERROR foundry_compilers_artifacts_solc::sources: error="/tmp/fe-position-descriptor-first-o1/test/reference/solmate/src/auth/Owned.sol": No such file or directory (os error 2)
+Unable to resolve imports:
+      "../libraries/PathKey.sol" in "/tmp/fe-position-descriptor-first-o1/test/periphery/src/interfaces/IV4Quoter.sol"
+      "solmate/src/auth/Owned.sol" in "/tmp/fe-position-descriptor-first-o1/test/reference/src/ProtocolFees.sol"
+      "../libraries/PathKey.sol" in "/tmp/fe-position-descriptor-first-o1/test/periphery/src/interfaces/IV4Router.sol"
+with remappings:
+      @openzeppelin/=/tmp/fe-position-descriptor-first-o1/test/reference/openzeppelin/
+      openzeppelin-contracts/=/tmp/fe-position-descriptor-first-o1/test/reference/openzeppelin/
+      permit2/=/tmp/fe-position-descriptor-first-o1/test/permit2/
+      solmate/=/tmp/fe-position-descriptor-first-o1/test/reference/solmate/
+      @uniswap/v4-core/=/tmp/fe-position-descriptor-first-o1/test/reference/
+Compiling 88 files with Solc 0.8.26
+Solc 0.8.26 finished in 26.11ms
+Error: Compiler run failed:
+Error (6275): Source "test/periphery/src/libraries/PathKey.sol" not found: File not found. Searched the following locations: "/tmp/fe-position-descriptor-first-o1".
+ParserError: Source "test/periphery/src/libraries/PathKey.sol" not found: File not found. Searched the following locations: "/tmp/fe-position-descriptor-first-o1".
+ --> test/periphery/src/interfaces/IV4Quoter.sol:6:1:
+  |
+6 | import {PathKey} from "../libraries/PathKey.sol";
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Error (6275): Source "test/periphery/src/libraries/PathKey.sol" not found: File not found. Searched the following locations: "/tmp/fe-position-descriptor-first-o1".
+ParserError: Source "test/periphery/src/libraries/PathKey.sol" not found: File not found. Searched the following locations: "/tmp/fe-position-descriptor-first-o1".
+ --> test/periphery/src/interfaces/IV4Router.sol:6:1:
+  |
+6 | import {PathKey} from "../libraries/PathKey.sol";
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Error (6275): Source "test/reference/solmate/src/auth/Owned.sol" not found: File not found. Searched the following locations: "/tmp/fe-position-descriptor-first-o1".
+ParserError: Source "test/reference/solmate/src/auth/Owned.sol" not found: File not found. Searched the following locations: "/tmp/fe-position-descriptor-first-o1".
+ --> test/reference/src/ProtocolFees.sol:9:1:
+  |
+9 | import {Owned} from "solmate/src/auth/Owned.sol";
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Traceback (most recent call last):
+  File "/home/cburgdorf/Documents/hacking/fe/uniswap_v4_demo/tests/run_math_parity.py", line 452, in <module>
+    'result': 'passed' if result.returncode == 0 else 'failed',
+    ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/linuxbrew/.linuxbrew/Cellar/python@3.14/3.14.4/lib/python3.14/subprocess.py", line 509, in check_returncode
+    raise CalledProcessError(self.returncode, self.args, self.stdout,
+                             self.stderr)
+subprocess.CalledProcessError: Command '['forge', 'test', '--root', '/tmp/fe-position-descriptor-first-o1', '--fuzz-runs', '100', '-vv']' returned non-zero exit status 1.

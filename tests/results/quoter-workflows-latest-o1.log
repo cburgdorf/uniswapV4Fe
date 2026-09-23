@@ -1,0 +1,14 @@
+Parity artifacts: /tmp/fe-quoter-workflows-latest-o1
+Compiler: fe 26.3.0 (702686c98); sha256=f3aaead7171e522c76b07fba14d25b70997fe3251a952686b0ad9c918aebac44
+Compiling 58 files with Solc 0.8.26
+Solc 0.8.26 finished in 4.95s
+Compiler run successful!
+
+Ran 3 tests for test/QuoterWorkflows.t.sol:QuoterWorkflowsTest
+[PASS] testFuzz_multi(uint64,bool,bool,bool) (runs: 10000, μ: 27214371, ~: 27229663)
+[PASS] testFuzz_single(uint64,bool,bool,bool) (runs: 10000, μ: 26211456, ~: 26239046)
+[PASS] test_rejectionsAndTinyAmounts() (gas: 459354199)
+Suite result: ok. 3 passed; 0 failed; 0 skipped; finished in 22.03s (37.37s CPU time)
+
+Ran 1 test suite in 22.03s (22.03s CPU time): 3 tests passed, 0 failed, 0 skipped (3 total tests)
+Verified protocol ABI: /tmp/fe-quoter-workflows-latest-o1/fe/V4Quoter.protocol.abi.json

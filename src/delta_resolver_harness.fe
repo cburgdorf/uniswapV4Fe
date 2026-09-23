@@ -1,0 +1,48 @@
+// SPDX-License-Identifier: MIT
+use std::abi::sol
+use std::evm::{Address, Ctx, RawMem, Call}
+use super::{delta_resolver as resolver, transient_state_library as state}
+msg ResolverMsg {
+    #[selector = sol("read(address,address,uint8)")]
+    Read { target: Address, currency: Address, mode: u8 } -> u256,
+    #[selector = sol("amount(address,address,uint256,uint8)")]
+    Amount { currency: Address, input: Address, amount: u256, mode: u8 } -> u256,
+}
+pub contract DeltaResolverHarness {
+    manager: Address,
+    init(_manager: Address) uses (mut manager) { manager = _manager }
+    recv ResolverMsg {
+        Read { target, currency, mode } -> u256 uses (manager, ctx: Ctx, mem: mut RawMem) {
+            if mode == 0 {
+                return state::synced_currency(manager).inner
+            }
+            if mode == 1 {
+                return state::synced_reserves(manager)
+            }
+            if mode == 2 {
+                return state::nonzero_delta_count(manager)
+            }
+            if mode == 3 {
+                return state::currency_delta(manager, target, currency).downcast_truncate()
+            }
+            if state::is_unlocked(manager) { 1 } else { 0 }
+        }
+        Amount { currency, input, amount, mode } -> u256
+        uses (manager, ctx: Ctx, mem: mut RawMem, call: mut Call)
+        {
+            if mode == 0 {
+                return resolver::full_debt(manager, currency)
+            }
+            if mode == 1 {
+                return resolver::full_credit(manager, currency)
+            }
+            if mode == 2 {
+                return resolver::map_settle(manager, amount, currency)
+            }
+            if mode == 3 {
+                return resolver::map_take(manager, amount, currency)
+            }
+            resolver::map_wrap_unwrap(manager, input, amount, currency)
+        }
+    }
+}

@@ -1,0 +1,127 @@
+// SPDX-License-Identifier: MIT
+// Pinned UniswapV4DeployerCompetition, including OpenZeppelin Create2 errors.
+use std::abi::{Bytes, Bytes32, sol}
+use std::evm::{Address, Ctx, RawMem, RawStorage, Log, Create, revert_error, crypto::keccak256}
+use std::evm::packed::keccak_packed
+use super::vanity_address
+const ADDRESS_MASK: u256 = 0xffffffffffffffffffffffffffffffffffffffff
+
+#[event]
+pub struct NewAddressFound {
+    #[indexed]
+    pub bestAddress: Address,
+    #[indexed]
+    pub submitter: Address,
+    pub score: u256,
+}
+#[error]
+pub struct InvalidBytecode {}
+#[error]
+pub struct CompetitionNotOver { pub currentTime: u256, pub deadline: u256 }
+#[error]
+pub struct CompetitionOver { pub currentTime: u256, pub deadline: u256 }
+#[error]
+pub struct NotAllowedToDeploy { pub sender: Address, pub deployer: Address }
+#[error]
+pub struct WorseAddress { pub newAddress: Address, pub bestAddress: Address, pub newScore: u256, pub bestScore: u256 }
+#[error]
+pub struct InvalidSender { pub salt: Bytes32, pub sender: Address }
+#[error]
+pub struct Create2EmptyBytecode {}
+#[error]
+pub struct Create2FailedDeployment {}
+
+msg CompetitionMsg {
+    #[selector = sol("bestAddressSalt()")]
+    BestAddressSalt {} -> Bytes32,
+    #[selector = sol("bestAddressSubmitter()")]
+    BestAddressSubmitter {} -> Address,
+    #[selector = sol("competitionDeadline()")]
+    CompetitionDeadline {} -> u256,
+    #[selector = sol("initCodeHash()")]
+    InitCodeHash {} -> Bytes32,
+    #[selector = sol("deployer()")]
+    Deployer {} -> Address,
+    #[selector = sol("exclusiveDeployDeadline()")]
+    ExclusiveDeployDeadline {} -> u256,
+    #[selector = sol("bestAddress()")]
+    BestAddress {} -> Address,
+    #[selector = sol("updateBestAddress(bytes32)")]
+    UpdateBestAddress { salt: Bytes32 },
+    #[selector = sol("deploy(bytes)")]
+    Deploy { bytecode: Bytes },
+}
+
+fn predicted(_ salt: u256, _ hash: u256) -> Address uses (ctx: Ctx, mem: mut RawMem) {
+    Address { inner: keccak_packed((255 as u8, ctx.address(), salt, hash)) & ADDRESS_MASK }
+}
+
+pub contract UniswapV4DeployerCompetition {
+    init_code_hash: Bytes32,
+    competition_deadline: u256,
+    exclusive_deadline: u256,
+    exclusive_deployer: Address,
+
+    init(_initCodeHash: Bytes32, _competitionDeadline: u256, _exclusiveDeployer: Address, _exclusiveDeployLength: u256)
+    uses (mut init_code_hash, mut competition_deadline, mut exclusive_deadline, mut exclusive_deployer)
+    {
+        init_code_hash = _initCodeHash
+        competition_deadline = _competitionDeadline
+        exclusive_deadline = _competitionDeadline + _exclusiveDeployLength
+        exclusive_deployer = _exclusiveDeployer
+    }
+
+    recv CompetitionMsg {
+        BestAddressSalt {} -> Bytes32 uses (storage: RawStorage) {
+            Bytes32 { val: storage.sload(0) }
+        }
+        BestAddressSubmitter {} -> Address uses (storage: RawStorage) {
+            Address { inner: storage.sload(1) & ADDRESS_MASK }
+        }
+        CompetitionDeadline {} -> u256 uses (competition_deadline) { competition_deadline }
+        InitCodeHash {} -> Bytes32 uses (init_code_hash) { Bytes32 { val: init_code_hash.val } }
+        Deployer {} -> Address uses (exclusive_deployer) { exclusive_deployer }
+        ExclusiveDeployDeadline {} -> u256 uses (exclusive_deadline) { exclusive_deadline }
+        BestAddress {} -> Address uses (init_code_hash, storage: RawStorage, ctx: Ctx, mem: mut RawMem) {
+            predicted(storage.sload(0), init_code_hash.val)
+        }
+        UpdateBestAddress { salt }
+        uses (init_code_hash, competition_deadline, storage: mut RawStorage, ctx: Ctx, mem: mut RawMem, log: mut Log)
+        {
+            if ctx.timestamp() > competition_deadline {
+                revert_error(CompetitionOver { currentTime: ctx.timestamp(), deadline: competition_deadline })
+            }
+            let sender = ctx.caller()
+            let salt_owner = salt.val >> 96
+            if salt_owner != 0 && salt_owner != sender.inner {
+                revert_error(InvalidSender { salt, sender })
+            }
+            let next = predicted(salt.val, init_code_hash.val)
+            let best = predicted(storage.sload(0), init_code_hash.val)
+            let next_score = vanity_address::score(next)
+            let best_score = vanity_address::score(best)
+            if next_score <= best_score {
+                revert_error(WorseAddress { newAddress: next, bestAddress: best, newScore: next_score, bestScore: best_score })
+            }
+            storage.sstore(slot: 0, value: salt.val)
+            storage.sstore(slot: 1, value: (storage.sload(1) & !ADDRESS_MASK) | sender.inner)
+            log.emit(NewAddressFound { bestAddress: next, submitter: sender, score: next_score })
+        }
+        Deploy { bytecode }
+        uses (init_code_hash, competition_deadline, exclusive_deadline, exclusive_deployer, ctx: Ctx, storage: RawStorage, create: mut Create)
+        {
+            if keccak256(bytecode.payload_span()) != init_code_hash.val {
+                revert_error(InvalidBytecode {})
+            }
+            if ctx.timestamp() <= competition_deadline {
+                revert_error(CompetitionNotOver { currentTime: ctx.timestamp(), deadline: competition_deadline })
+            }
+            if ctx.caller().inner != exclusive_deployer.inner && ctx.timestamp() <= exclusive_deadline {
+                revert_error(NotAllowedToDeploy { sender: ctx.caller(), deployer: exclusive_deployer })
+            }
+            if bytecode.len() == 0 { revert_error(Create2EmptyBytecode {}) }
+            let deployed = create.create2_raw(value: 0, init_code: bytecode.payload_span(), salt: storage.sload(0))
+            if deployed.inner == 0 { revert_error(Create2FailedDeployment {}) }
+        }
+    }
+}

@@ -1,0 +1,53 @@
+// SPDX-License-Identifier: MIT
+// Adapter exposes notification internals; parent authorization is tested at
+// PositionManager integration, not replaced by this fixture's helpers.
+use std::abi::{Bytes, sol}
+use std::evm::{Address, Ctx, Call, RawMem, RawStorage, Log}
+use std::evm::packed::keccak_packed
+use super::notifier::Notifications
+msg NotifierMsg {
+    #[selector = sol("unsubscribeGasLimit()")]
+    Limit {} -> u256,
+    #[selector = sol("subscriber(uint256)")]
+    Subscriber { id: u256 } -> Address,
+    #[selector = sol("info(uint256)")]
+    Info { id: u256 } -> u256,
+    #[selector = sol("seed(uint256,uint256)")]
+    Seed { id: u256, value: u256 },
+    #[selector = sol("subscribe(uint256,address,bytes)")]
+    Subscribe { id: u256, target: Address, data: Bytes },
+    #[selector = sol("unsubscribe(uint256)")]
+    Unsubscribe { id: u256 },
+    #[selector = sol("burn(uint256,address,uint256,uint256,int256)")]
+    Burn { id: u256, owner: Address, info: u256, liquidity: u256, fees: i256 },
+    #[selector = sol("modify(uint256,int256,int256)")]
+    Modify { id: u256, change: i256, fees: i256 },
+}
+pub contract NotifierHarness {
+    gas_limit: u256,
+    init(_gas_limit: u256) uses (mut gas_limit) { gas_limit = _gas_limit }
+    recv NotifierMsg {
+        Limit {} -> u256 uses (gas_limit) { gas_limit }
+        Subscriber { id } -> Address uses (gas_limit, mem: mut RawMem, storage: RawStorage) {
+            Notifications { subscribers_slot: 0, info_slot: 1, gas_limit }.subscriber(id)
+        }
+        Info { id } -> u256 uses (mem: mut RawMem, storage: RawStorage) { storage.sload(keccak_packed((id, 1 as u256))) }
+        Seed { id, value } uses (mem: mut RawMem, storage: mut RawStorage) {
+            storage.sstore(slot: keccak_packed((id, 1 as u256)), value: value)
+        }
+        #[payable]
+        Subscribe { id, target, data } uses (gas_limit, ctx: Ctx, call: mut Call, mem: mut RawMem, storage: mut RawStorage, log: mut Log) {
+            Notifications { subscribers_slot: 0, info_slot: 1, gas_limit }.subscribe(id, target, data)
+        }
+        #[payable]
+        Unsubscribe { id } uses (gas_limit, ctx: Ctx, call: mut Call, mem: mut RawMem, storage: mut RawStorage, log: mut Log) {
+            Notifications { subscribers_slot: 0, info_slot: 1, gas_limit }.unsubscribe(id)
+        }
+        Burn { id, owner, info, liquidity, fees } uses (gas_limit, ctx: Ctx, call: mut Call, mem: mut RawMem, storage: mut RawStorage) {
+            Notifications { subscribers_slot: 0, info_slot: 1, gas_limit }.burn(id, owner, info, liquidity, fees)
+        }
+        Modify { id, change, fees } uses (gas_limit, ctx: Ctx, call: mut Call, mem: mut RawMem, storage: RawStorage) {
+            Notifications { subscribers_slot: 0, info_slot: 1, gas_limit }.modify(id, change, fees)
+        }
+    }
+}

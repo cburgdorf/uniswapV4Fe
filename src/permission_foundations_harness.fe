@@ -1,0 +1,32 @@
+// SPDX-License-Identifier: MIT
+use std::abi::{Bytes2, Bytes4, sol}
+use std::evm::Address
+use super::{permission_flags, allowlist_checker}
+msg PermissionFoundationsMsg {
+    #[selector = sol("flags(bytes2,bytes2)")]
+    Flags { a: Bytes2, b: Bytes2 } -> (Bytes2, Bytes2, bool),
+    #[selector = sol("constants()")]
+    Constants {} -> (Bytes2, Bytes2, Bytes2, Bytes2),
+    #[selector = sol("supportsInterface(bytes4)")]
+    Supports { id: Bytes4 } -> bool,
+}
+pub contract PermissionFoundationsHarness {
+    recv PermissionFoundationsMsg {
+        Flags { a, b } -> (Bytes2, Bytes2, bool) {
+            let left = permission_flags::from_abi(a)
+            let right = permission_flags::from_abi(b)
+            ((left | right).to_abi(), (left & right).to_abi(), left == right)
+        }
+        Constants {} -> (Bytes2, Bytes2, Bytes2, Bytes2) {
+            (permission_flags::NONE.to_abi(), permission_flags::SWAP_ALLOWED.to_abi(),
+             permission_flags::LIQUIDITY_ALLOWED.to_abi(), permission_flags::ALL_ALLOWED.to_abi())
+        }
+        Supports { id } -> bool { allowlist_checker::supports_interface(id) }
+    }
+    // Test policy only: the production base deliberately leaves policy abstract.
+    recv allowlist_checker::AllowlistMsg {
+        CheckAllowlist { account, tokenAddress } -> Bytes2 {
+            Bytes2 { val: (account.inner ^ tokenAddress.inner) & 0xffff }
+        }
+    }
+}

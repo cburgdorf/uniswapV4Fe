@@ -1,0 +1,26 @@
+// SPDX-License-Identifier: MIT
+// Legacy PositionConfig/PositionConfigId retained by the pinned periphery.
+use std::abi::{Bytes3, Bytes32, sol::Int24}
+use std::evm::{RawMem, RawStorage}
+use std::evm::packed::keccak_packed
+use super::pool_types::PoolKey
+pub struct PositionConfig { pub pool_key: PoolKey, pub lower: Int24, pub upper: Int24 }
+impl PositionConfig {
+    pub fn to_id(self) -> Bytes32 uses (mem: mut RawMem) {
+        let spacing: u256 = (self.pool_key.tickSpacing.val as i256).downcast_truncate()
+        let lower: u256 = (self.lower.val as i256).downcast_truncate()
+        let upper: u256 = (self.upper.val as i256).downcast_truncate()
+        Bytes32 { val: keccak_packed((self.pool_key.currency0, self.pool_key.currency1,
+            Bytes3 { val: self.pool_key.fee.val as u256 }, Bytes3 { val: spacing & 0xffffff },
+            self.pool_key.hooks, Bytes3 { val: lower & 0xffffff }, Bytes3 { val: upper & 0xffffff })) >> 1 }
+    }
+}
+pub struct PositionConfigId { pub slot: u256 }
+impl Copy for PositionConfigId {}
+impl PositionConfigId {
+    pub fn get(self) -> Bytes32 uses (storage: RawStorage) { Bytes32 { val: storage.sload(self.slot) & !((1 as u256) << 255) } }
+    pub fn set(self, _ id: Bytes32) uses (storage: mut RawStorage) { storage.sstore(slot: self.slot, value: id.val) }
+    pub fn subscribe(self) uses (storage: mut RawStorage) { storage.sstore(slot: self.slot, value: storage.sload(self.slot) | ((1 as u256) << 255)) }
+    pub fn unsubscribe(self) uses (storage: mut RawStorage) { storage.sstore(slot: self.slot, value: self.get().val) }
+    pub fn has_subscriber(self) -> bool uses (storage: RawStorage) { storage.sload(self.slot) >> 255 != 0 }
+}

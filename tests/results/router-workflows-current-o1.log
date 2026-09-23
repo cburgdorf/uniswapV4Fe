@@ -1,0 +1,15 @@
+Compiling 63 files with Solc 0.8.26
+Solc 0.8.26 finished in 6.10s
+Compiler run successful!
+
+Ran 7 tests for test/RouterWorkflows.t.sol:RouterWorkflowsTest
+[PASS] testFuzz_allAndPortionActions(uint64,bool,bool,bool) (runs: 1000, μ: 24421027, ~: 24401956)
+[PASS] testFuzz_multiWorkflow(uint64,bool,bool,bool) (runs: 1000, μ: 25440109, ~: 25431199)
+[PASS] testFuzz_rollback(uint64,bool,bool) (runs: 1000, μ: 24335571, ~: 24359042)
+[PASS] testFuzz_singleWorkflow(uint64,bool,bool,bool) (runs: 1000, μ: 24460900, ~: 24445270)
+[PASS] test_callbackAuthorizationAndEmptyBatch() (gas: 11118004)
+[PASS] test_reentrantPayment() (gas: 24557614)
+[PASS] test_tinyIntermediateAmounts() (gas: 68438893)
+Suite result: ok. 7 passed; 0 failed; 0 skipped; finished in 2.28s (7.27s CPU time)
+
+Ran 1 test suite in 2.28s (2.28s CPU time): 7 tests passed, 0 failed, 0 skipped (7 total tests)

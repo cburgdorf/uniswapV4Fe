@@ -1,0 +1,20 @@
+// ABI-only export panics in instantiate_callable_typed_body on Fe aad737010.
+use std::abi::sol
+use std::evm::{Address, encode_msg_calldata}
+msg TokenMsg {
+    #[selector = sol("transfer(address,uint256)")]
+    Transfer { to: Address, amount: u256 } -> bool,
+}
+msg ProbeMsg {
+    #[selector = sol("probe()")]
+    Probe {},
+}
+pub contract EncodeMsgAbiProbe {
+    recv ProbeMsg {
+        Probe {} {
+            let encoded = encode_msg_calldata(
+                TokenMsg::Transfer { to: Address { inner: 1 }, amount: 1 },
+            )
+        }
+    }
+}

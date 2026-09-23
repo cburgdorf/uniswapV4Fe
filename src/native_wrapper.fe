@@ -1,0 +1,26 @@
+// SPDX-License-Identifier: MIT
+// v4-periphery NativeWrapper. Caller resolves balance-based amount sentinels.
+use std::abi::sol
+use std::evm::{Address, Ctx, Call, revert, revert_error}
+use core::ops::Eq
+#[error]
+pub struct InvalidEthSender {}
+msg WethMsg {
+    #[selector = sol("deposit()")]
+    Deposit,
+    #[selector = sol("withdraw(uint256)")]
+    Withdraw { amount: u256 },
+}
+pub fn wrap(_ weth: Address, _ amount: u256) uses (ctx: Ctx, call: mut Call) {
+    if amount == 0 { return }
+    if ctx.extcodesize(weth) == 0 { revert(()) }
+    call.call(addr: weth, gas: ctx.gas(), value: amount, message: WethMsg::Deposit {})
+}
+pub fn unwrap(_ weth: Address, _ amount: u256) uses (ctx: Ctx, call: mut Call) {
+    if amount == 0 { return }
+    if ctx.extcodesize(weth) == 0 { revert(()) }
+    call.call(addr: weth, gas: ctx.gas(), value: 0, message: WethMsg::Withdraw { amount })
+}
+pub fn check_sender(_ weth: Address, _ manager: Address) uses (ctx: Ctx) {
+    if ctx.caller() != weth && ctx.caller() != manager { revert_error(InvalidEthSender {}) }
+}

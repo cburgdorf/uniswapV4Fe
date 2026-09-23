@@ -1,0 +1,10 @@
+Compiling 56 files with Solc 0.8.26
+Solc 0.8.26 finished in 2.55s
+Compiler run successful!
+
+Ran 2 tests for test/Permit2ForwarderWorkflows.t.sol:Permit2ForwarderWorkflowsTest
+[PASS] testFuzz_batchNonceSequence(uint8) (runs: 10000, μ: 196623, ~: 216826)
+[PASS] testFuzz_singlePermitAndPayment(uint160,bool) (runs: 10000, μ: 195139, ~: 103421)
+Suite result: ok. 2 passed; 0 failed; 0 skipped; finished in 5.26s (9.12s CPU time)
+
+Ran 1 test suite in 5.26s (5.26s CPU time): 2 tests passed, 0 failed, 0 skipped (2 total tests)

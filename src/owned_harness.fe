@@ -1,0 +1,31 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+use std::abi::sol
+use std::evm::{Address, Ctx, RawStorage, Log}
+use super::owned::Owned
+msg OwnedMsg {
+    #[selector = sol("owner()")]
+    Owner {} -> Address,
+    #[selector = sol("transferOwnership(address)")]
+    TransferOwnership { newOwner: Address },
+    #[selector = sol("restricted()")]
+    Restricted {} -> bool,
+}
+pub contract OwnedHarness {
+    init(initialOwner: Address)
+    uses (storage: mut RawStorage, log: mut Log)
+    {
+        Owned { slot: 0 }.initialize(initialOwner)
+    }
+    recv OwnedMsg {
+        Owner {} -> Address uses (storage: RawStorage) {
+            Owned { slot: 0 }.owner()
+        }
+        TransferOwnership { newOwner } uses (ctx: Ctx, storage: mut RawStorage, log: mut Log) {
+            Owned { slot: 0 }.transfer_ownership(newOwner)
+        }
+        Restricted {} -> bool uses (ctx: Ctx, storage: RawStorage) {
+            Owned { slot: 0 }.check_owner()
+            true
+        }
+    }
+}

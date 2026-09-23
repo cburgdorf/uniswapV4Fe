@@ -1,0 +1,50 @@
+   Compiling fe-common v26.3.0 (/home/cburgdorf/Documents/hacking/fe/fe/crates/common)
+   Compiling fe-codegen v26.3.0 (/home/cburgdorf/Documents/hacking/fe/fe/crates/codegen)
+   Compiling fe v26.3.0 (/home/cburgdorf/Documents/hacking/fe/fe/crates/fe)
+   Compiling fe-test-utils v26.3.0 (/home/cburgdorf/Documents/hacking/fe/fe/crates/test-utils)
+   Compiling fe-trace-facts v26.3.0 (/home/cburgdorf/Documents/hacking/fe/fe/crates/trace-facts)
+   Compiling fe-resolver v26.3.0 (/home/cburgdorf/Documents/hacking/fe/fe/crates/resolver)
+   Compiling fe-hir v26.3.0 (/home/cburgdorf/Documents/hacking/fe/fe/crates/hir)
+   Compiling fe-debug-export v26.3.0 (/home/cburgdorf/Documents/hacking/fe/fe/crates/debug-export)
+   Compiling fe-driver v26.3.0 (/home/cburgdorf/Documents/hacking/fe/fe/crates/driver)
+   Compiling fe-mir v26.3.0 (/home/cburgdorf/Documents/hacking/fe/fe/crates/mir)
+   Compiling fe-semantic-indexing v26.3.0 (/home/cburgdorf/Documents/hacking/fe/fe/crates/semantic-indexing)
+   Compiling fe-language-server v26.3.0 (/home/cburgdorf/Documents/hacking/fe/fe/crates/language-server)
+   Compiling fe-contract-harness v26.3.0 (/home/cburgdorf/Documents/hacking/fe/fe/crates/contract-harness)
+    Finished `release` profile [optimized] target(s) in 1m 07s
+     Running unittests src/main.rs (target/release/deps/fe-6efc2ec034411c5f)
+
+running 30 tests
+test abi::tests::manual_module_msg_variants_are_skipped_with_warning ... ok
+test abi::tests::hex_selector_skips_arm_with_warning ... ok
+test abi::tests::recv_variant_resolution_survives_same_name_event_structs ... ok
+test abi::tests::payable_constructor_and_recv_arms_preserve_abi_mutability_and_array_inputs ... ok
+test abi::tests::custom_errors_include_panic_with_value ... ok
+test abi::tests::manual_generic_recv_variants_are_skipped_with_warning ... ok
+test abi::tests::manual_msg_variant_impls_are_skipped_with_warning ... ok
+test abi::tests::fallback_recv_arm_emits_standard_fallback_abi_entry ... ok
+test abi::tests::custom_errors_include_result_unwrap ... ok
+test abi::tests::memory_effects_do_not_change_abi_state_mutability ... ok
+test abi::tests::constructed_events_without_emit_are_not_included ... ok
+test abi::tests::selector_const_alias_preserves_signature ... ok
+test abi::tests::custom_errors_ignore_non_error_panics_and_user_named_helpers ... ok
+test abi::tests::selector_const_block_local_alias_chain_preserves_signature ... ok
+test abi::tests::abi_export_traverses_typed_calldata_encoding ... ok
+test abi::tests::selector_const_block_preserves_signature ... ok
+test abi::tests::custom_errors_include_overloaded_operators ... ok
+test abi::tests::selector_const_fn_preserves_signature ... ok
+test abi::tests::sol_compat_wrapper_types_emit_correct_abi_type ... ok
+test abi::tests::custom_errors_include_generic_operator_helpers ... ok
+test abi::tests::selector_const_block_local_alias_preserves_signature ... ok
+test abi::tests::event_abi_preserves_indexed_fields ... ok
+test abi::tests::generic_event_helpers_preserve_concrete_event_types ... ok
+test abi::tests::custom_errors_include_reachable_reverts_only ... ok
+test abi::tests::sol_fixed_bytes_wrappers_emit_canonical_types ... ok
+test abi::tests::sol_fixed_bytes_aliases_emit_canonical_types ... ok
+test abi::tests::tuple_and_fixed_array_types_emit_components_and_lengths ... ok
+test abi::tests::sol_selector_alias_uses_source_function_name ... ok
+test abi::tests::sol_selector_preserves_source_casing ... ok
+test abi::tests::recv_mutability_uses_effective_contract_scoped_bindings ... ok
+
+test result: ok. 30 passed; 0 failed; 0 ignored; 0 measured; 43 filtered out; finished in 0.67s
+

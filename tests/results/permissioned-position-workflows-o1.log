@@ -1,0 +1,59 @@
+Compiling 1 files with Solc 0.8.26
+Solc 0.8.26 finished in 18.06s
+Compiler run successful with warnings:
+Warning (5740): Unreachable code.
+   --> test/reference/solmate/src/tokens/ERC721.sol:118:9:
+    |
+118 |         require(
+    |         ^ (Relevant source part starts here and spans across multiple lines).
+
+Warning (5740): Unreachable code.
+   --> test/reference/solmate/src/tokens/ERC721.sol:134:9:
+    |
+134 |         require(
+    |         ^ (Relevant source part starts here and spans across multiple lines).
+
+Warning (5667): Unused function parameter. Remove or comment out the variable name to silence this warning.
+   --> test/periphery/src/hooks/permissionedPools/PermissionedPositionManager.sol:144:27:
+    |
+144 |     function transferFrom(address from, address to, uint256 id) public override onlyIfPoolManagerLocked {
+    |                           ^^^^^^^^^^^^
+
+Warning (5667): Unused function parameter. Remove or comment out the variable name to silence this warning.
+   --> test/periphery/src/hooks/permissionedPools/PermissionedPositionManager.sol:144:41:
+    |
+144 |     function transferFrom(address from, address to, uint256 id) public override onlyIfPoolManagerLocked {
+    |                                         ^^^^^^^^^^
+
+Warning (5667): Unused function parameter. Remove or comment out the variable name to silence this warning.
+   --> test/periphery/src/hooks/permissionedPools/PermissionedPositionManager.sol:144:53:
+    |
+144 |     function transferFrom(address from, address to, uint256 id) public override onlyIfPoolManagerLocked {
+    |                                                     ^^^^^^^^^^
+
+Warning (2018): Function state mutability can be restricted to view
+   --> test/periphery/src/hooks/permissionedPools/PermissionedPositionManager.sol:144:5:
+    |
+144 |     function transferFrom(address from, address to, uint256 id) public override onlyIfPoolManagerLocked {
+    |     ^ (Relevant source part starts here and spans across multiple lines).
+
+
+Ran 14 tests for test/PermissionedPositionManagerWorkflows.t.sol:PermissionedPositionManagerWorkflowsTest
+[PASS] testFuzz_forcedExit(uint128,bool,uint8,bool) (runs: 10000, μ: 66260692, ~: 66173575)
+[PASS] testFuzz_lifecycle(uint128,bool,uint8) (runs: 10000, μ: 65733818, ~: 65731750)
+[PASS] testFuzz_stateful(uint256,bool) (runs: 10000, μ: 70956098, ~: 70899071)
+[PASS] testFuzz_strayClaims(uint128,bool,bool) (runs: 10000, μ: 66063872, ~: 66112553)
+[PASS] test_admission() (gas: 172939570)
+[PASS] test_claimActionsAndRawRecipient() (gas: 34521914)
+[PASS] test_increaseAuthorizationOrder() (gas: 34954209)
+[PASS] test_inheritedEntrypointsAndPermits() (gas: 35433146)
+[PASS] test_isolatedMaliciousNativeDelivery() (gas: 71317090)
+[PASS] test_ownerAndFundingPermissions() (gas: 36455502)
+[PASS] test_permissionReadResponses() (gas: 423882359)
+[PASS] test_subscriberReattachmentCleanup() (gas: 35629231)
+[PASS] test_transferGuardsAndDomain() (gas: 34878041)
+[PASS] test_zeroFactoryIsNotDisabledMode() (gas: 24975163)
+Suite result: ok. 14 passed; 0 failed; 0 skipped; finished in 142.68s (299.56s CPU time)
+
+Ran 1 test suite in 142.68s (142.68s CPU time): 14 tests passed, 0 failed, 0 skipped (14 total tests)
+Verified protocol ABI: /tmp/fe-permissioned-position-abi-o1/fe/PermissionedPositionManager.protocol.abi.json

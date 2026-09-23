@@ -1,0 +1,18 @@
+Parity artifacts: /tmp/fe-router-real-permit2-latest-o1
+Compiler: fe 26.3.0 (702686c98); sha256=f3aaead7171e522c76b07fba14d25b70997fe3251a952686b0ad9c918aebac44
+Compiling 63 files with Solc 0.8.26
+Solc 0.8.26 finished in 6.63s
+Compiler run successful!
+
+Ran 8 tests for test/RouterWorkflows.t.sol:RouterWorkflowsTest
+[PASS] testFuzz_allAndPortionActions(uint64,bool,bool,bool) (runs: 10000, μ: 24518069, ~: 24499253)
+[PASS] testFuzz_multiWorkflow(uint64,bool,bool,bool) (runs: 10000, μ: 25540147, ~: 25534796)
+[PASS] testFuzz_rollback(uint64,bool,bool) (runs: 10000, μ: 24431889, ~: 24444810)
+[PASS] testFuzz_singleWorkflow(uint64,bool,bool,bool) (runs: 10000, μ: 24560112, ~: 24582338)
+[PASS] test_callbackAuthorizationAndEmptyBatch() (gas: 11118036)
+[PASS] test_permit2RejectionsRollBackSwap() (gas: 46338552)
+[PASS] test_reentrantPayment() (gas: 24657740)
+[PASS] test_tinyIntermediateAmounts() (gas: 68733840)
+Suite result: ok. 8 passed; 0 failed; 0 skipped; finished in 23.52s (72.97s CPU time)
+
+Ran 1 test suite in 23.52s (23.52s CPU time): 8 tests passed, 0 failed, 0 skipped (8 total tests)

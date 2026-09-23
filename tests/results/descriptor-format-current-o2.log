@@ -1,0 +1,13 @@
+Compiling 33 files with Solc 0.8.26
+Solc 0.8.26 finished in 930.02ms
+Compiler run successful!
+
+Ran 5 tests for test/DescriptorFormatParity.t.sol:DescriptorFormatParityTest
+[PASS] testFuzz_fee(uint24) (runs: 10000, μ: 19436, ~: 19303)
+[PASS] testFuzz_price(uint160,uint8,uint8) (runs: 10000, μ: 27172, ~: 19440)
+[PASS] testFuzz_text(string,uint256,uint8) (runs: 10000, μ: 121063, ~: 106618)
+[PASS] testFuzz_tick(int24,int24,uint8,uint8,bool) (runs: 10000, μ: 55101, ~: 46072)
+[PASS] test_boundaries() (gas: 1397892)
+Suite result: ok. 5 passed; 0 failed; 0 skipped; finished in 2.21s (4.37s CPU time)
+
+Ran 1 test suite in 2.21s (2.21s CPU time): 5 tests passed, 0 failed, 0 skipped (5 total tests)

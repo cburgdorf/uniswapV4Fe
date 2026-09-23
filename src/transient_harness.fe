@@ -1,0 +1,106 @@
+// SPDX-License-Identifier: BUSL-1.1
+// Differential interface for transient storage and PoolManager delta accounting.
+use std::abi::sol
+use std::evm::{Address, RawOps, RawMem}
+use super::transient
+use super::balance_delta::BalanceDelta
+
+msg TransientMsg {
+    #[selector = sol("setUnlocked(bool)")]
+    SetUnlocked { value: bool },
+    #[selector = sol("unlocked()")]
+    Unlocked {} -> bool,
+    #[selector = sol("count()")]
+    Count {} -> u256,
+    #[selector = sol("bump(bool)")]
+    Bump { increment: bool },
+    #[selector = sol("deltaSlot(address,address)")]
+    DeltaSlot { currency: Address, target: Address } -> u256,
+    #[selector = sol("delta(address,address)")]
+    Delta { currency: Address, target: Address } -> i256,
+    #[selector = sol("applyDelta(address,address,int128)")]
+    Apply { currency: Address, target: Address, change: i128 } -> (i256, i256),
+    #[selector = sol("account(address,address,int128)")]
+    Account { currency: Address, target: Address, change: i128 },
+    #[selector = sol("accountPool(address,address,address,int256)")]
+    AccountPool { currency0: Address, currency1: Address, target: Address, delta: i256 },
+    #[selector = sol("sync(address,uint256)")]
+    Sync { currency: Address, amount: u256 },
+    #[selector = sol("reset()")]
+    Reset {},
+    #[selector = sol("synced()")]
+    Synced {} -> (Address, u256),
+    #[selector = sol("rawRead(uint256)")]
+    RawRead { slot: u256 } -> u256,
+    #[selector = sol("rawWrite(uint256,uint256)")]
+    RawWrite { slot: u256, value: u256 },
+    #[selector = sol("writeThenRevert(uint256,uint256)")]
+    WriteThenRevert { slot: u256, value: u256 },
+}
+pub contract TransientHarness uses (ops: mut RawOps, mem: mut RawMem) {
+    recv TransientMsg {
+        SetUnlocked { value } uses (mut ops) {
+            if value {
+                transient::unlock()
+            } else {
+                transient::lock()
+            }
+        }
+        Unlocked {} -> bool uses (ops) {
+            transient::is_unlocked()
+        }
+        Count {} -> u256 uses (ops) {
+            transient::nonzero_delta_count()
+        }
+        Bump { increment } uses (mut ops) {
+            if increment {
+                transient::increment_count()
+            } else {
+                transient::decrement_count()
+            }
+        }
+        DeltaSlot { currency, target } -> u256 uses (mut mem) {
+            transient::currency_delta_slot(currency, target)
+        }
+        Delta { currency, target } -> i256 uses (mut mem, ops) {
+            transient::get_delta(currency, target)
+        }
+        Apply { currency, target, change } -> (i256, i256)
+        uses (mut mem, mut ops)
+        {
+            transient::apply_delta(currency, target, change)
+        }
+        Account { currency, target, change } uses (mut mem, mut ops) {
+            transient::account_delta(currency, target, change)
+        }
+        AccountPool { currency0, currency1, target, delta }
+        uses (mut mem, mut ops)
+        {
+            transient::account_pool_delta(
+                currency0,
+                currency1,
+                target,
+                BalanceDelta { bits: delta },
+            )
+        }
+        Sync { currency, amount } uses (mut ops) {
+            transient::sync_currency_and_reserves(currency, amount)
+        }
+        Reset {} uses (mut ops) {
+            transient::reset_currency()
+        }
+        Synced {} -> (Address, u256) uses (ops) {
+            (transient::synced_currency(), transient::synced_reserves())
+        }
+        RawRead { slot } -> u256 uses (ops) {
+            ops.tstor_ptr<u256>(slot).read()
+        }
+        RawWrite { slot, value } uses (mut ops) {
+            ops.tstor_ptr<u256>(slot).write(value)
+        }
+        WriteThenRevert { slot, value } uses (mut ops) {
+            ops.tstor_ptr<u256>(slot).write(value)
+            std::evm::revert(())
+        }
+    }
+}

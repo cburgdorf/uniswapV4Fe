@@ -1,0 +1,1 @@
+Error: Failed to analyze contracts: MIR lowering failed: unsupported while lowering `decode_runtime_args`: semantic borrow checking failed for SemanticInstanceKey(Id(1704b), PhantomData<&salsa::interned::Value<fe_hir::analysis::semantic::instance::semantic::SemanticInstanceKey<'_>>>): borrow conflict in `fn decode_payload`

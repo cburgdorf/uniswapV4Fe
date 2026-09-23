@@ -1,0 +1,31 @@
+// SPDX-License-Identifier: MIT
+// Test-only direct access to abstract V4Router._handleAction.
+use std::abi::{Bytes, sol}
+use std::evm::{Address, Ctx, Call, RawMem}
+use super::{router::{self, AnyPool}, payments::Permit2Payment, calldata_decoder::argument_bytes}
+msg RouterHarnessMsg {
+    #[selector = sol("handle(uint256,bytes)")]
+    Handle { action: u256, data: Bytes },
+}
+pub contract RouterHarness {
+    manager: Address,
+    permit2: Address,
+    init(_manager: Address, _permit2: Address)
+    uses (mut manager, mut permit2)
+    {
+        manager = _manager
+        permit2 = _permit2
+    }
+    recv RouterHarnessMsg {
+        Handle { action, data } uses (manager, permit2, ctx: Ctx, call: mut Call, mem: mut RawMem) {
+            router::handle(
+                Permit2Payment { permit2 },
+                AnyPool {},
+                manager,
+                ctx.caller(),
+                action,
+                argument_bytes(1),
+            )
+        }
+    }
+}

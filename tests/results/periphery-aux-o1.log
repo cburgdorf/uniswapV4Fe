@@ -1,0 +1,13 @@
+Compiling 22 files with Solc 0.8.26
+Solc 0.8.26 finished in 478.31ms
+Compiler run successful!
+
+Ran 5 tests for test/PeripheryAuxParity.t.sol:PeripheryAuxParityTest
+[PASS] testFuzz_ascii(address,uint256) (runs: 10000, μ: 29878, ~: 29492)
+[PASS] testFuzz_config(address,address,uint24,int24,address,int24,int24) (runs: 10000, μ: 24445, ~: 24443)
+[PASS] testFuzz_state(bytes32) (runs: 10000, μ: 59396, ~: 59400)
+[PASS] testFuzz_vanity(address,address,uint256,uint8) (runs: 10000, μ: 54919, ~: 27168)
+[PASS] test_scoreBoundaries() (gas: 5293438)
+Suite result: ok. 5 passed; 0 failed; 0 skipped; finished in 742.35ms (1.86s CPU time)
+
+Ran 1 test suite in 743.31ms (742.35ms CPU time): 5 tests passed, 0 failed, 0 skipped (5 total tests)

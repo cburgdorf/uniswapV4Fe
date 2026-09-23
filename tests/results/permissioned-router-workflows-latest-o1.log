@@ -1,0 +1,23 @@
+Parity artifacts: /tmp/fe-permissioned-router-workflows-latest-o1
+Compiler: fe 26.3.0 (702686c98); sha256=f3aaead7171e522c76b07fba14d25b70997fe3251a952686b0ad9c918aebac44
+Wrote /tmp/fe-permissioned-router-workflows-latest-o1/fe/PermissionedV4Router.bin
+Wrote /tmp/fe-permissioned-router-workflows-latest-o1/fe/PermissionedV4Router.runtime.bin
+Wrote /tmp/fe-permissioned-router-workflows-latest-o1/fe/PermissionedV4Router.abi.json
+Compiling 87 files with Solc 0.8.26
+Solc 0.8.26 finished in 11.23s
+Compiler run successful!
+
+Ran 9 tests for test/PermissionedRouterWorkflows.t.sol:PermissionedRouterWorkflowsTest
+[PASS] testFuzz_multihop(uint64,bool,bool,bool) (runs: 10000, μ: 61545935, ~: 61618698)
+[PASS] testFuzz_rollback(uint64,uint8,bool,bool) (runs: 10000, μ: 59862493, ~: 59838839)
+[PASS] testFuzz_swaps(uint64,bool,bool,bool,bool) (runs: 10000, μ: 60203539, ~: 60264201)
+[PASS] testFuzz_takeActions(uint64,bool,bool) (runs: 10000, μ: 60175179, ~: 60121312)
+[PASS] test_callbackAndEntryBoundaries() (gas: 25755874)
+[PASS] test_plainAndDisabledFactory() (gas: 113127124)
+[PASS] test_realPermit2Reentry() (gas: 60454963)
+[PASS] test_tinyMultihop() (gas: 169850346)
+[PASS] test_zeroOutputDoesNotCallBlockedRecipient() (gas: 113486877)
+Suite result: ok. 9 passed; 0 failed; 0 skipped; finished in 50.61s (174.12s CPU time)
+
+Ran 1 test suite in 50.62s (50.61s CPU time): 9 tests passed, 0 failed, 0 skipped (9 total tests)
+Verified protocol ABI: /tmp/fe-permissioned-router-workflows-latest-o1/fe/PermissionedV4Router.protocol.abi.json

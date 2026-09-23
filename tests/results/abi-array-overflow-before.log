@@ -1,0 +1,16 @@
+FAIL  [0.0005s] overflowing_array_multiplication_reverts_empty
+    Test reverted: 0x4e487b710000000000000000000000000000000000000000000000000000000000000001
+FAIL  [0.0005s] overflowing_array_end_reverts_empty
+    Test reverted: 0x4e487b710000000000000000000000000000000000000000000000000000000000000001
+FAIL  [0.0005s] overflowing_tail_head_reverts_empty
+    Test reverted: 0x4e487b710000000000000000000000000000000000000000000000000000000000000001
+FAIL  [0.0005s] overflowing_relative_tail_reverts_empty
+    Test reverted: 0x4e487b710000000000000000000000000000000000000000000000000000000000000001
+
+test result: FAILED. 0 passed; 4 failed
+
+failures:
+    overflowing_array_multiplication_reverts_empty
+    overflowing_array_end_reverts_empty
+    overflowing_tail_head_reverts_empty
+    overflowing_relative_tail_reverts_empty

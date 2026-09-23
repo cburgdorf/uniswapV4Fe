@@ -1,0 +1,205 @@
+{
+  "result": "passed",
+  "scope": "Periphery action constants, IV4Router schemas/errors, and IWETH9 consumer interactions",
+  "reference_revision": "9969eec44cfdf07e24b41de47f40276a58401976",
+  "reference_sources": {
+    "src/libraries/Actions.sol": "6e8981fcc1fe709e71f85befa2e8656fac6601a565d8ce677b41cff24a838437",
+    "src/libraries/ActionConstants.sol": "8e88393dd8b50b25b818e2f6c246aae5cfe63106b56b6e0609869e599c81ec79",
+    "src/interfaces/IV4Router.sol": "a577e593bd1948ffcf9ce26964ae1e47bafcf6dffcd40baeb700bcb902367a53",
+    "src/interfaces/external/IWETH9.sol": "d6b24fe796517f53292d6679adf173e1f3c1fc0dc5efedfc69fa4955c1a9c058"
+  },
+  "audit_script_sha256": "71c7b550c6a72ac7ed0a55681c9d6cb59567d75c82f275565430610aabaca009",
+  "constant_count": 30,
+  "constants": {
+    "INCREASE_LIQUIDITY": {
+      "type": "uint256",
+      "value": 0
+    },
+    "DECREASE_LIQUIDITY": {
+      "type": "uint256",
+      "value": 1
+    },
+    "MINT_POSITION": {
+      "type": "uint256",
+      "value": 2
+    },
+    "BURN_POSITION": {
+      "type": "uint256",
+      "value": 3
+    },
+    "INCREASE_LIQUIDITY_FROM_DELTAS": {
+      "type": "uint256",
+      "value": 4
+    },
+    "MINT_POSITION_FROM_DELTAS": {
+      "type": "uint256",
+      "value": 5
+    },
+    "SWAP_EXACT_IN_SINGLE": {
+      "type": "uint256",
+      "value": 6
+    },
+    "SWAP_EXACT_IN": {
+      "type": "uint256",
+      "value": 7
+    },
+    "SWAP_EXACT_OUT_SINGLE": {
+      "type": "uint256",
+      "value": 8
+    },
+    "SWAP_EXACT_OUT": {
+      "type": "uint256",
+      "value": 9
+    },
+    "DONATE": {
+      "type": "uint256",
+      "value": 10
+    },
+    "SETTLE": {
+      "type": "uint256",
+      "value": 11
+    },
+    "SETTLE_ALL": {
+      "type": "uint256",
+      "value": 12
+    },
+    "SETTLE_PAIR": {
+      "type": "uint256",
+      "value": 13
+    },
+    "TAKE": {
+      "type": "uint256",
+      "value": 14
+    },
+    "TAKE_ALL": {
+      "type": "uint256",
+      "value": 15
+    },
+    "TAKE_PORTION": {
+      "type": "uint256",
+      "value": 16
+    },
+    "TAKE_PAIR": {
+      "type": "uint256",
+      "value": 17
+    },
+    "CLOSE_CURRENCY": {
+      "type": "uint256",
+      "value": 18
+    },
+    "CLEAR_OR_TAKE": {
+      "type": "uint256",
+      "value": 19
+    },
+    "SWEEP": {
+      "type": "uint256",
+      "value": 20
+    },
+    "WRAP": {
+      "type": "uint256",
+      "value": 21
+    },
+    "UNWRAP": {
+      "type": "uint256",
+      "value": 22
+    },
+    "MINT_6909": {
+      "type": "uint256",
+      "value": 23
+    },
+    "BURN_6909": {
+      "type": "uint256",
+      "value": 24
+    },
+    "UNWIND_WITH_FALLBACK": {
+      "type": "uint256",
+      "value": 25
+    },
+    "OPEN_DELTA": {
+      "type": "uint128",
+      "value": 0
+    },
+    "CONTRACT_BALANCE": {
+      "type": "uint256",
+      "value": 57896044618658097711785492504343953926634992332820282019728792003956564819968
+    },
+    "MSG_SENDER": {
+      "type": "address",
+      "value": 1
+    },
+    "ADDRESS_THIS": {
+      "type": "address",
+      "value": 2
+    }
+  },
+  "router_error_signatures": [
+    "error:V4TooLittleReceived(uint256,uint256)",
+    "error:V4TooMuchRequested(uint256,uint256)",
+    "error:V4TooLittleReceivedPerHop(uint256,uint256,uint256)",
+    "error:V4TooMuchRequestedPerHop(uint256,uint256,uint256)",
+    "error:V4TooLittleReceivedPerHopSingle(uint256,uint256)",
+    "error:V4TooMuchRequestedPerHopSingle(uint256,uint256)",
+    "error:InvalidHopPriceLength()",
+    "error:V4ExactOutputUnfilled(uint256,uint256)"
+  ],
+  "router_struct_types": {
+    "ExactInputSingleParams": [
+      "PoolKey",
+      "bool",
+      "uint128",
+      "uint128",
+      "uint256",
+      "bytes"
+    ],
+    "ExactInputParams": [
+      "Currency",
+      "PathKey[]",
+      "uint256[]",
+      "uint128",
+      "uint128"
+    ],
+    "ExactOutputSingleParams": [
+      "PoolKey",
+      "bool",
+      "uint128",
+      "uint128",
+      "uint256",
+      "bytes"
+    ],
+    "ExactOutputParams": [
+      "Currency",
+      "PathKey[]",
+      "uint256[]",
+      "uint128",
+      "uint128"
+    ]
+  },
+  "evidence": {
+    "router": {
+      "artifact": "/tmp/fe-router-interface-latest-o1",
+      "validation_sha256": "53f04c2d5ec3f01306ebada4bec270d4f084e09873b1ac8ece5b9d9de4e6d24a",
+      "compiler_sha256": "f3aaead7171e522c76b07fba14d25b70997fe3251a952686b0ad9c918aebac44",
+      "test_source_sha256": "91b97bbe832ac62c9dc69784a2038a0416f1acf60067c9d5a011dc564b404a6a",
+      "current_sources_checked": {
+        "src/actions.fe": "3cd310e2ba79b8892928b48df64c3c94ddb4f31d3f15b5064e468ff1cc81f4bd",
+        "src/router.fe": "5df888dddd8aec827f4c5fdd3ff77470c6f0fe391896c59eb72972039372d905",
+        "src/router_params.fe": "6687cd7cc0eade33c84f7c4a532dee008c2b4a7a681673c161c00e95c0f418c2",
+        "src/calldata_decoder.fe": "a007cb8fe22c40d18320ee83fae2440a065112488fe368f3b9b4cb4eca6815c7"
+      }
+    },
+    "native_wrapper": {
+      "artifact": "/tmp/fe-native-wrapper-latest-o1",
+      "validation_sha256": "f014553209238c7651ae58ed49433cff31277cb63062a50608a186eb45e59c5a",
+      "compiler_sha256": "f3aaead7171e522c76b07fba14d25b70997fe3251a952686b0ad9c918aebac44",
+      "test_source_sha256": "7b170893dbc3b43598b9dabab63fa36d1095fd62742b7315240138b88b227d81",
+      "current_sources_checked": {
+        "src/native_wrapper.fe": "f03dc291d978f89571d1af8faf7a6d3b4bdd498d7ee45b7991428a6a15434b3d"
+      }
+    }
+  },
+  "notes": [
+    "Router structs use lazy typed calldata views to preserve pinned Solidity validation order.",
+    "IWETH9 is an external dependency interface. NativeWrapper supplies deposit/withdraw interaction; ERC20 interactions use the shared currency/payment paths. No WETH9 token implementation is claimed.",
+    "Reserved actions remain subject to each reference dispatcher; declaring a constant does not enable it everywhere."
+  ]
+}

@@ -1,0 +1,14 @@
+// Reproduced with rebuilt Fe aad737010 / Sonatina 5449214737, default -O1.
+msg NegMsg {
+    #[selector = 0x12345678]
+    Negate { value: i256 } -> i256,
+}
+
+#[arithmetic(unchecked)]
+fn negate(_ value: i256) -> i256 { -value }
+
+pub contract NegProbe {
+    recv NegMsg {
+        Negate { value } -> i256 { negate(value) }
+    }
+}

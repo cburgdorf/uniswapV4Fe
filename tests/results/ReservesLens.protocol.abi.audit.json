@@ -1,0 +1,53 @@
+{
+  "fe_abi_sha256": "29ae03a78740a20b2567591df3fbfeb9267a1f6b8c674ad4425dbf79dc735c93",
+  "reference_artifact_sha256": "28d6bce836f535297c895520fb9b466c0ef8bfd178058be6dec399cb5281fb7f",
+  "protocol_abi_sha256": "5e8c1435e42fb66c37d8dd3d70ad462458ad017e0d58328e43d2295460da33f8",
+  "adapter_sha256": "ffd85641a3d37178f97aa5a389d46f40711c1195e658e97af9fb028f0812d3e5",
+  "callable_and_event_layouts": "compatible",
+  "reference_metadata_applied": [
+    "function:getPoolTVL(address,(address,address,uint24,int24,address),address)",
+    "function:getPoolTVL(address,(address,address,uint24,int24,address))",
+    "function:getPoolTVLBatch(address,(address,address,uint24,int24,address)[])",
+    "function:getPoolTVLBatch(address,(address,address,uint24,int24,address)[],address[])",
+    "function:getPoolTVLPaged(address,(address,address,uint24,int24,address),address,bytes,uint32)",
+    "function:getPoolTVLPaged(address,(address,address,uint24,int24,address),bytes)",
+    "function:getPopulatedTicksInWord(address,(address,address,uint24,int24,address),int16)"
+  ],
+  "explicit_fallback_receive": false,
+  "explicit_lazy_multicall": false,
+  "explicit_flat_dynamic_returns": [
+    "function:getPoolTVLPaged(address,(address,address,uint24,int24,address),address,bytes,uint32)",
+    "function:getPoolTVLPaged(address,(address,address,uint24,int24,address),bytes)"
+  ],
+  "fe_error_signatures": [
+    "error:CursorBlockMismatch(uint256,uint256)",
+    "error:CursorContextMismatch()",
+    "error:CursorStateMismatch()",
+    "error:InputLengthMismatch()",
+    "error:InvalidCursor()",
+    "error:InvalidPrice()",
+    "error:InvalidScanBudget(uint32)",
+    "error:InvalidTick(int24)",
+    "error:InvalidTickSpacing(int24)",
+    "error:LiquidityInvariantFailed(bytes32)",
+    "error:ManagerBatchReadFailed(address,bytes32,bytes32,uint256)",
+    "error:Panic(uint256)",
+    "error:PoolNotInitialized(bytes32)",
+    "error:TickInvariantFailed(bytes32,int256)",
+    "error:UnsupportedCursorVersion(uint8)"
+  ],
+  "reference_error_signatures": [
+    "error:CursorBlockMismatch(uint256,uint256)",
+    "error:CursorContextMismatch()",
+    "error:CursorStateMismatch()",
+    "error:InputLengthMismatch()",
+    "error:InvalidCursor()",
+    "error:InvalidScanBudget(uint32)",
+    "error:InvalidTickSpacing(int24)",
+    "error:LiquidityInvariantFailed(bytes32)",
+    "error:ManagerBatchReadFailed(address,bytes32,bytes32,uint256)",
+    "error:PoolNotInitialized(bytes32)",
+    "error:TickInvariantFailed(bytes32,int256)",
+    "error:UnsupportedCursorVersion(uint8)"
+  ]
+}

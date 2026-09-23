@@ -1,0 +1,27 @@
+// SPDX-License-Identifier: MIT
+use std::abi::{Bytes32, sol::Int24}
+use std::evm::Address
+#[error]
+pub struct PoolNotInitialized { pub poolId: Bytes32 }
+#[error]
+pub struct InvalidTickSpacing { pub tickSpacing: Int24 }
+#[error]
+pub struct InvalidScanBudget { pub maxReads: u32 }
+#[error]
+pub struct ManagerBatchReadFailed { pub manager: Address, pub firstSlot: Bytes32, pub lastSlot: Bytes32, pub count: u256 }
+#[error]
+pub struct LiquidityInvariantFailed { pub poolId: Bytes32 }
+#[error]
+pub struct TickInvariantFailed { pub poolId: Bytes32, pub tick: i256 }
+#[error]
+pub struct InvalidCursor {  }
+#[error]
+pub struct UnsupportedCursorVersion { pub version: u8 }
+#[error]
+pub struct CursorContextMismatch {  }
+#[error]
+pub struct CursorBlockMismatch { pub expected: u256, pub actual: u256 }
+#[error]
+pub struct CursorStateMismatch {  }
+#[error]
+pub struct InputLengthMismatch {  }

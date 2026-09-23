@@ -1,0 +1,38 @@
+// SPDX-License-Identifier: MIT
+use std::abi::{Bytes32, DynString, sol::{self, Int24}}
+use std::evm::{Address, RawMem, RawStorage}
+use super::{position_config::{PositionConfig, PositionConfigId}, pool_types::PoolKey, vanity_address as vanity, address_string}
+msg AuxMsg {
+    #[selector = sol("ascii(address,uint256)")]
+    Ascii { address: Address, len: u256 } -> DynString,
+    #[selector = sol("config((address,address,uint24,int24,address),int24,int24)")]
+    Config { key: PoolKey, lower: Int24, upper: Int24 } -> Bytes32,
+    #[selector = sol("state(bytes32)")]
+    State { id: Bytes32 } -> (Bytes32, bool, Bytes32, bool, Bytes32, bool),
+    #[selector = sol("score(address,address)")]
+    Score { a: Address, b: Address } -> (u256, u256, bool),
+    #[selector = sol("nibble(address,uint256)")]
+    Nibble { address: Address, index: u256 } -> u8,
+    #[selector = sol("leading(address,uint256,uint8)")]
+    Leading { address: Address, start: u256, comparison: u8 } -> u256,
+}
+pub contract PeripheryAuxHarness {
+    recv AuxMsg {
+        Ascii { address, len } -> DynString uses (mem: mut RawMem) { address_string::to_ascii(address, len) }
+        Config { key, lower, upper } -> Bytes32 uses (mem: mut RawMem) { PositionConfig { pool_key: key, lower, upper }.to_id() }
+        State { id } -> (Bytes32, bool, Bytes32, bool, Bytes32, bool) uses (storage: mut RawStorage) {
+            let config = PositionConfigId { slot: 0 }
+            config.set(id)
+            let initial = config.get()
+            let subscribed = config.has_subscriber()
+            config.subscribe()
+            let middle = config.get()
+            let has_middle = config.has_subscriber()
+            config.unsubscribe()
+            (initial, subscribed, middle, has_middle, config.get(), config.has_subscriber())
+        }
+        Score { a, b } -> (u256, u256, bool) { (vanity::score(a), vanity::score(b), vanity::better_than(a, b)) }
+        Nibble { address, index } -> u8 { vanity::nibble(address, index) }
+        Leading { address, start, comparison } -> u256 { vanity::leading(address, start, comparison) }
+    }
+}

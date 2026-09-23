@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/home/cburgdorf/Documents/hacking/fe/uniswap_v4_demo/tests/export_protocol_abi.py", line 140, in <module>
+    main()
+    ~~~~^^
+  File "/home/cburgdorf/Documents/hacking/fe/uniswap_v4_demo/tests/export_protocol_abi.py", line 120, in main
+    result, adaptations = export(fe, reference, args.flatten_dynamic_output, args.fallback_receive, args.lazy_multicall)
+                          ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/cburgdorf/Documents/hacking/fe/uniswap_v4_demo/tests/export_protocol_abi.py", line 97, in export
+    raise ValueError(f'Incompatible mutability: {key}: {am} / {em}')
+ValueError: Incompatible mutability: function:transferFrom(address,address,uint256): view / nonpayable

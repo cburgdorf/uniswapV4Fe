@@ -1,0 +1,81 @@
+// SPDX-License-Identifier: MIT
+// v4-periphery PathKeyLibrary. Equal currencies deliberately choose zeroForOne.
+use core::abi::AbiSize
+use std::evm::Address
+use std::abi::{Bytes, sol::{Uint24, Int24}}
+use super::pool_types::PoolKey
+pub struct PathKey {
+    pub intermediate_currency: Address,
+    pub fee: Uint24,
+    pub tick_spacing: Int24,
+    pub hooks: Address,
+    pub hook_data: Bytes,
+}
+impl PathKey {
+    pub fn pool_and_direction(self, _ currency_in: Address) -> (PoolKey, bool) {
+        let out = self.intermediate_currency
+        let (currency0, currency1) = if currency_in.inner < out.inner {
+            (currency_in, out)
+        } else {
+            (out, currency_in)
+        }
+        (
+            PoolKey {
+                currency0,
+                currency1,
+                fee: self.fee,
+                tickSpacing: self.tick_spacing,
+                hooks: self.hooks,
+            },
+            currency_in.inner == currency0.inner,
+        )
+    }
+}
+
+// Wire codecs for a PathKey[] in the periphery's external quote interface.
+// A nested static 4-tuple has the same wire layout and supplies AbiSpan, which
+// the current core library only implements for tuples up to arity four.
+impl core::abi::AbiSize for PathKey {
+    const HEAD_SIZE: u256 = 160
+    const IS_DYNAMIC: bool = true
+    fn payload_size(self) -> u256 {
+        160 + self.hook_data.payload_size()
+    }
+}
+impl core::abi::Decode<std::abi::Sol> for PathKey {
+    fn decode_payload<D: core::abi::AbiDecoder<std::abi::Sol>>(_ d: mut D) -> Self {
+        let (intermediate_currency, fee, tick_spacing, hooks, hook_data) = <(
+            Address,
+            Uint24,
+            Int24,
+            Address,
+            Bytes,
+        ) as core::abi::Decode<std::abi::Sol>>::decode_payload(mut d)
+        Self { intermediate_currency, fee, tick_spacing, hooks, hook_data }
+    }
+}
+impl core::abi::Encode<std::abi::Sol> for PathKey {
+    fn encode(own self, _ ptr: *u8) {
+        <(Address, Uint24, Int24, Address, Bytes) as core::abi::Encode<std::abi::Sol>>::encode(
+            (self.intermediate_currency, self.fee, self.tick_spacing, self.hooks, self.hook_data),
+            ptr,
+        )
+    }
+}
+impl core::abi::AbiSpan<std::abi::Sol> for PathKey {
+    fn payload_end<I: core::abi::ByteInput>(_ input: I, base: u256, pos: u256) -> u256 {
+        <((Address, Uint24, Int24, Address), Bytes) as core::abi::AbiSpan<
+            std::abi::Sol,
+        >>::payload_end(input, base, pos)
+    }
+    fn payload_end_with_input_len<I: core::abi::ByteInput>(
+        _ input: I,
+        base: u256,
+        pos: u256,
+        input_len: u256,
+    ) -> u256 {
+        <((Address, Uint24, Int24, Address), Bytes) as core::abi::AbiSpan<
+            std::abi::Sol,
+        >>::payload_end_with_input_len(input, base, pos, input_len)
+    }
+}

@@ -1,0 +1,92 @@
+{
+  "result": "passed",
+  "timestamp_utc": "2026-09-22T11:13:30.130769+00:00",
+  "anvil_version": "anvil Version: 1.5.1-stable\nCommit SHA: b0a9dd9ceda36f63e2326ce530c10e6916f4b8a2\nBuild Timestamp: 2025-12-22T11:39:01.425730780Z (1766403541)\nBuild Profile: maxperf",
+  "hardfork": "cancun",
+  "parity_validation_sha256": "8859bd5ce93fd08e9751da991b406866727d5f73a852752facc5c2e029ca00db",
+  "fe_creation_bytecode_sha256": "ec3f59db36ee00a66f2c40cad00b8b85b6b6b1401ea819bfa455d89fbba64de9",
+  "solidity_creation_bytecode_sha256": "532ee3e5e7aa49889b66b0b8c01424d24cbcc6bcbaa52fad3f7faa16749bacd5",
+  "test_script_sha256": "0690397904730bdce0762ed6cdac0edd5d0246ff03355575ad77bd464b578df5",
+  "cases": [
+    {
+      "implementation": "fe",
+      "case": "lock",
+      "transaction": "0xdbd35fe634e0a16a4a66037cbc4fb3c5fe49c77d78d5e7128f057c0adbfe3f5f",
+      "block": 2,
+      "executed_tstores": 1,
+      "next_call": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "implementation": "fe",
+      "case": "counter",
+      "transaction": "0x15d496c58a7a76f8066ba2c31e27cc791101ae43470dec71dbad204230da88e4",
+      "block": 3,
+      "executed_tstores": 1,
+      "next_call": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "implementation": "fe",
+      "case": "reserves",
+      "transaction": "0xc0963eb149d29b730645af28008acde97ed39fa8346ba8c1eb44dd1ee3ac3de4",
+      "block": 4,
+      "executed_tstores": 2,
+      "next_call": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "implementation": "fe",
+      "case": "delta_and_counter",
+      "transaction": "0x40fe8aa42fa03e635088924bbe464d91202db27ca07b32411c48ead8f7844ee6",
+      "block": 5,
+      "executed_tstores": 2,
+      "next_call": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "implementation": "fe",
+      "case": "arbitrary_slot",
+      "transaction": "0x3d2929d919972f2ae01e65a5acb2123dc5a8f45d80ea317627e2a4782b09f64f",
+      "block": 6,
+      "executed_tstores": 1,
+      "next_call": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "implementation": "solidity",
+      "case": "lock",
+      "transaction": "0x2048498d70ebbc0eb36bbfb922739e712e674353a27e746082df45e74b3679be",
+      "block": 8,
+      "executed_tstores": 1,
+      "next_call": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "implementation": "solidity",
+      "case": "counter",
+      "transaction": "0x155f5680d92ac60e23c8bd2b26548e5ef5bfe0f913b71ebf5224e38fca45fd55",
+      "block": 9,
+      "executed_tstores": 1,
+      "next_call": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "implementation": "solidity",
+      "case": "reserves",
+      "transaction": "0x4cada8bfb93d1426653e97f42ba1a88ec47f9770e75da6b9c9e7895ece897986",
+      "block": 10,
+      "executed_tstores": 2,
+      "next_call": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "implementation": "solidity",
+      "case": "delta_and_counter",
+      "transaction": "0x188f2562438c9871eb41d622e0469908efcaae4684ef0bb5b1cd7cccf9259a8d",
+      "block": 11,
+      "executed_tstores": 2,
+      "next_call": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "implementation": "solidity",
+      "case": "arbitrary_slot",
+      "transaction": "0xec9d8d861edcae5555facc0578b135d574b0f741c2389a28ab71a6bf0ede1c05",
+      "block": 12,
+      "executed_tstores": 1,
+      "next_call": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ]
+}

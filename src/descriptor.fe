@@ -1,0 +1,274 @@
+// SPDX-License-Identifier: MIT
+// Generated text composition from pinned Descriptor.sol.
+use core::ops::Eq
+use std::abi::{DynString, sol::{Int24, Uint24}}
+use std::evm::{Address, RawMem}
+use super::{metadata_text as text, descriptor_format::{fee as feeToPercentString, tick_price as tickToDecimalString}, metadata_text::escape as escapeSpecialCharacters, descriptor_image::{addressToString, generateSVGImage}}
+
+pub struct ConstructTokenURIParams {
+    pub tokenId: u256,
+    pub quoteCurrency: Address,
+    pub baseCurrency: Address,
+    pub quoteCurrencySymbol: DynString,
+    pub baseCurrencySymbol: DynString,
+    pub quoteCurrencyDecimals: u8,
+    pub baseCurrencyDecimals: u8,
+    pub flipRatio: bool,
+    pub tickLower: Int24,
+    pub tickUpper: Int24,
+    pub tickCurrent: Int24,
+    pub tickSpacing: Int24,
+    pub fee: Uint24,
+    pub poolManager: Address,
+    pub hooks: Address,
+}
+
+pub fn constructTokenURI(_ params: ConstructTokenURIParams) -> DynString uses (mem: mut RawMem) {
+    let name = generateName(params, feeToPercentString(params.fee))
+    let descriptionPartOne = generateDescriptionPartOne(escapeSpecialCharacters(params.quoteCurrencySymbol), escapeSpecialCharacters(params.baseCurrencySymbol), addressToString(params.poolManager))
+    let descriptionPartTwo = generateDescriptionPartTwo(text::decimal(params.tokenId), escapeSpecialCharacters(params.baseCurrencySymbol), (if (params.quoteCurrency.inner == (Address { inner: 0 }).inner) { literal_0() } else { addressToString(params.quoteCurrency) }), (if (params.baseCurrency.inner == (Address { inner: 0 }).inner) { literal_0() } else { addressToString(params.baseCurrency) }), (if (params.hooks.inner == (Address { inner: 0 }).inner) { literal_1() } else { addressToString(params.hooks) }), feeToPercentString(params.fee))
+    let image = text::base64((generateSVGImage(params)).payload_span())
+    return text::concat([(literal_2()).payload_span(), (text::base64((text::concat([(literal_3()).payload_span(), (name).payload_span(), (literal_4()).payload_span(), (descriptionPartOne).payload_span(), (descriptionPartTwo).payload_span(), (literal_5()).payload_span(), (literal_6()).payload_span(), (image).payload_span(), (literal_7()).payload_span()])).payload_span())).payload_span()])
+}
+
+pub fn generateDescriptionPartOne(_ quoteCurrencySymbol: DynString, _ baseCurrencySymbol: DynString, _ poolManager: DynString) -> DynString uses (mem: mut RawMem) {
+    return text::concat([(literal_8()).payload_span(), (quoteCurrencySymbol).payload_span(), (literal_9()).payload_span(), (baseCurrencySymbol).payload_span(), (literal_10()).payload_span(), (literal_11()).payload_span(), (literal_12()).payload_span(), (poolManager).payload_span(), (literal_13()).payload_span(), (quoteCurrencySymbol).payload_span()])
+}
+
+pub fn generateDescriptionPartTwo(_ tokenId: DynString, _ baseCurrencySymbol: DynString, _ quoteCurrency: DynString, _ baseCurrency: DynString, _ hooks: DynString, _ feeTier: DynString) -> DynString uses (mem: mut RawMem) {
+    return text::concat([(literal_14()).payload_span(), (quoteCurrency).payload_span(), (literal_13()).payload_span(), (baseCurrencySymbol).payload_span(), (literal_14()).payload_span(), (baseCurrency).payload_span(), (literal_15()).payload_span(), (hooks).payload_span(), (literal_16()).payload_span(), (feeTier).payload_span(), (literal_17()).payload_span(), (tokenId).payload_span(), (literal_18()).payload_span(), (literal_19()).payload_span()])
+}
+
+pub fn generateName(_ params: ConstructTokenURIParams, _ feeTier: DynString) -> DynString uses (mem: mut RawMem) {
+    return text::concat([(literal_20()).payload_span(), (feeTier).payload_span(), (literal_21()).payload_span(), (escapeSpecialCharacters(params.quoteCurrencySymbol)).payload_span(), (literal_22()).payload_span(), (escapeSpecialCharacters(params.baseCurrencySymbol)).payload_span(), (literal_21()).payload_span(), (tickToDecimalString((if (!params.flipRatio) { params.tickLower } else { params.tickUpper }), params.tickSpacing, params.baseCurrencyDecimals, params.quoteCurrencyDecimals, params.flipRatio)).payload_span(), (literal_23()).payload_span(), (tickToDecimalString((if (!params.flipRatio) { params.tickUpper } else { params.tickLower }), params.tickSpacing, params.baseCurrencyDecimals, params.quoteCurrencyDecimals, params.flipRatio)).payload_span()])
+}
+
+// "Native"
+fn literal_0() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x4e61746976650000000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 6))
+}
+
+// "No Hook"
+fn literal_1() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x4e6f20486f6f6b00000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 7))
+}
+
+// "data:application/json;base64,"
+fn literal_2() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x646174613a6170706c69636174696f6e2f6a736f6e3b6261736536342c000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 29))
+}
+
+// "{\"name\":\""
+fn literal_3() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x7b226e616d65223a220000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 9))
+}
+
+// "\", \"description\":\""
+fn literal_4() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x222c20226465736372697074696f6e223a220000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 18))
+}
+
+// "\", \"image\": \""
+fn literal_5() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x222c2022696d616765223a202200000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 13))
+}
+
+// "data:image/svg+xml;base64,"
+fn literal_6() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x646174613a696d6167652f7376672b786d6c3b6261736536342c000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 26))
+}
+
+// "\"}"
+fn literal_7() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x227d000000000000000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 2))
+}
+
+// "This NFT represents a liquidity position in a Uniswap v4 "
+fn literal_8() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(64)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x54686973204e465420726570726573656e74732061206c697175696469747920)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x706f736974696f6e20696e206120556e69737761702076342000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 57))
+}
+
+// "-"
+fn literal_9() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x2d00000000000000000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 1))
+}
+
+// " pool. "
+fn literal_10() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x20706f6f6c2e2000000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 7))
+}
+
+// "The owner of this NFT can modify or redeem the position.\\n"
+fn literal_11() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(64)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x546865206f776e6572206f662074686973204e46542063616e206d6f64696679)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x206f722072656465656d2074686520706f736974696f6e2e5c6e000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 58))
+}
+
+// "\\nPool Manager Address: "
+fn literal_12() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x5c6e506f6f6c204d616e6167657220416464726573733a200000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 24))
+}
+
+// "\\n"
+fn literal_13() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x5c6e000000000000000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 2))
+}
+
+// " Address: "
+fn literal_14() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x20416464726573733a2000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 10))
+}
+
+// "\\nHook Address: "
+fn literal_15() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x5c6e486f6f6b20416464726573733a2000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 16))
+}
+
+// "\\nFee Tier: "
+fn literal_16() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x5c6e46656520546965723a200000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 12))
+}
+
+// "\\nToken ID: "
+fn literal_17() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x5c6e546f6b656e2049443a200000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 12))
+}
+
+// "\\n\\n"
+fn literal_18() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x5c6e5c6e00000000000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 4))
+}
+
+// "⚠️ DISCLAIMER: Due diligence is imperative when assessing this NFT. Make sure currency addresses match the expected currencies, as currency symbols may be imitated."
+fn literal_19() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(192)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0xe29aa0efb88f20444953434c41494d45523a204475652064696c6967656e6365)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x20697320696d7065726174697665207768656e20617373657373696e67207468)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x6973204e46542e204d616b6520737572652063757272656e6379206164647265)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 96), value: 0x73736573206d61746368207468652065787065637465642063757272656e6369)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 128), value: 0x65732c2061732063757272656e63792073796d626f6c73206d61792062652069)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 160), value: 0x6d6974617465642e000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 168))
+}
+
+// "Uniswap - "
+fn literal_20() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x556e6973776170202d2000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 10))
+}
+
+// " - "
+fn literal_21() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x202d200000000000000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 3))
+}
+
+// "/"
+fn literal_22() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x2f00000000000000000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 1))
+}
+
+// "<>"
+fn literal_23() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c3e000000000000000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 2))
+}

@@ -1,0 +1,98 @@
+// SPDX-License-Identifier: MIT
+// Concrete Permit2 entrypoint around the pinned abstract PermissionedV4Router. The reference does
+// not prescribe a public execute ABI; this wrapper uses a transient caller lock
+// and the same Permit2 payment policy as PositionManager.
+use core::abi::ByteInput
+use std::abi::{Bytes, sol}
+use std::evm::{Address, Ctx, Call, RawMem, RawOps, CallData, revert, revert_error}
+use super::{router::{self}, permissioned_router::{PermissionedPayment, PermissionedPools}, payments::Permit2Payment, calldata_decoder::argument_bytes}
+const LOCKED_BY_SLOT: u256 = 0x0aedd6bde10e3aa2adec092b02a3e3e805795516cda41f27aa145b8f300af87a
+#[error]
+pub struct ContractLocked {}
+#[error]
+pub struct NotPoolManager {}
+msg RouterMsg {
+    #[selector = sol("execute(bytes)")]
+    Execute { data: Bytes },
+    #[selector = sol("unlockCallback(bytes)")]
+    Callback { data: Bytes } -> Bytes,
+    #[selector = sol("poolManager()")]
+    Manager {} -> Address,
+    #[selector = sol("PERMISSIONS_ADAPTER_FACTORY()") ]
+    Factory {} -> Address,
+    #[selector = sol("permit2()")]
+    Permit {} -> Address,
+    #[selector = sol("msgSender()")]
+    Sender {} -> Address,
+}
+msg UnlockMsg {
+    #[selector = sol("unlock(bytes)")]
+    Unlock { data: Bytes } -> Bytes,
+}
+pub contract PermissionedV4Router {
+    manager: Address,
+    permit2: Address,
+    factory: Address,
+    init(_manager: Address, _permit2: Address, _factory: Address)
+    uses (mut manager, mut permit2, mut factory)
+    {
+        manager = _manager
+        permit2 = _permit2
+        factory = _factory
+    }
+    recv {
+        #[payable]
+        RouterMsg::Execute { data } uses (manager, ctx: Ctx, call: mut Call, ops: mut RawOps) {
+            let slot = ops.tstor_ptr<Address>(LOCKED_BY_SLOT)
+            if slot.read().inner != 0 {
+                revert_error(ContractLocked {})
+            }
+            slot.write(ctx.caller())
+            let _ = call
+                .call(
+                    addr: manager,
+                    gas: ctx.gas(),
+                    value: 0,
+                    message: UnlockMsg::Unlock { data },
+                )
+            slot.write(Address { inner: 0 })
+        }
+        RouterMsg::Callback { data } -> Bytes uses (
+            manager,
+            permit2,
+            factory,
+            ctx: Ctx,
+            call: mut Call,
+            mem: mut RawMem,
+            ops: RawOps,
+        ) {
+            if ctx.caller() != manager {
+                revert_error(NotPoolManager {})
+            }
+            router::execute(
+                PermissionedPayment { funding: Permit2Payment { permit2 }, factory, sender: ops.tstor_ptr<Address>(LOCKED_BY_SLOT).read() },
+                PermissionedPools { factory },
+                manager,
+                ops.tstor_ptr<Address>(LOCKED_BY_SLOT).read(),
+                argument_bytes(0),
+            )
+            Bytes::from_word_prefix(word: 0, len: 0)
+        }
+        RouterMsg::Manager {} -> Address uses (manager) {
+            manager
+        }
+        RouterMsg::Factory {} -> Address uses (factory) { factory }
+        RouterMsg::Permit {} -> Address uses (permit2) {
+            permit2
+        }
+        RouterMsg::Sender {} -> Address uses (ops: RawOps) {
+            ops.tstor_ptr<Address>(LOCKED_BY_SLOT).read()
+        }
+        #[payable]
+        _ {
+            if CallData::new().len() != 0 {
+                revert(())
+            }
+        }
+    }
+}

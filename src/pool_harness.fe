@@ -1,0 +1,160 @@
+// SPDX-License-Identifier: BUSL-1.1
+// Raw Pool.sol differential surface, with runtime-selected storage roots.
+use std::abi::{Bytes32, sol::{self, Int24, Uint24, Uint160}}
+use std::evm::{Address, RawMem, RawStorage}
+use super::pool::{Pool, ModifyLiquidityParams, SwapParams, tick_spacing_to_max_liquidity_per_tick}
+
+msg PoolMsg {
+    #[selector = sol("initialize(uint256,uint160,uint24)")]
+    Initialize { root: u256, price: Uint160, fee: Uint24 } -> Int24,
+    #[selector = sol("header(uint256)")]
+    Header { root: u256 } -> (u256, u256, u256, u128),
+    #[selector = sol("setFees(uint256,uint24,uint24)")]
+    SetFees { root: u256, protocol: Uint24, lp: Uint24 },
+    #[selector = sol("checkInitialized(uint256)")]
+    CheckInitialized { root: u256 },
+    #[selector = sol("maxLiquidity(int24)")]
+    MaxLiquidity { spacing: Int24 } -> u128,
+    #[selector = sol("readTick(uint256,int24)")]
+    ReadTick { root: u256, tick: Int24 } -> (u128, i128, u256, u256),
+    #[selector = sol("updateTick(uint256,int24,int128,bool)")]
+    UpdateTick { root: u256, tick: Int24, delta: i128, upper: bool } -> (bool, u128),
+    #[selector = sol("crossTick(uint256,int24,uint256,uint256)")]
+    CrossTick { root: u256, tick: Int24, growth0: u256, growth1: u256 } -> i128,
+    #[selector = sol("clearTick(uint256,int24)")]
+    ClearTick { root: u256, tick: Int24 },
+    #[selector = sol("inside(uint256,int24,int24)")]
+    Inside { root: u256, lower: Int24, upper: Int24 } -> (u256, u256),
+    #[selector = sol(
+        "modify(uint256,address,int24,int24,int128,int24,bytes32)",
+    )]
+    Modify {
+        root: u256,
+        owner: Address,
+        lower: Int24,
+        upper: Int24,
+        delta: i128,
+        spacing: Int24,
+        salt: Bytes32,
+    } -> (i256, i256),
+    #[selector = sol("donate(uint256,uint256,uint256)")]
+    Donate { root: u256, a: u256, b: u256 } -> i256,
+    #[selector = sol("swap(uint256,int256,int24,bool,uint160,uint24)")]
+    Swap {
+        root: u256,
+        amount: i256,
+        spacing: Int24,
+        zero_for_one: bool,
+        limit: Uint160,
+        override_fee: Uint24,
+    } -> (i256, u256, Uint24, Uint160, Int24, u128),
+    #[selector = sol("readPosition(uint256,address,int24,int24,bytes32)")]
+    ReadPosition { root: u256, owner: Address, lower: Int24, upper: Int24, salt: Bytes32 } -> (
+        u128,
+        u256,
+        u256,
+    ),
+    #[selector = sol("nextTick(uint256,int24,int24,bool)")]
+    NextTick { root: u256, tick: Int24, spacing: Int24, lte: bool } -> (Int24, bool),
+}
+pub contract PoolHarness uses (storage: mut RawStorage, mem: mut RawMem) {
+    recv PoolMsg {
+        Initialize { root, price, fee } -> Int24 uses (mut storage) {
+            Pool { slot: root }.initialize(price, fee)
+        }
+        Header { root } -> (u256, u256, u256, u128)
+        uses (storage)
+        {
+            let p = Pool { slot: root }
+            (p.read_word(0), p.read_word(1), p.read_word(2), p.liquidity())
+        }
+        SetFees { root, protocol, lp } uses (mut storage) {
+            let p = Pool { slot: root }
+            p.set_protocol_fee(protocol)
+            p.set_lp_fee(lp)
+        }
+        CheckInitialized { root } uses (storage) {
+            Pool { slot: root }.check_initialized()
+        }
+        MaxLiquidity { spacing } -> u128 {
+            tick_spacing_to_max_liquidity_per_tick(spacing)
+        }
+        ReadTick { root, tick } -> (u128, i128, u256, u256)
+        uses (mut mem, storage)
+        {
+            let t = Pool { slot: root }.read_tick(tick)
+            (
+                t.liquidity_gross,
+                t.liquidity_net,
+                t.fee_growth_outside0_x128,
+                t.fee_growth_outside1_x128,
+            )
+        }
+        UpdateTick { root, tick, delta, upper } -> (bool, u128)
+        uses (mut mem, mut storage)
+        {
+            Pool { slot: root }.update_tick(tick, delta, upper)
+        }
+        CrossTick { root, tick, growth0, growth1 } -> i128
+        uses (mut mem, mut storage)
+        {
+            Pool { slot: root }.cross_tick(tick, growth0, growth1)
+        }
+        ClearTick { root, tick } uses (mut mem, mut storage) {
+            Pool { slot: root }.clear_tick(tick)
+        }
+        Inside { root, lower, upper } -> (u256, u256)
+        uses (mut mem, storage)
+        {
+            Pool { slot: root }.fee_growth_inside(lower, upper)
+        }
+        Modify { root, owner, lower, upper, delta, spacing, salt } -> (i256, i256)
+        uses (mut mem, mut storage)
+        {
+            let params = ModifyLiquidityParams {
+                owner,
+                tick_lower: lower,
+                tick_upper: upper,
+                liquidity_delta: delta,
+                tick_spacing: spacing,
+                salt: salt.val,
+            }
+            let (principal, fees) = Pool { slot: root }.modify_liquidity(params)
+            (principal.bits, fees.bits)
+        }
+        Donate { root, a, b } -> i256 uses (mut storage) {
+            Pool { slot: root }.donate(a, b).bits
+        }
+        Swap { root, amount, spacing, zero_for_one, limit, override_fee } -> (
+            i256,
+            u256,
+            Uint24,
+            Uint160,
+            Int24,
+            u128,
+        )
+        uses (mut mem, mut storage)
+        {
+            let params = SwapParams {
+                amount_specified: amount,
+                tick_spacing: spacing,
+                zero_for_one,
+                sqrt_price_limit_x96: limit,
+                lp_fee_override: override_fee,
+            }
+            let (delta, protocol, fee, result) = Pool { slot: root }.swap(params)
+            (delta.bits, protocol, fee, result.sqrt_price_x96, result.tick, result.liquidity)
+        }
+        ReadPosition { root, owner, lower, upper, salt } -> (u128, u256, u256)
+        uses (mut mem, storage)
+        {
+            let p = Pool { slot: root }.position(owner, lower, upper, salt.val).read()
+            (p.liquidity, p.fee_growth_inside0_last_x128, p.fee_growth_inside1_last_x128)
+        }
+        NextTick { root, tick, spacing, lte } -> (Int24, bool)
+        uses (mut mem, storage)
+        {
+            Pool { slot: root }.next_tick(tick, spacing, lte)
+        }
+    }
+}

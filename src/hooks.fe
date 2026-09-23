@@ -1,0 +1,543 @@
+// SPDX-License-Identifier: MIT
+// Port of v4-core Hooks.sol and its bounded ParseBytes call sites.
+use core::ops::{Eq, Sub}
+use core::ptr::{self, MemBuffer, MemSpan}
+use std::abi::{sol, sol::{Int24, Uint24, Uint160}}
+use std::evm::{Address, Call, Ctx, RawMem, copy_returndata, revert_error}
+use super::pool_types::{PoolKey, ModifyLiquidityParams, SwapParams}
+use super::balance_delta::{BalanceDelta, to_balance_delta}
+use super::before_swap_delta::BeforeSwapDelta
+use super::{currency, lp_fee, safe_cast}
+
+pub const ALL_HOOK_MASK: u256 = 0x3fff
+pub const BEFORE_INITIALIZE_FLAG: u256 = 1 << 13
+pub const AFTER_INITIALIZE_FLAG: u256 = 1 << 12
+pub const BEFORE_ADD_LIQUIDITY_FLAG: u256 = 1 << 11
+pub const AFTER_ADD_LIQUIDITY_FLAG: u256 = 1 << 10
+pub const BEFORE_REMOVE_LIQUIDITY_FLAG: u256 = 1 << 9
+pub const AFTER_REMOVE_LIQUIDITY_FLAG: u256 = 1 << 8
+pub const BEFORE_SWAP_FLAG: u256 = 1 << 7
+pub const AFTER_SWAP_FLAG: u256 = 1 << 6
+pub const BEFORE_DONATE_FLAG: u256 = 1 << 5
+pub const AFTER_DONATE_FLAG: u256 = 1 << 4
+pub const BEFORE_SWAP_RETURNS_DELTA_FLAG: u256 = 1 << 3
+pub const AFTER_SWAP_RETURNS_DELTA_FLAG: u256 = 1 << 2
+pub const AFTER_ADD_LIQUIDITY_RETURNS_DELTA_FLAG: u256 = 1 << 1
+pub const AFTER_REMOVE_LIQUIDITY_RETURNS_DELTA_FLAG: u256 = 1
+
+#[error]
+pub struct HookAddressNotValid { pub hooks: Address }
+#[error]
+pub struct InvalidHookResponse {}
+#[error]
+pub struct HookCallFailed {}
+#[error]
+pub struct HookDeltaExceedsSwapAmount {}
+
+pub fn has_permission(_ hooks: Address, _ flag: u256) -> bool {
+    hooks.inner & flag != 0
+}
+pub fn is_valid_hook_address(_ hooks: Address, _ fee: Uint24) -> bool {
+    if !has_permission(hooks, BEFORE_SWAP_FLAG)
+        && has_permission(hooks, BEFORE_SWAP_RETURNS_DELTA_FLAG) {
+        return false
+    }
+    if !has_permission(hooks, AFTER_SWAP_FLAG)
+        && has_permission(hooks, AFTER_SWAP_RETURNS_DELTA_FLAG) {
+        return false
+    }
+    if !has_permission(hooks, AFTER_ADD_LIQUIDITY_FLAG)
+        && has_permission(hooks, AFTER_ADD_LIQUIDITY_RETURNS_DELTA_FLAG) {
+        return false
+    }
+    if !has_permission(hooks, AFTER_REMOVE_LIQUIDITY_FLAG)
+        && has_permission(hooks, AFTER_REMOVE_LIQUIDITY_RETURNS_DELTA_FLAG) {
+        return false
+    }
+    if hooks.inner == 0 {
+        !lp_fee::is_dynamic_fee(fee)
+    } else {
+        (hooks.inner & ALL_HOOK_MASK) != 0 || lp_fee::is_dynamic_fee(fee)
+    }
+}
+
+fn selector(_ data: MemSpan) -> u32 {
+    let mut word: u32 = 0
+    let mut i: u256 = 0
+    while i < 4 {
+        word <<= 8
+        if i < data.len() {
+            word |= data.byte_at(i) as u32
+        }
+        i += 1
+    }
+    word
+}
+pub fn call_hook(_ hooks: Address, _ data: MemSpan) -> MemBuffer
+uses (ctx: Ctx, call: mut Call)
+{
+    let mut ret = MemBuffer::empty()
+    let result = call.raw_call(
+            addr: hooks,
+            gas: ctx.gas(),
+            value: 0,
+            args: data,
+            ret: mut ret,
+        )
+    if !result.success() {
+        currency::wrap_last_error(hooks, selector(data), sol("HookCallFailed()"))
+    }
+    let returned = copy_returndata()
+    if returned.len() < 32 || selector(returned.span()) != selector(data) {
+        revert_error(InvalidHookResponse {})
+    }
+    returned
+}
+pub fn call_hook_with_return_delta(_ hooks: Address, _ data: MemSpan, _ parse_return: bool) -> i256
+uses (ctx: Ctx, call: mut Call, mem: RawMem)
+{
+    let result = call_hook(hooks, data)
+    if !parse_return { return 0 }
+    if result.len() != 64 {
+        revert_error(InvalidHookResponse {})
+    }
+    mem.mload(ptr::offset_bytes(result.ptr(), 32)).downcast_truncate()
+}
+fn word(_ value: i256) -> u256 {
+    value.downcast_truncate()
+}
+
+// All IHooks arguments start with (sender, PoolKey). Up to six extra static
+// words precede an optional dynamic bytes tail. This avoids encode_msg_calldata's
+// ABI-export crash while preserving the original callback signatures and bytes.
+fn calldata(
+    _ sig: u32,
+    _ key: PoolKey,
+    _ extra: [u256; 6],
+    _ count: u256,
+    _ data: MemSpan,
+    _ dynamic: bool,
+) -> MemBuffer
+uses (ctx: Ctx, mem: mut RawMem)
+{
+    let heads = 6 + count + if dynamic { 1 } else { 0 }
+    let tail = if dynamic {
+        32 + ((data.len() + 31) / 32) * 32
+    } else {
+        0
+    }
+    let buffer = MemBuffer::alloc(4 + heads * 32 + tail)
+    ptr::zero_bytes(buffer.ptr(), buffer.len())
+    mem.mstore(addr: buffer.ptr(), value: (sig as u256) << 224)
+    let base = ptr::offset_bytes(buffer.ptr(), 4)
+    mem.mstore(addr: base, value: ctx.caller().inner)
+    mem.mstore(
+        addr: ptr::offset_bytes(base, 32),
+        value: key.currency0.inner,
+    )
+    mem.mstore(
+        addr: ptr::offset_bytes(base, 64),
+        value: key.currency1.inner,
+    )
+    mem.mstore(
+        addr: ptr::offset_bytes(base, 96),
+        value: key.fee.val as u256,
+    )
+    mem.mstore(
+        addr: ptr::offset_bytes(base, 128),
+        value: word(key.tickSpacing.val as i256),
+    )
+    mem.mstore(addr: ptr::offset_bytes(base, 160), value: key.hooks.inner)
+    let mut i: u256 = 0
+    while i < count {
+        let index: usize = i.downcast_truncate()
+        mem.mstore(
+            addr: ptr::offset_bytes(base, (6 + i) * 32),
+            value: extra[index],
+        )
+        i += 1
+    }
+    if dynamic {
+        mem.mstore(
+            addr: ptr::offset_bytes(base, (heads - 1) * 32),
+            value: heads * 32,
+        )
+        mem.mstore(
+            addr: ptr::offset_bytes(base, heads * 32),
+            value: data.len(),
+        )
+        ptr::copy(
+            dest: ptr::offset_bytes(base, (heads + 1) * 32),
+            source: data,
+        )
+    }
+    buffer
+}
+
+pub fn before_initialize(_ key: PoolKey, _ price: Uint160)
+uses (ctx: Ctx, call: mut Call, mem: mut RawMem)
+{
+    if ctx.caller() == key.hooks || !has_permission(key.hooks, BEFORE_INITIALIZE_FLAG) {
+        return
+    }
+    let data = calldata(
+        sol(
+            "beforeInitialize(address,(address,address,uint24,int24,address),uint160)",
+        ),
+        key,
+        [price.val, 0, 0, 0, 0, 0],
+        1,
+        MemSpan::empty(),
+        false,
+    )
+    let _ = call_hook(key.hooks, data.span())
+}
+pub fn after_initialize(_ key: PoolKey, _ price: Uint160, _ tick: Int24)
+uses (ctx: Ctx, call: mut Call, mem: mut RawMem)
+{
+    if ctx.caller() == key.hooks || !has_permission(key.hooks, AFTER_INITIALIZE_FLAG) {
+        return
+    }
+    let data = calldata(
+        sol(
+            "afterInitialize(address,(address,address,uint24,int24,address),uint160,int24)",
+        ),
+        key,
+        [price.val, word(tick.val as i256), 0, 0, 0, 0],
+        2,
+        MemSpan::empty(),
+        false,
+    )
+    let _ = call_hook(key.hooks, data.span())
+}
+pub fn before_modify_liquidity(
+    _ key: PoolKey,
+    _ params: ModifyLiquidityParams,
+    _ hook_data: MemSpan,
+)
+uses (ctx: Ctx, call: mut Call, mem: mut RawMem)
+{
+    if ctx.caller() == key.hooks {
+        return
+    }
+    let adding = params.liquidityDelta > 0
+    let flag = if adding {
+        BEFORE_ADD_LIQUIDITY_FLAG
+    } else {
+        BEFORE_REMOVE_LIQUIDITY_FLAG
+    }
+    if !has_permission(key.hooks, flag) {
+        return
+    }
+    let sig = if adding {
+        sol(
+            "beforeAddLiquidity(address,(address,address,uint24,int24,address),(int24,int24,int256,bytes32),bytes)",
+        )
+    } else {
+        sol(
+            "beforeRemoveLiquidity(address,(address,address,uint24,int24,address),(int24,int24,int256,bytes32),bytes)",
+        )
+    }
+    let data = calldata(
+        sig,
+        key,
+        [
+            word(params.tickLower.val as i256),
+            word(params.tickUpper.val as i256),
+            word(params.liquidityDelta),
+            params.salt.val,
+            0,
+            0,
+        ],
+        4,
+        hook_data,
+        true,
+    )
+    let _ = call_hook(key.hooks, data.span())
+}
+pub fn after_modify_liquidity(
+    _ key: PoolKey,
+    _ params: ModifyLiquidityParams,
+    _ delta: BalanceDelta,
+    _ fees: BalanceDelta,
+    _ hook_data: MemSpan,
+) -> (BalanceDelta, BalanceDelta)
+uses (ctx: Ctx, call: mut Call, mem: mut RawMem)
+{
+    let zero = BalanceDelta { bits: 0 }
+    if ctx.caller() == key.hooks {
+        return (delta, zero)
+    }
+    let adding = params.liquidityDelta > 0
+    let flag = if adding {
+        AFTER_ADD_LIQUIDITY_FLAG
+    } else {
+        AFTER_REMOVE_LIQUIDITY_FLAG
+    }
+    if !has_permission(key.hooks, flag) {
+        return (delta, zero)
+    }
+    let return_flag = if adding {
+        AFTER_ADD_LIQUIDITY_RETURNS_DELTA_FLAG
+    } else {
+        AFTER_REMOVE_LIQUIDITY_RETURNS_DELTA_FLAG
+    }
+    let sig = if adding {
+        sol(
+            "afterAddLiquidity(address,(address,address,uint24,int24,address),(int24,int24,int256,bytes32),int256,int256,bytes)",
+        )
+    } else {
+        sol(
+            "afterRemoveLiquidity(address,(address,address,uint24,int24,address),(int24,int24,int256,bytes32),int256,int256,bytes)",
+        )
+    }
+    let data = calldata(
+        sig,
+        key,
+        [
+            word(params.tickLower.val as i256),
+            word(params.tickUpper.val as i256),
+            word(params.liquidityDelta),
+            params.salt.val,
+            word(delta.bits),
+            word(fees.bits),
+        ],
+        6,
+        hook_data,
+        true,
+    )
+    let hook_delta = BalanceDelta {
+        bits: call_hook_with_return_delta(
+            key.hooks,
+            data.span(),
+            has_permission(key.hooks, return_flag),
+        ),
+    }
+    (delta - hook_delta, hook_delta)
+}
+pub fn before_swap(_ key: PoolKey, _ params: SwapParams, _ hook_data: MemSpan) -> (
+    i256,
+    BeforeSwapDelta,
+    Uint24,
+)
+uses (ctx: Ctx, call: mut Call, mem: mut RawMem)
+{
+    let mut amount = params.amountSpecified
+    let mut delta = BeforeSwapDelta { bits: 0 }
+    let mut fee = Uint24 { val: 0 }
+    if ctx.caller() == key.hooks || !has_permission(key.hooks, BEFORE_SWAP_FLAG) {
+        return (amount, delta, fee)
+    }
+    let direction = if params.zeroForOne { 1 } else { 0 }
+    let data = calldata(
+        sol(
+            "beforeSwap(address,(address,address,uint24,int24,address),(bool,int256,uint160),bytes)",
+        ),
+        key,
+        [direction, word(amount), params.sqrtPriceLimitX96.val, 0, 0, 0],
+        3,
+        hook_data,
+        true,
+    )
+    let result = call_hook(key.hooks, data.span())
+    if result.len() != 96 {
+        revert_error(InvalidHookResponse {})
+    }
+    if lp_fee::is_dynamic_fee(key.fee) {
+        fee = Uint24 {
+            val: (mem.mload(ptr::offset_bytes(result.ptr(), 64)) & 0xffffff).downcast_truncate(),
+        }
+    }
+    if has_permission(key.hooks, BEFORE_SWAP_RETURNS_DELTA_FLAG) {
+        delta = BeforeSwapDelta {
+            bits: mem.mload(ptr::offset_bytes(result.ptr(), 32)).downcast_truncate(),
+        }
+        let specified = delta.specified_delta()
+        if specified != 0 {
+            let exact_input = amount < 0
+            amount += specified as i256
+            if (exact_input && amount > 0) || (!exact_input && amount < 0) {
+                revert_error(HookDeltaExceedsSwapAmount {})
+            }
+        }
+    }
+    (amount, delta, fee)
+}
+pub fn after_swap(
+    _ key: PoolKey,
+    _ params: SwapParams,
+    _ delta: BalanceDelta,
+    _ hook_data: MemSpan,
+    _ before_return: BeforeSwapDelta,
+) -> (BalanceDelta, BalanceDelta)
+uses (ctx: Ctx, call: mut Call, mem: mut RawMem)
+{
+    if ctx.caller() == key.hooks {
+        return (delta, BalanceDelta { bits: 0 })
+    }
+    let specified = before_return.specified_delta()
+    let mut unspecified = before_return.unspecified_delta()
+    if has_permission(key.hooks, AFTER_SWAP_FLAG) {
+        let direction = if params.zeroForOne { 1 } else { 0 }
+        let data = calldata(
+            sol(
+                "afterSwap(address,(address,address,uint24,int24,address),(bool,int256,uint160),int256,bytes)",
+            ),
+            key,
+            [
+                direction,
+                word(params.amountSpecified),
+                params.sqrtPriceLimitX96.val,
+                word(delta.bits),
+                0,
+                0,
+            ],
+            4,
+            hook_data,
+            true,
+        )
+        unspecified += safe_cast::to_int128(
+            call_hook_with_return_delta(
+                key.hooks,
+                data.span(),
+                has_permission(key.hooks, AFTER_SWAP_RETURNS_DELTA_FLAG),
+            ),
+        )
+    }
+    let mut hook_delta = BalanceDelta { bits: 0 }
+    let mut caller_delta = delta
+    if specified != 0 || unspecified != 0 {
+        hook_delta = if (params.amountSpecified < 0) == params.zeroForOne {
+            to_balance_delta(specified, unspecified)
+        } else {
+            to_balance_delta(unspecified, specified)
+        }
+        caller_delta = caller_delta - hook_delta
+    }
+    (caller_delta, hook_delta)
+}
+pub fn before_donate(_ key: PoolKey, _ amount0: u256, _ amount1: u256, _ hook_data: MemSpan)
+uses (ctx: Ctx, call: mut Call, mem: mut RawMem)
+{
+    if ctx.caller() == key.hooks || !has_permission(key.hooks, BEFORE_DONATE_FLAG) {
+        return
+    }
+    let data = calldata(
+        sol(
+            "beforeDonate(address,(address,address,uint24,int24,address),uint256,uint256,bytes)",
+        ),
+        key,
+        [amount0, amount1, 0, 0, 0, 0],
+        2,
+        hook_data,
+        true,
+    )
+    let _ = call_hook(key.hooks, data.span())
+}
+pub fn after_donate(_ key: PoolKey, _ amount0: u256, _ amount1: u256, _ hook_data: MemSpan)
+uses (ctx: Ctx, call: mut Call, mem: mut RawMem)
+{
+    if ctx.caller() == key.hooks || !has_permission(key.hooks, AFTER_DONATE_FLAG) {
+        return
+    }
+    let data = calldata(
+        sol(
+            "afterDonate(address,(address,address,uint24,int24,address),uint256,uint256,bytes)",
+        ),
+        key,
+        [amount0, amount1, 0, 0, 0, 0],
+        2,
+        hook_data,
+        true,
+    )
+    let _ = call_hook(key.hooks, data.span())
+}
+
+pub struct Permissions {
+    pub beforeInitialize: bool,
+    pub afterInitialize: bool,
+    pub beforeAddLiquidity: bool,
+    pub afterAddLiquidity: bool,
+    pub beforeRemoveLiquidity: bool,
+    pub afterRemoveLiquidity: bool,
+    pub beforeSwap: bool,
+    pub afterSwap: bool,
+    pub beforeDonate: bool,
+    pub afterDonate: bool,
+    pub beforeSwapReturnDelta: bool,
+    pub afterSwapReturnDelta: bool,
+    pub afterAddLiquidityReturnDelta: bool,
+    pub afterRemoveLiquidityReturnDelta: bool,
+}
+impl Copy for Permissions {}
+impl Permissions {
+    pub fn from_bits(_ bits: u256) -> Self {
+        Self {
+            beforeInitialize: bits & (1 << 13) != 0,
+            afterInitialize: bits & (1 << 12) != 0,
+            beforeAddLiquidity: bits & (1 << 11) != 0,
+            afterAddLiquidity: bits & (1 << 10) != 0,
+            beforeRemoveLiquidity: bits & (1 << 9) != 0,
+            afterRemoveLiquidity: bits & (1 << 8) != 0,
+            beforeSwap: bits & (1 << 7) != 0,
+            afterSwap: bits & (1 << 6) != 0,
+            beforeDonate: bits & (1 << 5) != 0,
+            afterDonate: bits & (1 << 4) != 0,
+            beforeSwapReturnDelta: bits & (1 << 3) != 0,
+            afterSwapReturnDelta: bits & (1 << 2) != 0,
+            afterAddLiquidityReturnDelta: bits & (1 << 1) != 0,
+            afterRemoveLiquidityReturnDelta: bits & (1 << 0) != 0,
+        }
+    }
+    pub fn bits(self) -> u256 {
+        let mut result: u256 = 0
+        if self.beforeInitialize {
+            result |= 1 << 13
+        }
+        if self.afterInitialize {
+            result |= 1 << 12
+        }
+        if self.beforeAddLiquidity {
+            result |= 1 << 11
+        }
+        if self.afterAddLiquidity {
+            result |= 1 << 10
+        }
+        if self.beforeRemoveLiquidity {
+            result |= 1 << 9
+        }
+        if self.afterRemoveLiquidity {
+            result |= 1 << 8
+        }
+        if self.beforeSwap {
+            result |= 1 << 7
+        }
+        if self.afterSwap {
+            result |= 1 << 6
+        }
+        if self.beforeDonate {
+            result |= 1 << 5
+        }
+        if self.afterDonate {
+            result |= 1 << 4
+        }
+        if self.beforeSwapReturnDelta {
+            result |= 1 << 3
+        }
+        if self.afterSwapReturnDelta {
+            result |= 1 << 2
+        }
+        if self.afterAddLiquidityReturnDelta {
+            result |= 1 << 1
+        }
+        if self.afterRemoveLiquidityReturnDelta {
+            result |= 1 << 0
+        }
+        result
+    }
+}
+pub fn validate_hook_permissions(_ hooks: Address, _ permissions: Permissions) {
+    if hooks.inner & ALL_HOOK_MASK != permissions.bits() {
+        revert_error(HookAddressNotValid { hooks })
+    }
+}

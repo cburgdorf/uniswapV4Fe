@@ -1,0 +1,31 @@
+Compiling 21 files with Solc 0.8.30
+Solc 0.8.30 finished in 1.02s
+Compiler run successful with warnings:
+Warning (2519): This declaration shadows an existing declaration.
+   --> test/HooksParity.t.sol:184:13:
+    |
+184 |             ModifyLiquidityParams memory p=ModifyLiquidityParams(-30,90,i==0?int256(1):i==1?int256(0):int256(-1),bytes32(uint256(7)));
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Note: The shadowed declaration is here:
+   --> test/HooksParity.t.sol:190:9:
+    |
+190 |         SwapParams memory p=SwapParams(true,-100,17);
+    |         ^^^^^^^^^^^^^^^^^^^
+
+
+Ran 12 tests for test/HooksParity.t.sol:HooksParityTest
+[PASS] testFuzz_afterSwap(uint16,int256,int256,int256,int256,uint8,bool,bytes) (runs: 10000, μ: 133639, ~: 109233)
+[PASS] testFuzz_beforeSwap(uint16,int256,int256,uint256,uint8,bool,bool,bytes) (runs: 10000, μ: 152435, ~: 128028)
+[PASS] testFuzz_initializeDonate(uint16,uint160,int24,uint256,uint8,bool,bytes) (runs: 10000, μ: 199256, ~: 169536)
+[PASS] testFuzz_modify(uint16,int256,int256,int256,uint8,bytes) (runs: 10000, μ: 148939, ~: 118314)
+[PASS] testFuzz_permissions(address,uint24,uint160,uint256) (runs: 10000, μ: 27416, ~: 27416)
+[PASS] testFuzz_raw(bytes4,uint8,int256,uint256,bool,bool,bool) (runs: 10000, μ: 303194, ~: 324696)
+[PASS] testFuzz_validLiquidityDeltas(int128,int128,bool,bytes) (runs: 10000, μ: 179883, ~: 179887)
+[PASS] testFuzz_validSwapDeltas(int128,int128,int128,bool,bool,bytes) (runs: 10000, μ: 190614, ~: 189764)
+[PASS] test_responseLengthsAndSwapBoundaries() (gas: 6755538)
+[PASS] test_shortCallsAndCodelessTarget() (gas: 193726)
+[PASS] test_successfulDispatchAndSelfCall() (gas: 579281)
+[PASS] test_zeroAndFlaglessAddresses() (gas: 28717)
+Suite result: ok. 12 passed; 0 failed; 0 skipped; finished in 1.55s (7.68s CPU time)
+
+Ran 1 test suite in 1.55s (1.55s CPU time): 12 tests passed, 0 failed, 0 skipped (12 total tests)

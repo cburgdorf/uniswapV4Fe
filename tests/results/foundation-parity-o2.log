@@ -1,0 +1,15 @@
+Compiling 11 files with Solc 0.8.30
+Solc 0.8.30 finished in 98.96ms
+Compiler run successful!
+
+Ran 7 tests for test/FoundationParity.t.sol:FoundationParityTest
+[PASS] testFuzz_deltaArithmetic(int256,int256) (runs: 10000, μ: 16622, ~: 16659)
+[PASS] testFuzz_deltaPacking(int128,int128,int256) (runs: 10000, μ: 14444, ~: 14445)
+[PASS] testFuzz_liquidity(uint128,int128) (runs: 10000, μ: 12276, ~: 12284)
+[PASS] testFuzz_lpFee(uint24) (runs: 10000, μ: 20719, ~: 20686)
+[PASS] testFuzz_protocolFee(uint24,uint16,uint24) (runs: 10000, μ: 14484, ~: 14496)
+[PASS] testFuzz_slot0(uint256,uint160,int24,uint24) (runs: 10000, μ: 36357, ~: 36329)
+[PASS] test_boundaries() (gas: 1747389)
+Suite result: ok. 7 passed; 0 failed; 0 skipped; finished in 637.45ms (1.72s CPU time)
+
+Ran 1 test suite in 638.16ms (637.45ms CPU time): 7 tests passed, 0 failed, 0 skipped (7 total tests)

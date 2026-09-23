@@ -1,0 +1,60 @@
+running `fe test` for 6 inputs (jobs=8)
+
+COMPILING        abi_nested_msg_dec.. crates/fe/tests/fixtures/fe_test/abi_nested_msg_decode_bounds.fe
+COMPILING        abi_dynamic_payload  crates/fe/tests/fixtures/fe_test/abi_dynamic_payload.fe
+COMPILING        mem_vec              crates/fe/tests/fixtures/fe_test/mem_vec.fe
+COMPILING        dyn_array_get        crates/fe/tests/fixtures/fe_test/dyn_array_get.fe
+COMPILING        mem_vec_edge_cases   crates/fe/tests/fixtures/fe_test/mem_vec_edge_cases.fe
+COMPILING        abi_array_overflow.. crates/fe/tests/fixtures/fe_test/abi_array_overflow_revert.fe
+READY [2.2617s]  abi_nested_msg_dec.. running 3 tests
+PASS  [0.0002s]  abi_nested_msg_dec.. test_nested_msg_encoding_uses_single_dynamic_head_slot
+PASS  [0.0002s]  abi_nested_msg_dec.. test_nested_msg_decode_truncated_inner_head_reverts
+PASS  [0.0003s]  abi_nested_msg_dec.. test_nested_msg_decode_valid
+READY [3.7496s]  abi_array_overflow.. running 4 tests
+PASS  [0.0001s]  abi_array_overflow.. overflowing_tail_head_reverts_empty
+PASS  [0.0001s]  abi_array_overflow.. overflowing_array_multiplication_reverts_empty
+PASS  [0.0001s]  abi_array_overflow.. overflowing_array_end_reverts_empty
+PASS  [0.0001s]  abi_array_overflow.. overflowing_relative_tail_reverts_empty
+READY [5.9250s]  dyn_array_get        running 7 tests
+PASS  [0.0001s]  dyn_array_get        test_get_out_of_bounds_panics
+PASS  [0.0001s]  dyn_array_get        test_get_large_index_panics_before_offset_arithmetic
+PASS  [0.0001s]  dyn_array_get        test_get_on_empty_panics
+PASS  [0.0001s]  dyn_array_get        test_array_constructor_rejects_overflowing_element_frame
+PASS  [0.0000s]  dyn_array_get        test_array_constructor_rejects_overflowing_length_header
+PASS  [0.0001s]  dyn_array_get        test_get_from_decoded_param
+PASS  [0.0001s]  dyn_array_get        test_dirty_address_element_reverts_on_get
+READY [6.0309s]  mem_vec_edge_cases   running 12 tests
+PASS  [0.0001s]  mem_vec_edge_cases   test_empty_roundtrip
+PASS  [0.0001s]  mem_vec_edge_cases   test_fixed_bytes_elements
+PASS  [0.0001s]  mem_vec_edge_cases   test_custom_int_elements
+PASS  [0.0001s]  mem_vec_edge_cases   test_to_dyn_array_snapshot_isolation
+PASS  [0.0001s]  mem_vec_edge_cases   test_dirty_bool_get_reverts
+PASS  [0.0000s]  mem_vec_edge_cases   test_allocation_size_overflow_panics
+PASS  [0.0000s]  mem_vec_edge_cases   test_dirty_bool_copy_get_reverts
+PASS  [0.0000s]  mem_vec_edge_cases   test_huge_index_panics_before_offset_calculation
+PASS  [0.0000s]  mem_vec_edge_cases   test_empty_memvec_set_panics
+PASS  [0.0000s]  mem_vec_edge_cases   test_empty_memvec_get_panics
+PASS  [0.0000s]  mem_vec_edge_cases   test_dirty_bool_can_be_replaced
+PASS  [0.0002s]  mem_vec_edge_cases   test_primitive_elements
+READY [6.8177s]  mem_vec              running 9 tests
+PASS  [0.0001s]  mem_vec              test_zeroed_set_get
+PASS  [0.0001s]  mem_vec              test_get_out_of_bounds_panics
+PASS  [0.0001s]  mem_vec              test_set_out_of_bounds_panics
+PASS  [0.0001s]  mem_vec              test_from_dyn_array_copies_locally
+PASS  [0.0001s]  mem_vec              test_address_elements
+PASS  [0.0001s]  mem_vec              test_from_dyn_array_copies_across_call
+PASS  [0.0001s]  mem_vec              test_round_trip_returndata_matches_solidity_encoding
+PASS  [0.0001s]  mem_vec              test_round_trip_typed_decode
+PASS  [0.0001s]  mem_vec              test_encode_abi_payload_matches_solidity_encoding
+READY [9.4009s]  abi_dynamic_payload  running 9 tests
+PASS  [0.0001s]  abi_dynamic_payload  test_abi_dynamic_payload_tuple_encoding
+PASS  [0.0001s]  abi_dynamic_payload  test_bytes_from_words_prefix_uses_canonical_tail_size
+PASS  [0.0001s]  abi_dynamic_payload  test_error_dynamic_payload_tail_encoding
+PASS  [0.0001s]  abi_dynamic_payload  test_msg_dynamic_payload_tail_encoding
+PASS  [0.0001s]  abi_dynamic_payload  test_bytes_from_words_prefix_rejects_oversize_len
+PASS  [0.0001s]  abi_dynamic_payload  test_memory_and_calldata_bytes_views_reject_out_of_bounds_access
+PASS  [0.0001s]  abi_dynamic_payload  test_memory_prefix_zero_pads_short_spans
+PASS  [0.0001s]  abi_dynamic_payload  test_memory_bytes_view_masks_partial_words
+PASS  [0.0002s]  abi_dynamic_payload  test_owned_bytes_and_views_expose_explicit_spans
+
+test result: ok. 44 passed; 0 failed

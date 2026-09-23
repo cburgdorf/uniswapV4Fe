@@ -1,0 +1,141 @@
+// SPDX-License-Identifier: MIT
+// ABI surface for differential testing; not a protocol deployment contract.
+use std::abi::sol::{self, Int24, Uint24, Uint160}
+use super::{tick_math, full_math, bit_math, sqrt_price_math, swap_math, unsafe_math, safe_cast}
+
+msg MathHarnessMsg {
+    #[selector = sol("nextPrice(uint160,uint128,uint256,bool,uint8)")]
+    NextPrice {
+        price: Uint160,
+        liquidity: u128,
+        amount: u256,
+        direction: bool,
+        mode: u8,
+    } -> Uint160,
+    #[selector = sol("amountDelta(uint160,uint160,uint128,bool,bool)")]
+    AmountDelta { a: Uint160, b: Uint160, liquidity: u128, round_up: bool, token0: bool } -> u256,
+    #[selector = sol("signedDelta(uint160,uint160,int128,bool)")]
+    SignedDelta { a: Uint160, b: Uint160, liquidity: i128, token0: bool } -> i256,
+    #[selector = sol("swapStep(uint160,uint160,uint128,int256,uint24)")]
+    SwapStep {
+        current: Uint160,
+        target: Uint160,
+        liquidity: u128,
+        remaining: i256,
+        fee: Uint24,
+    } -> (Uint160, u256, u256, u256),
+    #[selector = sol("priceTarget(bool,uint160,uint160)")]
+    PriceTarget { direction: bool, next: Uint160, limit: Uint160 } -> Uint160,
+    #[selector = sol("unsafeMath(uint256,uint256,uint256)")]
+    UnsafeMath { a: u256, b: u256, denominator: u256 } -> (u256, u256),
+    #[selector = sol("safeCast(uint256,int256,uint8)")]
+    SafeCast { unsigned: u256, signed: i256, mode: u8 } -> u256,
+    #[selector = sol("sqrtPriceAtTick(int24)")]
+    SqrtPriceAtTick { tick: Int24 } -> Uint160,
+    #[selector = sol("tickAtSqrtPrice(uint160)")]
+    TickAtSqrtPrice { price: Uint160 } -> Int24,
+    #[selector = sol("usableTicks(int24)")]
+    UsableTicks { spacing: Int24 } -> (Int24, Int24),
+    #[selector = sol("mulDiv(uint256,uint256,uint256,bool)")]
+    MulDiv { a: u256, b: u256, denominator: u256, round_up: bool } -> u256,
+    #[selector = sol("bits(uint256)")]
+    Bits { value: u256 } -> (u8, u8),
+}
+
+pub contract MathHarness {
+    recv MathHarnessMsg {
+        NextPrice { price, liquidity, amount, direction, mode } -> Uint160 {
+            if mode == 0 {
+                return sqrt_price_math::next_sqrt_price_from_amount0_rounding_up(
+                    price,
+                    liquidity,
+                    amount,
+                    direction,
+                )
+            }
+            if mode == 1 {
+                return sqrt_price_math::next_sqrt_price_from_amount1_rounding_down(
+                    price,
+                    liquidity,
+                    amount,
+                    direction,
+                )
+            }
+            if mode == 2 {
+                return sqrt_price_math::next_sqrt_price_from_input(
+                    price,
+                    liquidity,
+                    amount,
+                    direction,
+                )
+            }
+            sqrt_price_math::next_sqrt_price_from_output(price, liquidity, amount, direction)
+        }
+        AmountDelta { a, b, liquidity, round_up, token0 } -> u256 {
+            if token0 {
+                sqrt_price_math::amount0_delta(a, b, liquidity, round_up)
+            } else {
+                sqrt_price_math::amount1_delta(a, b, liquidity, round_up)
+            }
+        }
+        SignedDelta { a, b, liquidity, token0 } -> i256 {
+            if token0 {
+                sqrt_price_math::signed_amount0_delta(a, b, liquidity)
+            } else {
+                sqrt_price_math::signed_amount1_delta(a, b, liquidity)
+            }
+        }
+        SwapStep { current, target, liquidity, remaining, fee } -> (Uint160, u256, u256, u256) {
+            swap_math::compute_swap_step(current, target, liquidity, remaining, fee)
+        }
+        PriceTarget { direction, next, limit } -> Uint160 {
+            swap_math::get_sqrt_price_target(direction, next, limit)
+        }
+        UnsafeMath { a, b, denominator } -> (u256, u256) {
+            (
+                unsafe_math::div_rounding_up(a, denominator),
+                unsafe_math::simple_mul_div(a, b, denominator),
+            )
+        }
+        SafeCast { unsigned, signed, mode } -> u256 {
+            if mode == 0 {
+                return safe_cast::to_uint160(unsigned).val
+            }
+            if mode == 1 {
+                return safe_cast::to_uint128(unsigned) as u256
+            }
+            if mode == 2 {
+                return safe_cast::to_int256(unsigned).downcast_truncate()
+            }
+            if mode == 3 {
+                let result = safe_cast::to_int128(signed) as i256
+                return result.downcast_truncate()
+            }
+            if mode == 4 {
+                let result = safe_cast::unsigned_to_int128(unsigned) as i256
+                return result.downcast_truncate()
+            }
+            let narrowed: i128 = signed.downcast_truncate()
+            safe_cast::signed_to_uint128(narrowed) as u256
+        }
+        SqrtPriceAtTick { tick } -> Uint160 {
+            tick_math::get_sqrt_price_at_tick(tick)
+        }
+        TickAtSqrtPrice { price } -> Int24 {
+            tick_math::get_tick_at_sqrt_price(price)
+        }
+        UsableTicks { spacing } -> (Int24, Int24) {
+            (tick_math::min_usable_tick(spacing), tick_math::max_usable_tick(spacing))
+        }
+        MulDiv { a, b, denominator, round_up } -> u256 {
+            if round_up {
+                full_math::mul_div_rounding_up(a, b, denominator)
+            } else {
+                full_math::mul_div(a, b, denominator)
+            }
+        }
+        Bits { value } -> (u8, u8) {
+            (bit_math::most_significant_bit(value), bit_math::least_significant_bit(value))
+        }
+    }
+}

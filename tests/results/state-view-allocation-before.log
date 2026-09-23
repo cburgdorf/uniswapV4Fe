@@ -1,0 +1,128 @@
+# Trace excerpt; omitted bytecode dumps and long calldata lines.
+Compiling 27 files with Solc 0.8.26
+Solc 0.8.26 finished in 4.28s
+Compiler run successful!
+
+Ran 1 test for test/StateViewParity.t.sol:StateViewParityTest
+[FAIL: return/revert mismatch] test_shortRangeArrays() (gas: 10527881)
+Traces:
+  [5377122] StateViewParityTest::setUp()
+    ├─ [3457919] → new PoolManager@0x5615dEB798BB3E4dFa0139dFa1b3D433Cc23b72f
+    │   ├─ emit OwnershipTransferred(user: 0x0000000000000000000000000000000000000000, newOwner: StateViewParityTest: [0x7FA9385bE102ac3EAc297483Dd6233D62b3e1496])
+    │   └─ ← [Return] 17151 bytes of code
+    ├─ [0] VM::readFile("fe-bytecode.txt") [staticcall]
+    │   └─ ← [Return] <file>
+    ├─ [1176149] → new <unknown>@0x2e234DAe75C793f67A35089C9d99245E1C58470b
+    │   └─ ← [Return] 5872 bytes of code
+    ├─ [557775] → new StateView@0xF62849F9A0B5Bf2913b396098F7c7019b51A820a
+    │   └─ ← [Return] 2784 bytes of code
+    └─ ← [Stop]
+
+  [10527881] StateViewParityTest::test_shortRangeArrays()
+    ├─ [164814] → new RawReader@0x5991A2dF15A8F6A256D3Ec51E99254Cd3fb576A9
+    │   └─ ← [Return] 823 bytes of code
+    ├─ [47375] RawReader::configure(0x00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000)
+    │   └─ ← [Stop]
+    ├─ [0] VM::readFile("fe-bytecode.txt") [staticcall]
+    │   └─ ← [Return] <file>
+    ├─ [1176149] → new <unknown>@0xc7183455a4C133Ae270771860664b6B7ec320bB1
+    │   └─ ← [Return] 5872 bytes of code
+    ├─ [557775] → new StateView@0xa0Cb889707d426A7A386870A03bc70d1b0697598
+    │   └─ ← [Return] 2784 bytes of code
+    ├─ [4654] 0xc7183455a4C133Ae270771860664b6B7ec320bB1::getTickInfo(0x0000000000000000000000000000000000000000000000000000000000000000, 0) [staticcall]
+    │   ├─ [974] RawReader::fallback(0x7561c2928b1aa0983cff7f05dfedeef5998cab1c32456fc669dfe1aae57808fa, 3) [staticcall]
+    │   │   └─ ← [Return] []
+    │   └─ ← [Return] 0, 0, 0, 0
+    ├─ [2611] StateView::getTickInfo(0x0000000000000000000000000000000000000000000000000000000000000000, 0) [staticcall]
+    │   ├─ [974] RawReader::fallback(0x7561c2928b1aa0983cff7f05dfedeef5998cab1c32456fc669dfe1aae57808fa, 3) [staticcall]
+    │   │   └─ ← [Return] []
+    │   └─ ← [Return] 0, 0, 0, 0
+    ├─ [164814] → new RawReader@0x1d1499e622D69689cdf9004d05Ec547d650Ff211
+    │   └─ ← [Return] 823 bytes of code
+    ├─ [69564] RawReader::configure(0x000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000)
+    │   └─ ← [Stop]
+    ├─ [0] VM::readFile("fe-bytecode.txt") [staticcall]
+    │   └─ ← [Return] <file>
+    ├─ [1176149] → new <unknown>@0xA4AD4f68d0b91CFD19687c881e50f3A00242828c
+    │   └─ ← [Return] 5872 bytes of code
+    ├─ [557775] → new StateView@0x03A6a84cD762D9707A21605b548aaaB891562aAb
+    │   └─ ← [Return] 2784 bytes of code
+    ├─ [4860] 0xA4AD4f68d0b91CFD19687c881e50f3A00242828c::getTickInfo(0x0000000000000000000000000000000000000000000000000000000000000000, 0) [staticcall]
+    │   ├─ [1171] RawReader::fallback(0x7561c2928b1aa0983cff7f05dfedeef5998cab1c32456fc669dfe1aae57808fa, 3) [staticcall]
+    │   │   └─ ← [Return] [0x0000000000000000000000000000000000000000000000000000000000000000]
+    │   └─ ← [Return] 0, 0, 0, 0
+    ├─ [2882] StateView::getTickInfo(0x0000000000000000000000000000000000000000000000000000000000000000, 0) [staticcall]
+    │   ├─ [1171] RawReader::fallback(0x7561c2928b1aa0983cff7f05dfedeef5998cab1c32456fc669dfe1aae57808fa, 3) [staticcall]
+    │   │   └─ ← [Return] [0x0000000000000000000000000000000000000000000000000000000000000000]
+    │   └─ ← [Return] 0, 0, 0, 0
+    ├─ [164814] → new RawReader@0xD6BbDE9174b1CdAa358d2Cf4D57D1a9F7178FBfF
+    │   └─ ← [Return] 823 bytes of code
+    ├─ [71853] RawReader::configure(0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000)
+    │   └─ ← [Stop]
+    ├─ [0] VM::readFile("fe-bytecode.txt") [staticcall]
+    │   └─ ← [Return] <file>
+    ├─ [1176149] → new <unknown>@0x15cF58144EF33af1e14b5208015d11F9143E27b9
+    │   └─ ← [Return] 5872 bytes of code
+    ├─ [557775] → new StateView@0x212224D2F2d262cd093eE13240ca4873fcCBbA3C
+    │   └─ ← [Return] 2784 bytes of code
+    ├─ [5066] 0x15cF58144EF33af1e14b5208015d11F9143E27b9::getTickInfo(0x0000000000000000000000000000000000000000000000000000000000000000, 0) [staticcall]
+    │   ├─ [1368] RawReader::fallback(0x7561c2928b1aa0983cff7f05dfedeef5998cab1c32456fc669dfe1aae57808fa, 3) [staticcall]
+    │   │   └─ ← [Return] [0x0000000000000000000000000000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000000000000000000000000000]
+    │   └─ ← [Return] 0, 0, 0, 0
+    ├─ [3153] StateView::getTickInfo(0x0000000000000000000000000000000000000000000000000000000000000000, 0) [staticcall]
+    │   ├─ [1368] RawReader::fallback(0x7561c2928b1aa0983cff7f05dfedeef5998cab1c32456fc669dfe1aae57808fa, 3) [staticcall]
+    │   │   └─ ← [Return] [0x0000000000000000000000000000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000000000000000000000000000]
+    │   └─ ← [Return] 0, 0, 0, 0
+    ├─ [164814] → new RawReader@0x2a07706473244BC757E10F2a9E86fB532828afe3
+    │   └─ ← [Return] 823 bytes of code
+    ├─ [74142] RawReader::configure(0x00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000)
+    │   └─ ← [Stop]
+    ├─ [0] VM::readFile("fe-bytecode.txt") [staticcall]
+    │   └─ ← [Return] <file>
+    ├─ [1176149] → new <unknown>@0x3D7Ebc40AF7092E3F1C81F2e996cbA5Cae2090d7
+    │   └─ ← [Return] 5872 bytes of code
+    ├─ [557775] → new StateView@0xD16d567549A2a2a2005aEACf7fB193851603dd70
+    │   └─ ← [Return] 2784 bytes of code
+    ├─ [5272] 0x3D7Ebc40AF7092E3F1C81F2e996cbA5Cae2090d7::getTickInfo(0x0000000000000000000000000000000000000000000000000000000000000000, 0) [staticcall]
+    │   ├─ [1565] RawReader::fallback(0x7561c2928b1aa0983cff7f05dfedeef5998cab1c32456fc669dfe1aae57808fa, 3) [staticcall]
+    │   │   └─ ← [Return] [0x0000000000000000000000000000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000000000000000000000000000]
+    │   └─ ← [Return] 0, 0, 0, 0
+    ├─ [3425] StateView::getTickInfo(0x0000000000000000000000000000000000000000000000000000000000000000, 0) [staticcall]
+    │   ├─ [1565] RawReader::fallback(0x7561c2928b1aa0983cff7f05dfedeef5998cab1c32456fc669dfe1aae57808fa, 3) [staticcall]
+    │   │   └─ ← [Return] [0x0000000000000000000000000000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000000000000000000000000000, 0x0000000000000000000000000000000000000000000000000000000000000000]
+    │   └─ ← [Return] 0, 0, 0, 0
+    ├─ [164814] → new RawReader@0x96d3F6c20EEd2697647F543fE6C08bC2Fbf39758
+    │   └─ ← [Return] 823 bytes of code
+    ├─ [67275] RawReader::configure(0x0000000000000000000000000000000000000000000000000000000000000020ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff)
+    │   └─ ← [Stop]
+    ├─ [0] VM::readFile("fe-bytecode.txt") [staticcall]
+    │   └─ ← [Return] <file>
+    ├─ [1176149] → new <unknown>@0x13aa49bAc059d709dd0a18D6bb63290076a702D7
+    │   └─ ← [Return] 5872 bytes of code
+    ├─ [557775] → new StateView@0xDB25A7b768311dE128BBDa7B8426c3f9C74f3240
+    │   └─ ← [Return] 2784 bytes of code
+    ├─ [4138] 0x13aa49bAc059d709dd0a18D6bb63290076a702D7::getTickInfo(0x0000000000000000000000000000000000000000000000000000000000000000, 0) [staticcall]
+    │   ├─ [974] RawReader::fallback(0x7561c2928b1aa0983cff7f05dfedeef5998cab1c32456fc669dfe1aae57808fa, 3) [staticcall]
+    │   │   └─ ← [Return] 0x0000000000000000000000000000000000000000000000000000000000000020ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+    │   └─ ← [Revert] EvmError: Revert
+    ├─ [2257] StateView::getTickInfo(0x0000000000000000000000000000000000000000000000000000000000000000, 0) [staticcall]
+    │   ├─ [974] RawReader::fallback(0x7561c2928b1aa0983cff7f05dfedeef5998cab1c32456fc669dfe1aae57808fa, 3) [staticcall]
+    │   │   └─ ← [Return] 0x0000000000000000000000000000000000000000000000000000000000000020ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+    │   └─ ← [Revert] panic: memory allocation error (0x41)
+    └─ ← [Revert] return/revert mismatch
+
+Backtrace:
+  at StateView.getTickInfo
+  at StateViewParityTest.test_shortRangeArrays
+
+Suite result: FAILED. 0 passed; 1 failed; 0 skipped; finished in 2.23ms (1.25ms CPU time)
+
+Ran 1 test suite in 4.41ms (2.23ms CPU time): 0 tests passed, 1 failed, 0 skipped (1 total tests)
+
+Failing tests:
+Encountered 1 failing test in test/StateViewParity.t.sol:StateViewParityTest
+[FAIL: return/revert mismatch] test_shortRangeArrays() (gas: 10527881)
+
+Encountered a total of 1 failing tests, 0 tests succeeded
+
+Tip: Run `forge test --rerun` to retry only the 1 failed test

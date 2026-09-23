@@ -1,0 +1,23 @@
+Parity artifacts: /tmp/fe-state-view-latest-o1
+Compiler: fe 26.3.0 (702686c98); sha256=f3aaead7171e522c76b07fba14d25b70997fe3251a952686b0ad9c918aebac44
+Wrote /tmp/fe-state-view-latest-o1/fe/StateView.bin
+Wrote /tmp/fe-state-view-latest-o1/fe/StateView.runtime.bin
+Wrote /tmp/fe-state-view-latest-o1/fe/StateView.abi.json
+Compiling 52 files with Solc 0.8.26
+Solc 0.8.26 finished in 4.37s
+Compiler run successful!
+
+Ran 9 tests for test/StateViewParity.t.sol:StateViewParityTest
+[PASS] testFuzz_bitmap(bytes32,int16,uint256) (runs: 10000, μ: 21276, ~: 21274)
+[PASS] testFuzz_header(bytes32,uint256,uint256,uint256,uint256) (runs: 10000, μ: 37313, ~: 37312)
+[PASS] testFuzz_inside(bytes32,int24,int24,int24,uint256[6]) (runs: 10000, μ: 47118, ~: 47112)
+[PASS] testFuzz_position(bytes32,address,int24,int24,bytes32,uint256,uint256,uint256) (runs: 10000, μ: 44038, ~: 44030)
+[PASS] testFuzz_rawRangeReturn(uint8,uint256,uint256) (runs: 10000, μ: 2115204, ~: 2094302)
+[PASS] testFuzz_tick(bytes32,int24,uint256,uint256,uint256) (runs: 10000, μ: 43493, ~: 43479)
+[PASS] test_initializedPoolAndFailureBubbling() (gas: 114315)
+[PASS] test_laterAllocationBoundaries() (gas: 2677904)
+[PASS] test_shortRangeArrays() (gas: 106100401)
+Suite result: ok. 9 passed; 0 failed; 0 skipped; finished in 1.90s (5.63s CPU time)
+
+Ran 1 test suite in 1.90s (1.90s CPU time): 9 tests passed, 0 failed, 0 skipped (9 total tests)
+Verified protocol ABI: /tmp/fe-state-view-latest-o1/fe/StateView.protocol.abi.json

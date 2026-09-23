@@ -1,0 +1,18 @@
+Compiling 81 files with Solc 0.8.26
+Solc 0.8.26 finished in 4.69s
+Compiler run successful!
+
+Ran 10 tests for test/PermissionedRouterParity.t.sol:PermissionedRouterParityTest
+[PASS] testFuzz_actions(uint128,uint8,bool,bool) (runs: 10000, μ: 1709125, ~: 1635221)
+[PASS] testFuzz_mapping(uint256,int256,bool,uint8) (runs: 10000, μ: 1632530, ~: 1632868)
+[PASS] testFuzz_pay(uint128,bool,bool,bool,bool) (runs: 10000, μ: 1680023, ~: 1687541)
+[PASS] testFuzz_permissions(bool,bool,bool,bool,uint8,bool) (runs: 10000, μ: 1643333, ~: 1643250)
+[PASS] testFuzz_raw(bytes,uint8) (runs: 10000, μ: 1619359, ~: 1618093)
+[PASS] testFuzz_single(uint128,uint128,bool,bool,bool) (runs: 10000, μ: 1703618, ~: 1643104)
+[PASS] testFuzz_take(uint256,bool,bool,bool) (runs: 10000, μ: 1685235, ~: 1713287)
+[PASS] test_multihopChecksEachPool() (gas: 2845148)
+[PASS] test_rawResponsesAndMalformedCalls() (gas: 18270307)
+[PASS] test_zeroAmountsAndDisabledFactory() (gas: 10920295)
+Suite result: ok. 10 passed; 0 failed; 0 skipped; finished in 4.18s (25.08s CPU time)
+
+Ran 1 test suite in 4.18s (4.18s CPU time): 10 tests passed, 0 failed, 0 skipped (10 total tests)

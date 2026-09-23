@@ -1,0 +1,28 @@
+Parity artifacts: /tmp/fe-quoter-interface-latest-o1
+Compiler: fe 26.3.0 (702686c98); sha256=f3aaead7171e522c76b07fba14d25b70997fe3251a952686b0ad9c918aebac44
+Wrote /tmp/fe-quoter-interface-latest-o1/fe/V4Quoter.bin
+Wrote /tmp/fe-quoter-interface-latest-o1/fe/V4Quoter.runtime.bin
+Wrote /tmp/fe-quoter-interface-latest-o1/fe/V4Quoter.abi.json
+Compiling 58 files with Solc 0.8.26
+Solc 0.8.26 finished in 3.37s
+Compiler run successful!
+
+Ran 14 tests for test/QuoterParity.t.sol:QuoterParityTest
+[PASS] testFuzz_filledRoutes(uint64,uint8,bool) (runs: 10000, μ: 142070, ~: 152533)
+[PASS] testFuzz_multi(uint128,int128,int128,bool,uint8,bytes) (runs: 10000, μ: 116939, ~: 134549)
+[PASS] testFuzz_publicMalformed(uint256,uint8,bool,bool) (runs: 10000, μ: 58859, ~: 26618)
+[PASS] testFuzz_publicSmallOffsets(uint16,uint8,bool,bool) (runs: 10000, μ: 79534, ~: 111366)
+[PASS] testFuzz_single(uint128,int128,int128,bool,bool,bytes) (runs: 10000, μ: 124225, ~: 124242)
+[PASS] test_aliasPaths() (gas: 239589)
+[PASS] test_internalAuthPrecedence() (gas: 24343)
+[PASS] test_publicAllocationBoundaries() (gas: 358598)
+[PASS] test_publicOversizedArray() (gas: 24427)
+[PASS] test_reentrantSenderMarker() (gas: 160520)
+[PASS] test_shortQuoteReasons() (gas: 4097908)
+[PASS] test_signAndWidthBoundaries() (gas: 275857)
+[PASS] test_successAndCallerGuards() (gas: 274852)
+[PASS] test_truncatedPublicCalls() (gas: 48760520)
+Suite result: ok. 14 passed; 0 failed; 0 skipped; finished in 1.59s (5.94s CPU time)
+
+Ran 1 test suite in 1.59s (1.59s CPU time): 14 tests passed, 0 failed, 0 skipped (14 total tests)
+Verified protocol ABI: /tmp/fe-quoter-interface-latest-o1/fe/V4Quoter.protocol.abi.json

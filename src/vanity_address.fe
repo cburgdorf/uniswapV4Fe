@@ -1,0 +1,31 @@
+// SPDX-License-Identifier: MIT
+use std::evm::{Address, revert_error, Panic, PANIC_INDEX_OUT_OF_BOUNDS}
+pub fn nibble(_ address: Address, _ index: u256) -> u8 {
+    if index >= 40 { revert_error(Panic::from(PANIC_INDEX_OUT_OF_BOUNDS)) }
+    ((address.inner >> ((39 - index) * 4)) & 15).downcast_truncate()
+}
+pub fn leading(_ address: Address, _ start: u256, _ comparison: u8) -> u256 {
+    let mut count: u256 = 0
+    let mut i = start
+    while i < 40 {
+        if nibble(address, i) != comparison { return count }
+        count += 1
+        i += 1
+    }
+    count
+}
+pub fn score(_ address: Address) -> u256 {
+    let zeros = leading(address, 0, 0)
+    let fours = leading(address, zeros, 4)
+    if fours == 0 { return 0 }
+    let mut result = zeros * 10
+    if fours == 4 { result += 60 } else if fours > 4 { result += 40 }
+    let mut i: u256 = 0
+    while i < 40 {
+        if nibble(address, i) == 4 { result += 1 }
+        i += 1
+    }
+    if address.inner & 0xffff == 0x4444 { result += 20 }
+    result
+}
+pub fn better_than(_ first: Address, _ second: Address) -> bool { score(first) > score(second) }

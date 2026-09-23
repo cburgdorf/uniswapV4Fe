@@ -1,0 +1,35 @@
+Parity artifacts: /tmp/fe-forwarder-bounded-latest-o1
+Compiler: fe 26.3.0 (702686c98); sha256=f3aaead7171e522c76b07fba14d25b70997fe3251a952686b0ad9c918aebac44
+Wrote /tmp/fe-forwarder-bounded-latest-o1/fe/Permit2ForwarderHarness.bin
+Wrote /tmp/fe-forwarder-bounded-latest-o1/fe/Permit2ForwarderHarness.runtime.bin
+Wrote /tmp/fe-forwarder-bounded-latest-o1/fe/Permit2ForwarderHarness.abi.json
+Compiling 56 files with Solc 0.8.26
+Solc 0.8.26 finished in 2.30s
+Compiler run successful!
+
+Ran 6 tests for test/Permit2ForwarderParity.t.sol:Permit2ForwarderParityTest
+[PASS] testFuzz_batch(uint256,uint8,address,bytes,bytes,uint8) (runs: 10000, μ: 820934, ~: 730069)
+[FAIL: forwarder result; counterexample: calldata=0x16689aea0000000000000000000000000000000000000000000000000000000000020000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000 args=[131072 [1.31e5], 115792089237316195423570985008687907853269984665640564039457584007913129639904 [1.157e77], true, false]] testFuzz_mutatedCalldata(uint256,uint256,bool,bool) (runs: 709, μ: 143977, ~: 39545)
+[PASS] testFuzz_single(address,address,uint160,uint48,uint48,address,uint256,bytes,bytes,uint8) (runs: 10000, μ: 476447, ~: 415968)
+[PASS] test_batchMalformedLength() (gas: 39904)
+[PASS] test_dirtyArrayElementAndNoCode() (gas: 1048300)
+[PASS] test_everyTruncatedPrefix() (gas: 22577278)
+Suite result: FAILED. 5 passed; 1 failed; 0 skipped; finished in 1.18s (2.02s CPU time)
+
+Ran 1 test suite in 1.18s (1.18s CPU time): 5 tests passed, 1 failed, 0 skipped (6 total tests)
+
+Failing tests:
+Encountered 1 failing test in test/Permit2ForwarderParity.t.sol:Permit2ForwarderParityTest
+[FAIL: forwarder result; counterexample: calldata=0x16689aea0000000000000000000000000000000000000000000000000000000000020000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000 args=[131072 [1.31e5], 115792089237316195423570985008687907853269984665640564039457584007913129639904 [1.157e77], true, false]] testFuzz_mutatedCalldata(uint256,uint256,bool,bool) (runs: 709, μ: 143977, ~: 39545)
+
+Encountered a total of 1 failing tests, 5 tests succeeded
+
+Tip: Run `forge test --rerun` to retry only the 1 failed test
+Traceback (most recent call last):
+  File "/home/cburgdorf/Documents/hacking/fe/uniswap_v4_demo/tests/run_math_parity.py", line 557, in <module>
+    result.check_returncode()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/home/linuxbrew/.linuxbrew/Cellar/python@3.14/3.14.4/lib/python3.14/subprocess.py", line 509, in check_returncode
+    raise CalledProcessError(self.returncode, self.args, self.stdout,
+                             self.stderr)
+subprocess.CalledProcessError: Command '['forge', 'test', '--root', '/tmp/fe-forwarder-bounded-latest-o1', '--fuzz-runs', '10000', '-vv']' returned non-zero exit status 1.

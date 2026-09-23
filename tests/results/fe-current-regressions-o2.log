@@ -1,0 +1,45 @@
+running `fe test` for 5 inputs (jobs=8)
+
+COMPILING        abi_unpadded_dynam.. /tmp/fe-uniswap-integrated/crates/fe/tests/fixtures/fe_test/abi_unpadded_dynamic_payload.fe
+COMPILING        record_literal_imp.. /tmp/fe-uniswap-integrated/crates/fe/tests/fixtures/fe_test/record_literal_implicit_borrow.fe
+COMPILING        composed_abi_decoder /tmp/fe-uniswap-integrated/crates/fe/tests/fixtures/fe_test/composed_abi_decoder.fe
+COMPILING        payable_return       /tmp/fe-uniswap-integrated/crates/fe/tests/fixtures/fe_test/payable_return.fe
+COMPILING        precompile_wrappers  /tmp/fe-uniswap-integrated/crates/fe/tests/fixtures/fe_test/precompile_wrappers.fe
+READY [0.5305s]  record_literal_imp.. running 3 tests
+PASS  [0.0002s]  record_literal_imp.. borrowed_record_literal_preserves_field_order
+PASS  [0.0002s]  record_literal_imp.. address_equality_borrows_record_literal
+PASS  [0.0002s]  record_literal_imp.. borrowed_record_variant_preserves_field_order
+READY [3.3792s]  composed_abi_decoder running 3 tests
+PASS  [0.0001s]  composed_abi_decoder composed_addresses_roundtrip
+PASS  [0.0001s]  composed_abi_decoder composed_second_address_rejects_noncanonical_word
+PASS  [0.0001s]  composed_abi_decoder composed_first_address_rejects_noncanonical_word
+READY [4.7461s]  payable_return       running 4 tests
+PASS  [0.0001s]  payable_return       test_payable_scalar_zero_value
+PASS  [0.0001s]  payable_return       test_payable_tuple_with_value
+PASS  [0.0002s]  payable_return       test_payable_scalar_with_value
+PASS  [0.0002s]  payable_return       test_payable_dynamic_return
+READY [6.8024s]  precompile_wrappers  running 7 tests
+PASS  [0.0001s]  precompile_wrappers  test_raw_staticcall_copies_to_output_buffer
+PASS  [0.0001s]  precompile_wrappers  test_new_fixed_buffer_wrappers_do_not_bubble_failure
+PASS  [0.0001s]  precompile_wrappers  test_hash_and_copy_precompiles_return_results
+PASS  [0.0001s]  precompile_wrappers  test_math_and_ec_precompiles_return_results
+PASS  [0.0002s]  precompile_wrappers  test_variable_precompile_wrappers_reject_invalid_chunk_lengths
+PASS  [0.0003s]  precompile_wrappers  test_fixed_precompile_wrappers_reject_mismatched_buffer_lengths
+PASS  [0.0007s]  precompile_wrappers  test_signature_precompiles_expose_invalid_signature
+READY [7.8698s]  abi_unpadded_dynam.. running 14 tests
+PASS  [0.0001s]  abi_unpadded_dynam.. unpadded_strings
+PASS  [0.0000s]  abi_unpadded_dynam.. missing_length_word_rejected
+PASS  [0.0000s]  abi_unpadded_dynam.. overflowing_length_rejected
+PASS  [0.0001s]  abi_unpadded_dynam.. aligned_and_empty_bytes
+PASS  [0.0001s]  abi_unpadded_dynam.. dirty_padding_is_cleared
+PASS  [0.0001s]  abi_unpadded_dynam.. missing_actual_bytes_rejected
+PASS  [0.0002s]  abi_unpadded_dynam.. unpadded_bytes_all_decode_paths
+PASS  [0.0001s]  abi_unpadded_dynam.. missing_nested_bytes_rejected
+PASS  [0.0002s]  abi_unpadded_dynam.. unpadded_nested_bytes
+PASS  [0.0001s]  abi_unpadded_dynam.. canonical_array_keeps_full_span
+PASS  [0.0001s]  abi_unpadded_dynam.. unpadded_array_all_decode_paths_reencode_aligned
+PASS  [0.0001s]  abi_unpadded_dynam.. deeply_nested_array_clears_partial_padding
+PASS  [0.0002s]  abi_unpadded_dynam.. short_string_all_decode_paths_respect_input_extent
+PASS  [0.0002s]  abi_unpadded_dynam.. partially_padded_array_all_decode_paths_clear_padding
+
+test result: ok. 31 passed; 0 failed

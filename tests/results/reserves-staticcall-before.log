@@ -1,0 +1,10 @@
+errors in file:///tmp/fe-v4-staticcall-view.fe
+
+error[8-0066]: mutable borrow requires a mutable place
+   ┌─ fe-v4-staticcall-view.fe:10:13
+   │
+ 7 │         Check { target } -> bool uses (call: Call) {
+   │                                        ---- `call` does not provide mutable access
+   ·
+10 │             call.raw_staticcall(addr: target, gas: 30000, args: args.span(), ret: mut ret).success()
+   │             ^^^^ cannot borrow as `mut`

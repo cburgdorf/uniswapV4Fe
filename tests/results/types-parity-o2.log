@@ -1,0 +1,26 @@
+Compiling 11 files with Solc 0.8.30
+Solc 0.8.30 finished in 110.65ms
+Compiler run successful with warnings:
+Warning (2519): This declaration shadows an existing declaration.
+  --> test/TypesParity.t.sol:72:18:
+   |
+72 |                 (bool ok,)=compare(shortData);require(!ok,"truncated head accepted");
+   |                  ^^^^^^^
+Note: The shadowed declaration is here:
+  --> test/TypesParity.t.sol:74:14:
+   |
+74 |             (bool ok,)=compare(bytes.concat(full,hex"deadbeef"));require(ok,"trailing data rejected");
+   |              ^^^^^^^
+
+
+Ran 7 tests for test/TypesParity.t.sol:TypesParityTest
+[PASS] testFuzz_dirtyKey(uint8,uint256) (runs: 10000, μ: 18570, ~: 20313)
+[PASS] testFuzz_dirtyOperations(uint8,uint256) (runs: 10000, μ: 16404, ~: 16282)
+[PASS] testFuzz_modify(int24,int24,int256,bytes32) (runs: 10000, μ: 13976, ~: 13963)
+[PASS] testFuzz_poolKey(address,address,uint24,int24,address) (runs: 10000, μ: 21470, ~: 21461)
+[PASS] testFuzz_swap(bool,int256,uint160) (runs: 10000, μ: 13019, ~: 13025)
+[PASS] test_boundaries() (gas: 44806)
+[PASS] test_truncationAndTrailingData() (gas: 8380360)
+Suite result: ok. 7 passed; 0 failed; 0 skipped; finished in 351.95ms (1.23s CPU time)
+
+Ran 1 test suite in 352.68ms (351.95ms CPU time): 7 tests passed, 0 failed, 0 skipped (7 total tests)

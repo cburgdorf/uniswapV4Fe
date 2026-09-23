@@ -1,0 +1,107 @@
+// SPDX-License-Identifier: MIT
+// PermissionedV4Router overrides. Funding remains a policy of the concrete router.
+use std::abi::{Bytes2, sol}
+use std::evm::{Address, Ctx, Call, RawMem, encode_msg_calldata, staticcall_decode, revert, revert_error}
+use super::{actions, pool_types::PoolKey, router::PoolValidator, payments::{self, TokenPayer, Permit2Payment}, delta_resolver, currency::Currency}
+#[error]
+pub struct Unauthorized {}
+#[error]
+pub struct SwappingDisabled {}
+#[error]
+pub struct HookNotAllowed {}
+msg PermissionRead {
+    #[selector = sol("verifiedPermissionsAdapterOf(address)")]
+    Verified { adapter: Address } -> Address,
+    #[selector = sol("allowedHooks(address)")]
+    Hook { hook: Address } -> bool,
+    #[selector = sol("swappingEnabled()")]
+    Swapping {} -> bool,
+    #[selector = sol("isAllowed(address,bytes2)")]
+    Allowed { account: Address, permission: Bytes2 } -> bool,
+    #[selector = sol("wrapToPoolManager(uint256)")]
+    Wrap { amount: u256 },
+}
+pub fn verified_token(_ factory: Address, _ currency: Address) -> Address uses (ctx: Ctx) {
+    if factory.inner == 0 { return Address::zero() }
+    staticcall_decode(addr: factory, gas: ctx.gas(), args: encode_msg_calldata(PermissionRead::Verified { adapter: currency }).span())
+}
+pub fn validate_hook(_ factory: Address, _ currency: Address, _ hook: Address) uses (ctx: Ctx) {
+    if verified_token(factory, currency).inner == 0 { return }
+    let allowed: bool = staticcall_decode(addr: currency, gas: ctx.gas(), args: encode_msg_calldata(PermissionRead::Hook { hook }).span())
+    if !allowed { revert_error(HookNotAllowed {}) }
+}
+pub struct PermissionedPools { pub factory: Address }
+impl Copy for PermissionedPools {}
+impl PoolValidator for PermissionedPools {
+    fn validate(self, _ key: PoolKey) uses (ctx: Ctx, mem: mut RawMem) {
+        if self.factory.inner == 0 { return }
+        validate_hook(self.factory, key.currency0, key.hooks)
+        validate_hook(self.factory, key.currency1, key.hooks)
+    }
+}
+fn check_swapping(_ adapter: Address, _ sender: Address) uses (ctx: Ctx) {
+    let enabled: bool = staticcall_decode(addr: adapter, gas: ctx.gas(), args: encode_msg_calldata(PermissionRead::Swapping {}).span())
+    if !enabled { revert_error(SwappingDisabled {}) }
+    let allowed: bool = staticcall_decode(addr: adapter, gas: ctx.gas(), args: encode_msg_calldata(PermissionRead::Allowed { account: sender, permission: Bytes2 { val: 1 } }).span())
+    if !allowed { revert_error(Unauthorized {}) }
+}
+pub fn wrap(_ adapter: Address, _ amount: u256) uses (ctx: Ctx, call: mut Call) {
+    if ctx.extcodesize(adapter) == 0 { revert(()) }
+    call.call(addr: adapter, gas: ctx.gas(), value: 0, message: PermissionRead::Wrap { amount })
+}
+// The two abstract funding hooks of the reference remain explicit policy hooks.
+pub trait PermissionedFunding {
+    fn pay_standard(self, _ manager: Address, _ currency: Address, _ payer: Address, _ amount: u256)
+    uses (ctx: Ctx, call: mut Call, mem: mut RawMem)
+    fn pay_from_payer(self, _ payer: Address, _ adapter: Address, _ token: Address, _ amount: u256)
+    uses (ctx: Ctx, call: mut Call, mem: mut RawMem)
+}
+impl PermissionedFunding for Permit2Payment {
+    fn pay_standard(self, _ manager: Address, _ currency: Address, _ payer: Address, _ amount: u256)
+    uses (ctx: Ctx, call: mut Call, mem: mut RawMem)
+    {
+        self.pay(manager, currency, payer, amount)
+    }
+    fn pay_from_payer(self, _ payer: Address, _ adapter: Address, _ token: Address, _ amount: u256)
+    uses (ctx: Ctx, call: mut Call, mem: mut RawMem)
+    {
+        self.pay(adapter, token, payer, amount)
+        wrap(adapter, amount)
+    }
+}
+pub struct PermissionedPayment<F> { pub funding: F, pub factory: Address, pub sender: Address }
+impl<F: PermissionedFunding> TokenPayer for PermissionedPayment<F> {
+    fn pay(self, _ manager: Address, _ currency: Address, _ payer: Address, _ amount: u256)
+    uses (ctx: Ctx, call: mut Call, mem: mut RawMem)
+    {
+        let token = verified_token(self.factory, currency)
+        if token.inner == 0 {
+            self.funding.pay_standard(manager, currency, payer, amount)
+            return
+        }
+        check_swapping(currency, self.sender)
+        if payer.inner == ctx.address().inner {
+            Currency { address: token }.transfer(currency, amount)
+            wrap(currency, amount)
+        } else {
+            self.funding.pay_from_payer(payer, currency, token, amount)
+        }
+    }
+    fn take(self, _ manager: Address, _ currency: Address, _ recipient: Address, _ amount: u256)
+    uses (ctx: Ctx, call: mut Call, mem: mut RawMem)
+    {
+        if verified_token(self.factory, currency).inner != 0 { check_swapping(currency, self.sender) }
+        // Authorization precedes DeltaResolver's zero-amount shortcut.
+        payments::take(manager, currency, recipient, amount)
+    }
+    fn map_settle(self, _ manager: Address, _ amount: u256, _ currency: Address) -> u256
+    uses (ctx: Ctx, call: mut Call, mem: mut RawMem)
+    {
+        let token = verified_token(self.factory, currency)
+        if token.inner != 0 && amount == actions::CONTRACT_BALANCE {
+            Currency { address: token }.balance_of_self()
+        } else {
+            delta_resolver::map_settle(manager, amount, currency)
+        }
+    }
+}

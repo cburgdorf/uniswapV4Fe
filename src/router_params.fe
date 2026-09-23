@@ -1,0 +1,95 @@
+// SPDX-License-Identifier: MIT
+// Lazy typed calldata access for IV4Router. Unlike the assembly action decoder,
+// Solidity validates typed scalar values and dynamic tails when accessed.
+use core::abi::ByteInput
+use std::abi::sol::{Uint24, Int24}
+use std::evm::{Address, CallData, revert, revert_error, Panic, PANIC_INDEX_OUT_OF_BOUNDS}
+use super::{calldata_decoder::View, pool_types::PoolKey}
+
+pub fn address(_ value: u256) -> Address {
+    if value >> 160 != 0 {
+        revert(())
+    }
+    Address { inner: value }
+}
+pub fn uint128(_ value: u256) -> u128 {
+    if value >> 128 != 0 {
+        revert(())
+    }
+    value.downcast_truncate()
+}
+pub fn boolean(_ value: u256) -> bool {
+    if value > 1 { revert(()) }
+    value != 0
+}
+// An array's view contains its element count, not a byte count.
+#[arithmetic(unchecked)]
+pub fn array(_ base: u256, _ head: u256, _ stride: u256) -> View {
+    // Pinned solc 0.8.26 uses SLT/SGT here, not unsigned bounds checks.
+    // Negative relative locations can point beyond calldata and read zeros.
+    let input = CallData::new()
+    let relative = View { offset: base, len: 0 }.word(head)
+    let signed_relative: i256 = relative.downcast_truncate()
+    let limit: i256 = (input.len() - base - 31).downcast_truncate()
+    if signed_relative >= limit {
+        revert(())
+    }
+    let tail = base + relative
+    let len = input.word_at(tail)
+    if len > 0xffffffffffffffff {
+        revert(())
+    }
+    let offset = tail + 32
+    let signed_offset: i256 = offset.downcast_truncate()
+    let end: i256 = (input.len() - len * stride).downcast_truncate()
+    if signed_offset > end {
+        revert(())
+    }
+    View { offset, len }
+}
+
+pub fn word_at(_ array: View, _ index: u256) -> u256 {
+    if index >= array.len {
+        revert_error(Panic::from(PANIC_INDEX_OUT_OF_BOUNDS))
+    }
+    array.word(index * 32)
+}
+#[arithmetic(unchecked)]
+pub fn path_at(_ paths: View, _ index: u256) -> View {
+    let relative = word_at(paths, index)
+    let size = CallData::new().len()
+    let signed_relative: i256 = relative.downcast_truncate()
+    let limit: i256 = (size - paths.offset - 159).downcast_truncate()
+    if signed_relative >= limit {
+        revert(())
+    }
+    View { offset: paths.offset + relative, len: 160 }
+}
+
+pub fn path_pool(_ path: View, _ currency: Address) -> (PoolKey, bool) {
+    let intermediate = address(path.word(0))
+    let fee_word = path.word(32)
+    if fee_word >> 24 != 0 {
+        revert(())
+    }
+    let spacing: i256 = path.word(64).downcast_truncate()
+    if spacing < -8388608 || spacing > 8388607 {
+        revert(())
+    }
+    let hooks = address(path.word(96))
+    let (currency0, currency1) = if currency.inner < intermediate.inner {
+        (currency, intermediate)
+    } else {
+        (intermediate, currency)
+    }
+    (
+        PoolKey {
+            currency0,
+            currency1,
+            fee: Uint24 { val: fee_word.downcast_truncate() },
+            tickSpacing: Int24 { val: spacing.downcast_truncate() },
+            hooks,
+        },
+        currency.inner == currency0.inner,
+    )
+}

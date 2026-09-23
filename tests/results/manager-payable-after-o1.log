@@ -1,0 +1,6 @@
+PASS  [0.0005s] test_payable_tuple_with_value
+PASS  [0.0005s] test_payable_scalar_zero_value
+PASS  [0.0005s] test_payable_scalar_with_value
+PASS  [0.0005s] test_payable_dynamic_return
+
+test result: ok. 4 passed; 0 failed

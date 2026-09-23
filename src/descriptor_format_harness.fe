@@ -1,0 +1,31 @@
+// SPDX-License-Identifier: MIT
+use std::abi::{Bytes, DynString, sol::{self, Uint24, Int24, Uint160}}
+use std::evm::RawMem
+use super::{metadata_text as text, descriptor_format as format}
+msg FormatMsg {
+    #[selector = sol("fee(uint24)")]
+    Fee { value: Uint24 } -> DynString,
+    #[selector = sol("price(uint160,uint8,uint8)")]
+    Price { sqrt: Uint160, base: u8, quote: u8 } -> DynString,
+    #[selector = sol("tick(int24,int24,uint8,uint8,bool)")]
+    Tick { tick: Int24, spacing: Int24, base: u8, quote: u8, flip: bool } -> DynString,
+    #[selector = sol("escape(string)")]
+    Escape { value: DynString } -> DynString,
+    #[selector = sol("hex(uint256,uint256)")]
+    Hex { value: u256, len: u256 } -> DynString,
+    #[selector = sol("decimal(uint256)")]
+    Decimal { value: u256 } -> DynString,
+    #[selector = sol("base64(bytes)")]
+    Base64 { value: Bytes } -> DynString,
+}
+pub contract DescriptorFormatHarness {
+    recv FormatMsg {
+        Fee { value } -> DynString uses (mem: mut RawMem) { format::fee(value) }
+        Price { sqrt, base, quote } -> DynString uses (mem: mut RawMem) { format::fixed_price(sqrt, base, quote) }
+        Tick { tick, spacing, base, quote, flip } -> DynString uses (mem: mut RawMem) { format::tick_price(tick, spacing, base, quote, flip) }
+        Escape { value } -> DynString uses (mem: mut RawMem) { text::escape(value) }
+        Hex { value, len } -> DynString uses (mem: mut RawMem) { text::hex(value, len) }
+        Decimal { value } -> DynString uses (mem: mut RawMem) { text::decimal(value) }
+        Base64 { value } -> DynString uses (mem: mut RawMem) { text::base64(value.payload_span()) }
+    }
+}

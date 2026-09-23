@@ -1,0 +1,20 @@
+Parity artifacts: /tmp/fe-foundation-latest-o1
+Compiler: fe 26.3.0 (702686c98); sha256=f3aaead7171e522c76b07fba14d25b70997fe3251a952686b0ad9c918aebac44
+Wrote /tmp/fe-foundation-latest-o1/fe/FoundationHarness.bin
+Wrote /tmp/fe-foundation-latest-o1/fe/FoundationHarness.runtime.bin
+Wrote /tmp/fe-foundation-latest-o1/fe/FoundationHarness.abi.json
+Compiling 11 files with Solc 0.8.26
+Solc 0.8.26 finished in 113.18ms
+Compiler run successful!
+
+Ran 7 tests for test/FoundationParity.t.sol:FoundationParityTest
+[PASS] testFuzz_deltaArithmetic(int256,int256) (runs: 10000, μ: 16625, ~: 16662)
+[PASS] testFuzz_deltaPacking(int128,int128,int256) (runs: 10000, μ: 14448, ~: 14449)
+[PASS] testFuzz_liquidity(uint128,int128) (runs: 10000, μ: 12278, ~: 12286)
+[PASS] testFuzz_lpFee(uint24) (runs: 10000, μ: 20722, ~: 20689)
+[PASS] testFuzz_protocolFee(uint24,uint16,uint24) (runs: 10000, μ: 14486, ~: 14498)
+[PASS] testFuzz_slot0(uint256,uint160,int24,uint24) (runs: 10000, μ: 36367, ~: 36339)
+[PASS] test_boundaries() (gas: 1747707)
+Suite result: ok. 7 passed; 0 failed; 0 skipped; finished in 672.86ms (1.78s CPU time)
+
+Ran 1 test suite in 673.47ms (672.86ms CPU time): 7 tests passed, 0 failed, 0 skipped (7 total tests)

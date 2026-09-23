@@ -1,0 +1,813 @@
+{
+  "fe_abi_sha256": "f5e595a3eff52e14ddd905f153ef13e5e5a4da74f8adb06748114b003d010a74",
+  "solidity_artifact_sha256": "85b59db1ed45e0db38da3a5e7482aa90df7451695016e0a5bacae90aa2d12ba0",
+  "function_count": 33,
+  "abi_surface_matches": false,
+  "complete_metadata_matches_excluding_internal_type": false,
+  "surface_errors": [
+    "function:modifyLiquidity((address,address,uint24,int24,address),(int24,int24,int256,bytes32),bytes): output type mismatch"
+  ],
+  "missing_entries": [],
+  "additional_entries": [
+    "error:CannotUpdateEmptyPosition()",
+    "error:Error(string)",
+    "error:HookAddressNotValid(address)",
+    "error:HookDeltaExceedsSwapAmount()",
+    "error:InvalidFeeForExactOut()",
+    "error:InvalidHookResponse()",
+    "error:InvalidPrice()",
+    "error:InvalidPriceOrLiquidity()",
+    "error:InvalidSqrtPrice(uint160)",
+    "error:InvalidTick(int24)",
+    "error:LPFeeTooLarge(uint24)",
+    "error:NoLiquidityToReceiveFees()",
+    "error:NotEnoughLiquidity()",
+    "error:Panic(uint256)",
+    "error:PoolAlreadyInitialized()",
+    "error:PriceLimitAlreadyExceeded(uint160,uint160)",
+    "error:PriceLimitOutOfBounds(uint160)",
+    "error:PriceOverflow()",
+    "error:SafeCastOverflow()",
+    "error:TickLiquidityOverflow(int24)",
+    "error:TickLowerOutOfBounds(int24)",
+    "error:TickMisaligned(int24,int24)",
+    "error:TickUpperOutOfBounds(int24)",
+    "error:TicksMisordered(int24,int24)",
+    "error:WrappedError(address,bytes4,bytes,bytes)"
+  ],
+  "metadata_differences": [
+    {
+      "entry": "function:allowance(address,address,uint256)",
+      "fe": {
+        "type": "function",
+        "name": "allowance",
+        "inputs": [
+          {
+            "name": "owner",
+            "type": "address"
+          },
+          {
+            "name": "spender",
+            "type": "address"
+          },
+          {
+            "name": "id",
+            "type": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      "solidity": {
+        "type": "function",
+        "name": "allowance",
+        "inputs": [
+          {
+            "name": "owner",
+            "type": "address"
+          },
+          {
+            "name": "spender",
+            "type": "address"
+          },
+          {
+            "name": "id",
+            "type": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amount",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      }
+    },
+    {
+      "entry": "function:balanceOf(address,uint256)",
+      "fe": {
+        "type": "function",
+        "name": "balanceOf",
+        "inputs": [
+          {
+            "name": "owner",
+            "type": "address"
+          },
+          {
+            "name": "id",
+            "type": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      "solidity": {
+        "type": "function",
+        "name": "balanceOf",
+        "inputs": [
+          {
+            "name": "owner",
+            "type": "address"
+          },
+          {
+            "name": "id",
+            "type": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "balance",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      }
+    },
+    {
+      "entry": "function:collectProtocolFees(address,address,uint256)",
+      "fe": {
+        "type": "function",
+        "name": "collectProtocolFees",
+        "inputs": [
+          {
+            "name": "recipient",
+            "type": "address"
+          },
+          {
+            "name": "currency",
+            "type": "address"
+          },
+          {
+            "name": "amount",
+            "type": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "solidity": {
+        "type": "function",
+        "name": "collectProtocolFees",
+        "inputs": [
+          {
+            "name": "recipient",
+            "type": "address"
+          },
+          {
+            "name": "currency",
+            "type": "address"
+          },
+          {
+            "name": "amount",
+            "type": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amountCollected",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      }
+    },
+    {
+      "entry": "function:donate((address,address,uint24,int24,address),uint256,uint256,bytes)",
+      "fe": {
+        "type": "function",
+        "name": "donate",
+        "inputs": [
+          {
+            "name": "key",
+            "type": "tuple",
+            "components": [
+              {
+                "name": "currency0",
+                "type": "address"
+              },
+              {
+                "name": "currency1",
+                "type": "address"
+              },
+              {
+                "name": "fee",
+                "type": "uint24"
+              },
+              {
+                "name": "tickSpacing",
+                "type": "int24"
+              },
+              {
+                "name": "hooks",
+                "type": "address"
+              }
+            ]
+          },
+          {
+            "name": "amount0",
+            "type": "uint256"
+          },
+          {
+            "name": "amount1",
+            "type": "uint256"
+          },
+          {
+            "name": "hookData",
+            "type": "bytes"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "int256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "solidity": {
+        "type": "function",
+        "name": "donate",
+        "inputs": [
+          {
+            "name": "key",
+            "type": "tuple",
+            "components": [
+              {
+                "name": "currency0",
+                "type": "address"
+              },
+              {
+                "name": "currency1",
+                "type": "address"
+              },
+              {
+                "name": "fee",
+                "type": "uint24"
+              },
+              {
+                "name": "tickSpacing",
+                "type": "int24"
+              },
+              {
+                "name": "hooks",
+                "type": "address"
+              }
+            ]
+          },
+          {
+            "name": "amount0",
+            "type": "uint256"
+          },
+          {
+            "name": "amount1",
+            "type": "uint256"
+          },
+          {
+            "name": "hookData",
+            "type": "bytes"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "delta",
+            "type": "int256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      }
+    },
+    {
+      "entry": "function:initialize((address,address,uint24,int24,address),uint160)",
+      "fe": {
+        "type": "function",
+        "name": "initialize",
+        "inputs": [
+          {
+            "name": "key",
+            "type": "tuple",
+            "components": [
+              {
+                "name": "currency0",
+                "type": "address"
+              },
+              {
+                "name": "currency1",
+                "type": "address"
+              },
+              {
+                "name": "fee",
+                "type": "uint24"
+              },
+              {
+                "name": "tickSpacing",
+                "type": "int24"
+              },
+              {
+                "name": "hooks",
+                "type": "address"
+              }
+            ]
+          },
+          {
+            "name": "sqrtPriceX96",
+            "type": "uint160"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "int24"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "solidity": {
+        "type": "function",
+        "name": "initialize",
+        "inputs": [
+          {
+            "name": "key",
+            "type": "tuple",
+            "components": [
+              {
+                "name": "currency0",
+                "type": "address"
+              },
+              {
+                "name": "currency1",
+                "type": "address"
+              },
+              {
+                "name": "fee",
+                "type": "uint24"
+              },
+              {
+                "name": "tickSpacing",
+                "type": "int24"
+              },
+              {
+                "name": "hooks",
+                "type": "address"
+              }
+            ]
+          },
+          {
+            "name": "sqrtPriceX96",
+            "type": "uint160"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "tick",
+            "type": "int24"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      }
+    },
+    {
+      "entry": "function:isOperator(address,address)",
+      "fe": {
+        "type": "function",
+        "name": "isOperator",
+        "inputs": [
+          {
+            "name": "owner",
+            "type": "address"
+          },
+          {
+            "name": "spender",
+            "type": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      "solidity": {
+        "type": "function",
+        "name": "isOperator",
+        "inputs": [
+          {
+            "name": "owner",
+            "type": "address"
+          },
+          {
+            "name": "operator",
+            "type": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "isOperator",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view"
+      }
+    },
+    {
+      "entry": "function:modifyLiquidity((address,address,uint24,int24,address),(int24,int24,int256,bytes32),bytes)",
+      "fe": {
+        "type": "function",
+        "name": "modifyLiquidity",
+        "inputs": [
+          {
+            "name": "key",
+            "type": "tuple",
+            "components": [
+              {
+                "name": "currency0",
+                "type": "address"
+              },
+              {
+                "name": "currency1",
+                "type": "address"
+              },
+              {
+                "name": "fee",
+                "type": "uint24"
+              },
+              {
+                "name": "tickSpacing",
+                "type": "int24"
+              },
+              {
+                "name": "hooks",
+                "type": "address"
+              }
+            ]
+          },
+          {
+            "name": "params",
+            "type": "tuple",
+            "components": [
+              {
+                "name": "tickLower",
+                "type": "int24"
+              },
+              {
+                "name": "tickUpper",
+                "type": "int24"
+              },
+              {
+                "name": "liquidityDelta",
+                "type": "int256"
+              },
+              {
+                "name": "salt",
+                "type": "bytes32"
+              }
+            ]
+          },
+          {
+            "name": "hookData",
+            "type": "bytes"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "tuple",
+            "components": [
+              {
+                "name": "",
+                "type": "int256"
+              },
+              {
+                "name": "",
+                "type": "int256"
+              }
+            ]
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "solidity": {
+        "type": "function",
+        "name": "modifyLiquidity",
+        "inputs": [
+          {
+            "name": "key",
+            "type": "tuple",
+            "components": [
+              {
+                "name": "currency0",
+                "type": "address"
+              },
+              {
+                "name": "currency1",
+                "type": "address"
+              },
+              {
+                "name": "fee",
+                "type": "uint24"
+              },
+              {
+                "name": "tickSpacing",
+                "type": "int24"
+              },
+              {
+                "name": "hooks",
+                "type": "address"
+              }
+            ]
+          },
+          {
+            "name": "params",
+            "type": "tuple",
+            "components": [
+              {
+                "name": "tickLower",
+                "type": "int24"
+              },
+              {
+                "name": "tickUpper",
+                "type": "int24"
+              },
+              {
+                "name": "liquidityDelta",
+                "type": "int256"
+              },
+              {
+                "name": "salt",
+                "type": "bytes32"
+              }
+            ]
+          },
+          {
+            "name": "hookData",
+            "type": "bytes"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "callerDelta",
+            "type": "int256"
+          },
+          {
+            "name": "feesAccrued",
+            "type": "int256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      }
+    },
+    {
+      "entry": "function:protocolFeesAccrued(address)",
+      "fe": {
+        "type": "function",
+        "name": "protocolFeesAccrued",
+        "inputs": [
+          {
+            "name": "currency",
+            "type": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      },
+      "solidity": {
+        "type": "function",
+        "name": "protocolFeesAccrued",
+        "inputs": [
+          {
+            "name": "currency",
+            "type": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amount",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      }
+    },
+    {
+      "entry": "function:supportsInterface(bytes4)",
+      "fe": {
+        "type": "function",
+        "name": "supportsInterface",
+        "inputs": [
+          {
+            "name": "interfaceId",
+            "type": "bytes4"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "pure"
+      },
+      "solidity": {
+        "type": "function",
+        "name": "supportsInterface",
+        "inputs": [
+          {
+            "name": "interfaceId",
+            "type": "bytes4"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view"
+      }
+    },
+    {
+      "entry": "function:swap((address,address,uint24,int24,address),(bool,int256,uint160),bytes)",
+      "fe": {
+        "type": "function",
+        "name": "swap",
+        "inputs": [
+          {
+            "name": "key",
+            "type": "tuple",
+            "components": [
+              {
+                "name": "currency0",
+                "type": "address"
+              },
+              {
+                "name": "currency1",
+                "type": "address"
+              },
+              {
+                "name": "fee",
+                "type": "uint24"
+              },
+              {
+                "name": "tickSpacing",
+                "type": "int24"
+              },
+              {
+                "name": "hooks",
+                "type": "address"
+              }
+            ]
+          },
+          {
+            "name": "params",
+            "type": "tuple",
+            "components": [
+              {
+                "name": "zeroForOne",
+                "type": "bool"
+              },
+              {
+                "name": "amountSpecified",
+                "type": "int256"
+              },
+              {
+                "name": "sqrtPriceLimitX96",
+                "type": "uint160"
+              }
+            ]
+          },
+          {
+            "name": "hookData",
+            "type": "bytes"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "int256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "solidity": {
+        "type": "function",
+        "name": "swap",
+        "inputs": [
+          {
+            "name": "key",
+            "type": "tuple",
+            "components": [
+              {
+                "name": "currency0",
+                "type": "address"
+              },
+              {
+                "name": "currency1",
+                "type": "address"
+              },
+              {
+                "name": "fee",
+                "type": "uint24"
+              },
+              {
+                "name": "tickSpacing",
+                "type": "int24"
+              },
+              {
+                "name": "hooks",
+                "type": "address"
+              }
+            ]
+          },
+          {
+            "name": "params",
+            "type": "tuple",
+            "components": [
+              {
+                "name": "zeroForOne",
+                "type": "bool"
+              },
+              {
+                "name": "amountSpecified",
+                "type": "int256"
+              },
+              {
+                "name": "sqrtPriceLimitX96",
+                "type": "uint160"
+              }
+            ]
+          },
+          {
+            "name": "hookData",
+            "type": "bytes"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "swapDelta",
+            "type": "int256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      }
+    },
+    {
+      "entry": "function:unlock(bytes)",
+      "fe": {
+        "type": "function",
+        "name": "unlock",
+        "inputs": [
+          {
+            "name": "data",
+            "type": "bytes"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "bytes"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "solidity": {
+        "type": "function",
+        "name": "unlock",
+        "inputs": [
+          {
+            "name": "data",
+            "type": "bytes"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "result",
+            "type": "bytes"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      }
+    }
+  ]
+}

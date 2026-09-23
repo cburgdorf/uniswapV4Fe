@@ -1,0 +1,6 @@
+{
+  "compiler_sha256": "bcca32a599986969df798656735d88167e0f95957ba18f8ec9aa6dffb7c3ecf5",
+  "fixture_sha256": "024f9fc102c8d724de2b8d7e7c86de161159f18454c2389b1c35a7123eb94c03",
+  "exit_code": 1,
+  "expected": "four regression failures before fix"
+}

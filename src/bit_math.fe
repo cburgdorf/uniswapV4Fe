@@ -1,0 +1,24 @@
+// SPDX-License-Identifier: MIT
+// Semantics of Uniswap v4-core BitMath.sol; binary search implementation.
+use super::require
+
+pub fn most_significant_bit(_ x: u256) -> u8 {
+    require(x > 0)
+    let mut value = x
+    let mut result: u8 = 0
+    let mut shift: u256 = 128
+    while shift > 0 {
+        if value >> shift != 0 {
+            value = value >> shift
+            result = result + shift.downcast_truncate()
+        }
+        shift = shift >> 1
+    }
+    result
+}
+
+#[arithmetic(unchecked)]
+pub fn least_significant_bit(_ x: u256) -> u8 {
+    require(x > 0)
+    most_significant_bit(x & (0 - x))
+}

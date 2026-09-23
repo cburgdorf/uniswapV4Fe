@@ -1,0 +1,19 @@
+Parity artifacts: /tmp/fe-permissions-factory-test-o1
+Compiler: fe 26.3.0 (91d3e8215); sha256=fb65ef0e54fcfeb4875b987d2fa2e8bd7da020295670f7e940efe1476066f264
+error[8-0089]: failed to evaluate constant `SELECTOR`
+  ┌─ src/permissions_adapter_factory.fe:7:1
+  │  
+7 │ ╭ #[error]
+8 │ │ pub struct PermissionsAdapterAlreadyVerified { pub permissionsAdapter: Address }
+  │ ╰────────────────────────────────────────────────────────────────────────────────^ `SELECTOR` from generated `#[error]` implementation failed during compile-time evaluation
+
+Traceback (most recent call last):
+  File "/home/cburgdorf/Documents/hacking/fe/uniswap_v4_demo/tests/run_math_parity.py", line 150, in <module>
+    subprocess.run([str(args.fe.resolve()), 'build', str(build_root), '--contract', harness,
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                    '-O', args.optimize, '--out-dir', str(work / 'fe')], check=True)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/linuxbrew/.linuxbrew/Cellar/python@3.14/3.14.4/lib/python3.14/subprocess.py", line 578, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['/tmp/fe-uniswap-current2/target/release/fe', 'build', '/tmp/fe-permissions-factory-test-o1/ingot', '--contract', 'PermissionsAdapterFactory', '-O', '1', '--out-dir', '/tmp/fe-permissions-factory-test-o1/fe']' returned non-zero exit status 1.

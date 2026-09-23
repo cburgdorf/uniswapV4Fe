@@ -1,0 +1,219 @@
+// SPDX-License-Identifier: MIT
+// v4-core StateLibrary.sol: external reads preserve range-call boundaries.
+use core::ptr::{self, MemBuffer}
+use core::abi::store_word
+use std::abi::{Bytes32, DynArray, sol::{self, Int24}}
+use std::evm::{
+    Address,
+    Ctx,
+    RawMem,
+    staticcall_decode,
+    copy_returndata,
+    decode_returndata,
+    revert,
+    revert_error,
+    Panic,
+    PANIC_OUT_OF_MEMORY,
+}
+use std::evm::packed::keccak_packed
+use super::slot0::Slot0
+
+pub fn pool_slot(_ id: Bytes32) -> u256 uses (mem: mut RawMem) {
+    keccak_packed((id.val, 6 as u256))
+}
+pub fn tick_slot(_ id: Bytes32, _ tick: Int24) -> u256 uses (mem: mut RawMem) {
+    keccak_packed((tick.val as i256, pool_slot(id) + 4))
+}
+pub fn position_slot(_ id: Bytes32, _ position: Bytes32) -> u256
+uses (mem: mut RawMem)
+{
+    keccak_packed((position.val, pool_slot(id) + 6))
+}
+pub fn read_word(_ manager: Address, _ slot: u256) -> u256 uses (ctx: Ctx) {
+    let args = MemBuffer::alloc(36)
+    store_word(
+        ptr: args.ptr(),
+        value: (sol("extsload(bytes32)") as u256) << 224,
+    )
+    store_word(ptr: ptr::offset_bytes(args.ptr(), 4), value: slot)
+    staticcall_decode<Bytes32>(addr: manager, gas: ctx.gas(), args: args.span()).val
+}
+pub struct RangeRead { pub words: (u256, u256, u256), pub reference_free: u256 }
+// The pinned StateView starts at 0x80. Each abi.encodePacked pair allocates
+// 96 bytes; returned arrays allocate the rounded returndata then their tail.
+// Track that reference allocator separately from Fe's scratch-memory layout.
+fn read_range_at(
+    _ manager: Address,
+    _ slot: u256,
+    _ count: u256,
+    _ reference_free: u256,
+) -> RangeRead
+uses (ctx: Ctx, mem: RawMem)
+{
+    let args = MemBuffer::alloc(68)
+    store_word(
+        ptr: args.ptr(),
+        value: (sol("extsload(bytes32,uint256)") as u256) << 224,
+    )
+    store_word(ptr: ptr::offset_bytes(args.ptr(), 4), value: slot)
+    store_word(ptr: ptr::offset_bytes(args.ptr(), 36), value: count)
+    // Unit decoding accepts arbitrary successful returndata, and the helper
+    // still bubbles call failures. This keeps STATICCALL read-only despite
+    // Call.raw_staticcall currently requiring a mutable Call capability.
+    let _ = staticcall_decode<()>(addr: manager, gas: ctx.gas(), args: args.span())
+    let returned = copy_returndata()
+    let next = reference_free + ((returned.len() + 31) & !(31 as u256))
+    if next > 0xffffffffffffffff {
+        revert_error(Panic::from(PANIC_OUT_OF_MEMORY))
+    }
+    if returned.len() < 32 {
+        revert(())
+    }
+    let offset = mem.mload(returned.ptr())
+    if offset > 0xffffffffffffffff || offset > returned.len() - 32 {
+        revert(())
+    }
+    let length = mem.mload(ptr::offset_bytes(returned.ptr(), offset))
+    if length > 0xffffffffffffffff {
+        revert_error(Panic::from(PANIC_OUT_OF_MEMORY))
+    }
+    let end = next + 32 + length * 32
+    if end > 0xffffffffffffffff {
+        revert_error(Panic::from(PANIC_OUT_OF_MEMORY))
+    }
+    let data = decode_returndata<DynArray<Bytes32>>(returned.span())
+    let base = data.encoded_span().ptr()
+    // An empty array encoded in just one word leaves the final four call
+    // argument bytes visible to the reference's unchecked memory read.
+    let first = if length > 0 {
+        mem.mload(ptr::offset_bytes(base, 32))
+    } else if returned.len() == 32 {
+        count << 224
+    } else {
+        0
+    }
+    let second = if length > 1 {
+        mem.mload(ptr::offset_bytes(base, 64))
+    } else {
+        0
+    }
+    let third = if length > 2 {
+        mem.mload(ptr::offset_bytes(base, 96))
+    } else {
+        0
+    }
+    RangeRead { words: (first, second, third), reference_free: end }
+}
+// StateLibrary reads the returned memory array in assembly without index checks.
+fn array_word(_ data: (u256, u256, u256), _ index: u256) -> u256 {
+    if index == 0 {
+        return data.0
+    }
+    if index == 1 {
+        return data.1
+    }
+    data.2
+}
+pub fn slot0(_ manager: Address, _ id: Bytes32) -> Slot0
+uses (ctx: Ctx, mem: mut RawMem)
+{
+    Slot0 { bits: read_word(manager, pool_slot(id)) }
+}
+pub fn tick_info(_ manager: Address, _ id: Bytes32, _ tick: Int24) -> (u128, i128, u256, u256)
+uses (ctx: Ctx, mem: mut RawMem)
+{
+    let data = read_range_at(manager, tick_slot(id, tick), 3, 0x140).words
+    let word = array_word(data, 0)
+    (
+        (word).downcast_truncate(),
+        (word >> 128).downcast_truncate(),
+        array_word(data, 1),
+        array_word(data, 2),
+    )
+}
+pub fn tick_liquidity(_ manager: Address, _ id: Bytes32, _ tick: Int24) -> (u128, i128)
+uses (ctx: Ctx, mem: mut RawMem)
+{
+    let word = read_word(manager, tick_slot(id, tick))
+    (word.downcast_truncate(), (word >> 128).downcast_truncate())
+}
+pub fn tick_fee_growth(_ manager: Address, _ id: Bytes32, _ tick: Int24) -> (u256, u256)
+uses (ctx: Ctx, mem: mut RawMem)
+{
+    let data = read_range_at(manager, tick_slot(id, tick) + 1, 2, 0x140).words
+    (array_word(data, 0), array_word(data, 1))
+}
+pub fn fee_growth_globals(_ manager: Address, _ id: Bytes32) -> (u256, u256)
+uses (ctx: Ctx, mem: mut RawMem)
+{
+    let data = read_range_at(manager, pool_slot(id) + 1, 2, 0xe0).words
+    (array_word(data, 0), array_word(data, 1))
+}
+pub fn liquidity(_ manager: Address, _ id: Bytes32) -> u128
+uses (ctx: Ctx, mem: mut RawMem)
+{
+    read_word(manager, pool_slot(id) + 3).downcast_truncate()
+}
+pub fn tick_bitmap(_ manager: Address, _ id: Bytes32, _ tick: i16) -> u256
+uses (ctx: Ctx, mem: mut RawMem)
+{
+    read_word(manager, keccak_packed((tick as i256, pool_slot(id) + 5)))
+}
+pub fn position_info(_ manager: Address, _ id: Bytes32, _ position: Bytes32) -> (u128, u256, u256)
+uses (ctx: Ctx, mem: mut RawMem)
+{
+    let data = read_range_at(manager, position_slot(id, position), 3, 0x140).words
+    (array_word(data, 0).downcast_truncate(), array_word(data, 1), array_word(data, 2))
+}
+pub fn position_liquidity(_ manager: Address, _ id: Bytes32, _ position: Bytes32) -> u128
+uses (ctx: Ctx, mem: mut RawMem)
+{
+    read_word(manager, position_slot(id, position)).downcast_truncate()
+}
+#[arithmetic(unchecked)]
+pub fn fee_growth_inside(_ manager: Address, _ id: Bytes32, _ lower: Int24, _ upper: Int24) -> (
+    u256,
+    u256,
+)
+uses (ctx: Ctx, mem: mut RawMem)
+{
+    let globals = read_range_at(manager, pool_slot(id) + 1, 2, 0xe0)
+    let global = (array_word(globals.words, 0), array_word(globals.words, 1))
+    let lows = read_range_at(
+        manager,
+        tick_slot(id, lower) + 1,
+        2,
+        globals.reference_free + 192,
+    )
+    let low = (array_word(lows.words, 0), array_word(lows.words, 1))
+    let highs = read_range_at(
+        manager,
+        tick_slot(id, upper) + 1,
+        2,
+        lows.reference_free + 192,
+    )
+    let high = (array_word(highs.words, 0), array_word(highs.words, 1))
+    let tick = slot0(manager, id).tick().val
+    if tick < lower.val {
+        return (low.0 - high.0, low.1 - high.1)
+    }
+    if tick >= upper.val {
+        return (high.0 - low.0, high.1 - low.1)
+    }
+    (global.0 - low.0 - high.0, global.1 - low.1 - high.1)
+}
+
+pub fn position_info_by_owner(
+    _ manager: Address,
+    _ id: Bytes32,
+    _ owner: Address,
+    _ lower: Int24,
+    _ upper: Int24,
+    _ salt: Bytes32,
+) -> (u128, u256, u256)
+uses (ctx: Ctx, mem: mut RawMem)
+{
+    let key = super::position::calculate_position_key(owner, lower, upper, salt.val)
+    let data = read_range_at(manager, position_slot(id, Bytes32 { val: key }), 3, 0x140).words
+    (array_word(data, 0).downcast_truncate(), array_word(data, 1), array_word(data, 2))
+}

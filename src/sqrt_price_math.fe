@@ -1,0 +1,193 @@
+// SPDX-License-Identifier: MIT
+// Port of Uniswap v4-core SqrtPriceMath.sol; see reference_manifest.json.
+use std::abi::sol::Uint160
+use std::evm::revert_error
+use super::full_math::{mul_div, mul_div_rounding_up}
+use super::unsafe_math::div_rounding_up
+use super::safe_cast::{to_uint160, to_int256}
+
+pub const Q96: u256 = 0x1000000000000000000000000
+pub const MAX_UINT160: u256 = 0xffffffffffffffffffffffffffffffffffffffff
+
+#[error]
+pub struct InvalidPriceOrLiquidity {}
+#[error]
+pub struct InvalidPrice {}
+#[error]
+pub struct NotEnoughLiquidity {}
+#[error]
+pub struct PriceOverflow {}
+
+// These two operations intentionally wrap while the fallback addition must not.
+#[arithmetic(unchecked)]
+fn wrapping_product(_ a: u256, _ b: u256) -> u256 {
+    a * b
+}
+#[arithmetic(unchecked)]
+fn wrapping_sum(_ a: u256, _ b: u256) -> u256 {
+    a + b
+}
+
+pub fn next_sqrt_price_from_amount0_rounding_up(
+    _ sqrt_price: Uint160,
+    _ liquidity: u128,
+    _ amount: u256,
+    _ add: bool,
+) -> Uint160 {
+    if amount == 0 {
+        return sqrt_price
+    }
+    let price = sqrt_price.val
+    let numerator = (liquidity as u256) << 96
+    let product = wrapping_product(amount, price)
+    if add {
+        if product / amount == price {
+            let denominator = wrapping_sum(numerator, product)
+            if denominator >= numerator {
+                return Uint160 { val: mul_div_rounding_up(numerator, price, denominator) }
+            }
+        }
+        // Preserve Solidity's checked division and addition in this fallback.
+        let denominator = numerator / price + amount
+        Uint160 { val: div_rounding_up(numerator, denominator) }
+    } else {
+        if product / amount != price || numerator <= product {
+            revert_error(PriceOverflow {})
+        }
+        to_uint160(mul_div_rounding_up(numerator, price, numerator - product))
+    }
+}
+
+pub fn next_sqrt_price_from_amount1_rounding_down(
+    _ sqrt_price: Uint160,
+    _ liquidity: u128,
+    _ amount: u256,
+    _ add: bool,
+) -> Uint160 {
+    let liquidity_word = liquidity as u256
+    if add {
+        let quotient = if amount <= MAX_UINT160 {
+            (amount << 96) / liquidity_word
+        } else {
+            mul_div(amount, Q96, liquidity_word)
+        }
+        to_uint160(sqrt_price.val + quotient)
+    } else {
+        let quotient = if amount <= MAX_UINT160 {
+            div_rounding_up(amount << 96, liquidity_word)
+        } else {
+            mul_div_rounding_up(amount, Q96, liquidity_word)
+        }
+        if sqrt_price.val <= quotient {
+            revert_error(NotEnoughLiquidity {})
+        }
+        Uint160 { val: sqrt_price.val - quotient }
+    }
+}
+
+pub fn next_sqrt_price_from_input(
+    _ sqrt_price: Uint160,
+    _ liquidity: u128,
+    _ amount_in: u256,
+    _ zero_for_one: bool,
+) -> Uint160 {
+    if sqrt_price.val == 0 || liquidity == 0 {
+        revert_error(InvalidPriceOrLiquidity {})
+    }
+    if zero_for_one {
+        next_sqrt_price_from_amount0_rounding_up(sqrt_price, liquidity, amount_in, true)
+    } else {
+        next_sqrt_price_from_amount1_rounding_down(sqrt_price, liquidity, amount_in, true)
+    }
+}
+
+pub fn next_sqrt_price_from_output(
+    _ sqrt_price: Uint160,
+    _ liquidity: u128,
+    _ amount_out: u256,
+    _ zero_for_one: bool,
+) -> Uint160 {
+    if sqrt_price.val == 0 || liquidity == 0 {
+        revert_error(InvalidPriceOrLiquidity {})
+    }
+    if zero_for_one {
+        next_sqrt_price_from_amount1_rounding_down(sqrt_price, liquidity, amount_out, false)
+    } else {
+        next_sqrt_price_from_amount0_rounding_up(sqrt_price, liquidity, amount_out, false)
+    }
+}
+
+pub fn amount0_delta(
+    _ price_a: Uint160,
+    _ price_b: Uint160,
+    _ liquidity: u128,
+    _ round_up: bool,
+) -> u256 {
+    let lower = if price_a.val < price_b.val {
+        price_a.val
+    } else {
+        price_b.val
+    }
+    let upper = if price_a.val < price_b.val {
+        price_b.val
+    } else {
+        price_a.val
+    }
+    if lower == 0 {
+        revert_error(InvalidPrice {})
+    }
+    let numerator1 = (liquidity as u256) << 96
+    let numerator2 = upper - lower
+    if round_up {
+        div_rounding_up(mul_div_rounding_up(numerator1, numerator2, upper), lower)
+    } else {
+        mul_div(numerator1, numerator2, upper) / lower
+    }
+}
+
+pub fn abs_diff(_ a: Uint160, _ b: Uint160) -> u256 {
+    if a.val >= b.val {
+        a.val - b.val
+    } else {
+        b.val - a.val
+    }
+}
+
+pub fn amount1_delta(
+    _ price_a: Uint160,
+    _ price_b: Uint160,
+    _ liquidity: u128,
+    _ round_up: bool,
+) -> u256 {
+    let difference = abs_diff(price_a, price_b)
+    if round_up {
+        mul_div_rounding_up(liquidity as u256, difference, Q96)
+    } else {
+        mul_div(liquidity as u256, difference, Q96)
+    }
+}
+
+pub fn signed_amount0_delta(_ price_a: Uint160, _ price_b: Uint160, _ liquidity: i128) -> i256 {
+    // Widen before negation to support the most negative int128.
+    let signed_liquidity = liquidity as i256
+    let magnitude: u128 = (if liquidity < 0 {
+        -signed_liquidity
+    } else {
+        signed_liquidity
+    })
+        .downcast_truncate()
+    let delta = to_int256(amount0_delta(price_a, price_b, magnitude, liquidity >= 0))
+    if liquidity < 0 { delta } else { -delta }
+}
+
+pub fn signed_amount1_delta(_ price_a: Uint160, _ price_b: Uint160, _ liquidity: i128) -> i256 {
+    let signed_liquidity = liquidity as i256
+    let magnitude: u128 = (if liquidity < 0 {
+        -signed_liquidity
+    } else {
+        signed_liquidity
+    })
+        .downcast_truncate()
+    let delta = to_int256(amount1_delta(price_a, price_b, magnitude, liquidity >= 0))
+    if liquidity < 0 { delta } else { -delta }
+}

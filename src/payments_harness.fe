@@ -1,0 +1,40 @@
+// SPDX-License-Identifier: MIT
+use std::abi::sol
+use std::evm::{Address, Ctx, Call, RawMem}
+use super::payments::{self, Permit2Payment}
+msg PaymentsMsg {
+    #[selector = sol("perform(address,address,address,uint256,bool)")]
+    Perform { currency: Address, payer: Address, recipient: Address, amount: u256, isTake: bool },
+}
+pub contract PaymentsHarness {
+    manager: Address,
+    permit2: Address,
+    init(_manager: Address, _permit2: Address)
+    uses (mut manager, mut permit2)
+    {
+        manager = _manager
+        permit2 = _permit2
+    }
+    recv PaymentsMsg {
+        Perform { currency, payer, recipient, amount, isTake }
+        uses (manager, permit2, ctx: Ctx, call: mut Call, mem: mut RawMem)
+        {
+            if isTake {
+                payments::take(manager, currency, recipient, amount)
+            } else {
+                let resolved = if payer.inner == 1 {
+                    ctx.address()
+                } else {
+                    payer
+                }
+                payments::settle(
+                    Permit2Payment { permit2 },
+                    manager,
+                    currency,
+                    resolved,
+                    amount,
+                )
+            }
+        }
+    }
+}

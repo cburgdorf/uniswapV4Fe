@@ -1,0 +1,31 @@
+{
+  "fe_abi_sha256": "fd442e6f6eef461c8dcc9d4c77eb8fa585daf461fcfdabb9bb060678f500893e",
+  "reference_artifact_sha256": "59b7dc3cafd26d8aa32f7b8456c36f9a2db1ca610e19b65dafc288bc06bdfd76",
+  "protocol_abi_sha256": "218431b284f1595204ed4294e6321a802cb9bb4005a4bdcbcf874cb7b3c4f99c",
+  "adapter_sha256": "ffd85641a3d37178f97aa5a389d46f40711c1195e658e97af9fb028f0812d3e5",
+  "callable_and_event_layouts": "compatible",
+  "reference_metadata_applied": [
+    "constructor:(address)",
+    "function:getFeeGrowthGlobals(bytes32)",
+    "function:getFeeGrowthInside(bytes32,int24,int24)",
+    "function:getLiquidity(bytes32)",
+    "function:getPositionInfo(bytes32,bytes32)",
+    "function:getPositionInfo(bytes32,address,int24,int24,bytes32)",
+    "function:getPositionLiquidity(bytes32,bytes32)",
+    "function:getSlot0(bytes32)",
+    "function:getTickBitmap(bytes32,int16)",
+    "function:getTickFeeGrowthOutside(bytes32,int24)",
+    "function:getTickInfo(bytes32,int24)",
+    "function:getTickLiquidity(bytes32,int24)",
+    "function:poolManager()"
+  ],
+  "explicit_fallback_receive": false,
+  "explicit_lazy_multicall": false,
+  "explicit_flat_dynamic_returns": [],
+  "fe_error_signatures": [
+    "error:Panic(uint256)"
+  ],
+  "reference_error_signatures": [
+    "error:NotPoolManager()"
+  ]
+}

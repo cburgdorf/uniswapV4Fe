@@ -1,0 +1,194 @@
+{
+  "event_abi": "passed",
+  "event_names": [
+    "Approval",
+    "OperatorSet",
+    "Transfer"
+  ],
+  "full_abi_parity": false,
+  "remaining_function_metadata_differences": [
+    {
+      "name": "isOperator",
+      "fe": {
+        "type": "function",
+        "name": "isOperator",
+        "inputs": [
+          {
+            "name": "owner",
+            "type": "address"
+          },
+          {
+            "name": "spender",
+            "type": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "solidity": {
+        "type": "function",
+        "name": "isOperator",
+        "inputs": [
+          {
+            "name": "owner",
+            "type": "address"
+          },
+          {
+            "name": "operator",
+            "type": "address"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "isOperator",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view"
+      }
+    },
+    {
+      "name": "balanceOf",
+      "fe": {
+        "type": "function",
+        "name": "balanceOf",
+        "inputs": [
+          {
+            "name": "owner",
+            "type": "address"
+          },
+          {
+            "name": "id",
+            "type": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "solidity": {
+        "type": "function",
+        "name": "balanceOf",
+        "inputs": [
+          {
+            "name": "owner",
+            "type": "address"
+          },
+          {
+            "name": "id",
+            "type": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "balance",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      }
+    },
+    {
+      "name": "allowance",
+      "fe": {
+        "type": "function",
+        "name": "allowance",
+        "inputs": [
+          {
+            "name": "owner",
+            "type": "address"
+          },
+          {
+            "name": "spender",
+            "type": "address"
+          },
+          {
+            "name": "id",
+            "type": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable"
+      },
+      "solidity": {
+        "type": "function",
+        "name": "allowance",
+        "inputs": [
+          {
+            "name": "owner",
+            "type": "address"
+          },
+          {
+            "name": "spender",
+            "type": "address"
+          },
+          {
+            "name": "id",
+            "type": "uint256"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "amount",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view"
+      }
+    },
+    {
+      "name": "supportsInterface",
+      "fe": {
+        "type": "function",
+        "name": "supportsInterface",
+        "inputs": [
+          {
+            "name": "interfaceId",
+            "type": "bytes4"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "pure"
+      },
+      "solidity": {
+        "type": "function",
+        "name": "supportsInterface",
+        "inputs": [
+          {
+            "name": "interfaceId",
+            "type": "bytes4"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view"
+      }
+    }
+  ],
+  "fe_abi_sha256": "b1228d523b40745947037cf739eb5de58cd695f37f7896d14eadf766dea006c4",
+  "solidity_artifact_sha256": "12ec4824ac129114ec547b41ce71d3f180c7b418dc37b37ba3cc1d12a9bfb86d",
+  "checker_sha256": "78f9b467c03200991eaf61b40a1cf953187e898f2948065c7bf75dfc3dabd2a8"
+}

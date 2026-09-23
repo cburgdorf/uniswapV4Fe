@@ -1,0 +1,146 @@
+// SPDX-License-Identifier: MIT
+// Port of Uniswap v4-core TickMath.sol; see reference_manifest.json and LICENSE-MIT.
+use std::abi::sol::{Int24, Uint160}
+use std::evm::revert_error
+use super::bit_math::most_significant_bit
+use super::full_math::MAX_U256
+
+pub const MIN_TICK: i32 = -887272
+pub const MAX_TICK: i32 = 887272
+pub const MIN_TICK_SPACING: i32 = 1
+pub const MAX_TICK_SPACING: i32 = 32767
+pub const MIN_SQRT_PRICE: u256 = 4295128739
+pub const MAX_SQRT_PRICE: u256 = 1461446703485210103287273052203988822378723970342
+
+#[error]
+pub struct InvalidTick { pub tick: Int24 }
+
+#[error]
+pub struct InvalidSqrtPrice { pub sqrt_price_x96: Uint160 }
+
+pub fn max_usable_tick(_ tick_spacing: Int24) -> Int24 {
+    Int24 { val: (MAX_TICK / tick_spacing.val) * tick_spacing.val }
+}
+
+pub fn min_usable_tick(_ tick_spacing: Int24) -> Int24 {
+    Int24 { val: (MIN_TICK / tick_spacing.val) * tick_spacing.val }
+}
+
+/// sqrt(1.0001^tick) in Q64.96, rounded up exactly as the reference.
+pub fn get_sqrt_price_at_tick(_ tick: Int24) -> Uint160 {
+    let signed_tick = tick.val
+    if signed_tick < MIN_TICK || signed_tick > MAX_TICK {
+        revert_error(InvalidTick { tick })
+    }
+    let abs_tick: u256 = (if signed_tick < 0 {
+        -signed_tick
+    } else {
+        signed_tick
+    })
+        .downcast_truncate()
+    let mut price: u256 = if abs_tick & 1 != 0 {
+        0xfffcb933bd6fad37aa2d162d1a594001
+    } else {
+        0x100000000000000000000000000000000
+    }
+    if abs_tick & 0x2 != 0 {
+        price = (price * 0xfff97272373d413259a46990580e213a) >> 128
+    }
+    if abs_tick & 0x4 != 0 {
+        price = (price * 0xfff2e50f5f656932ef12357cf3c7fdcc) >> 128
+    }
+    if abs_tick & 0x8 != 0 {
+        price = (price * 0xffe5caca7e10e4e61c3624eaa0941cd0) >> 128
+    }
+    if abs_tick & 0x10 != 0 {
+        price = (price * 0xffcb9843d60f6159c9db58835c926644) >> 128
+    }
+    if abs_tick & 0x20 != 0 {
+        price = (price * 0xff973b41fa98c081472e6896dfb254c0) >> 128
+    }
+    if abs_tick & 0x40 != 0 {
+        price = (price * 0xff2ea16466c96a3843ec78b326b52861) >> 128
+    }
+    if abs_tick & 0x80 != 0 {
+        price = (price * 0xfe5dee046a99a2a811c461f1969c3053) >> 128
+    }
+    if abs_tick & 0x100 != 0 {
+        price = (price * 0xfcbe86c7900a88aedcffc83b479aa3a4) >> 128
+    }
+    if abs_tick & 0x200 != 0 {
+        price = (price * 0xf987a7253ac413176f2b074cf7815e54) >> 128
+    }
+    if abs_tick & 0x400 != 0 {
+        price = (price * 0xf3392b0822b70005940c7a398e4b70f3) >> 128
+    }
+    if abs_tick & 0x800 != 0 {
+        price = (price * 0xe7159475a2c29b7443b29c7fa6e889d9) >> 128
+    }
+    if abs_tick & 0x1000 != 0 {
+        price = (price * 0xd097f3bdfd2022b8845ad8f792aa5825) >> 128
+    }
+    if abs_tick & 0x2000 != 0 {
+        price = (price * 0xa9f746462d870fdf8a65dc1f90e061e5) >> 128
+    }
+    if abs_tick & 0x4000 != 0 {
+        price = (price * 0x70d869a156d2a1b890bb3df62baf32f7) >> 128
+    }
+    if abs_tick & 0x8000 != 0 {
+        price = (price * 0x31be135f97d08fd981231505542fcfa6) >> 128
+    }
+    if abs_tick & 0x10000 != 0 {
+        price = (price * 0x9aa508b5b7a84e1c677de54f3e99bc9) >> 128
+    }
+    if abs_tick & 0x20000 != 0 {
+        price = (price * 0x5d6af8dedb81196699c329225ee604) >> 128
+    }
+    if abs_tick & 0x40000 != 0 {
+        price = (price * 0x2216e584f5fa1ea926041bedfe98) >> 128
+    }
+    if abs_tick & 0x80000 != 0 {
+        price = (price * 0x48a170391f7dc42444e8fa2) >> 128
+    }
+    if signed_tick > 0 {
+        price = MAX_U256 / price
+    }
+    Uint160 { val: (price + 0xffffffff) >> 32 }
+}
+
+/// Greatest tick whose rounded sqrt price is at most the input.
+pub fn get_tick_at_sqrt_price(_ sqrt_price_x96: Uint160) -> Int24 {
+    let sqrt_price = sqrt_price_x96.val
+    if sqrt_price < MIN_SQRT_PRICE || sqrt_price >= MAX_SQRT_PRICE {
+        revert_error(InvalidSqrtPrice { sqrt_price_x96 })
+    }
+    let price = sqrt_price << 32
+    let msb = most_significant_bit(price) as u256
+    let mut r = if msb >= 128 {
+        price >> (msb - 127)
+    } else {
+        price << (127 - msb)
+    }
+    let signed_msb: i256 = msb.downcast_truncate()
+    let mut log_2: i256 = (signed_msb - 128) << 64
+    let mut bit: u256 = 63
+    while bit >= 50 {
+        r = (r * r) >> 127
+        let f = r >> 128
+        let signed_fraction: i256 = (f << bit).downcast_truncate()
+        log_2 = log_2 | signed_fraction
+        r = r >> f
+        bit -= 1
+    }
+    let log_sqrt10001 = log_2 * 255738958999603826347141
+    let tick_low: i32 = ((log_sqrt10001 - 3402992956809132418596140100660247210) >> 128)
+        .downcast_truncate()
+    let tick_high: i32 = ((log_sqrt10001 + 291339464771989622907027621153398088495) >> 128)
+        .downcast_truncate()
+    if tick_low == tick_high {
+        return Int24 { val: tick_low }
+    }
+    if get_sqrt_price_at_tick(Int24 { val: tick_high }).val <= sqrt_price {
+        Int24 { val: tick_high }
+    } else {
+        Int24 { val: tick_low }
+    }
+}

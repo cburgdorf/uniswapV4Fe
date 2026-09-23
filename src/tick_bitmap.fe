@@ -1,0 +1,123 @@
+// SPDX-License-Identifier: MIT
+// Port of Uniswap v4-core TickBitmap.sol.
+use std::abi::sol::Int24
+use std::evm::{StorageMap, RawMem, RawStorage, revert_error}
+use std::evm::packed::keccak_packed
+use super::bit_math::{most_significant_bit, least_significant_bit}
+use super::full_math::MAX_U256
+
+#[error]
+pub struct TickMisaligned { pub tick: Int24, pub tick_spacing: Int24 }
+
+fn wrap_int24(_ value: i32) -> Int24 {
+    Int24 { val: (value << 8) >> 8 }
+}
+
+/// EVM SDIV/SMOD return zero for a zero divisor. TickBitmap uses them directly.
+pub fn compress(_ tick: Int24, _ spacing: Int24) -> Int24 {
+    if spacing.val == 0 {
+        return Int24 { val: 0 }
+    }
+    let quotient = tick.val / spacing.val
+    let correction = if tick.val % spacing.val < 0 { 1 } else { 0 }
+    wrap_int24(quotient - correction)
+}
+
+pub fn position(_ tick: Int24) -> (i16, u8) {
+    ((tick.val >> 8).downcast_truncate(), (tick.val & 255).downcast_truncate())
+}
+
+// Resolve the exact assembly mapping key and bit mask, including SDIV by zero.
+fn flip_location(_ tick: Int24, _ spacing: Int24) -> (i32, u256) {
+    let mut quotient: i32 = 0
+    if spacing.val != 0 {
+        if tick.val % spacing.val != 0 {
+            revert_error(TickMisaligned { tick, tick_spacing: spacing })
+        }
+        quotient = tick.val / spacing.val
+    }
+    let bit: u256 = (quotient & 255).downcast_truncate()
+    (quotient >> 8, (1 as u256) << bit)
+}
+
+fn search_location(_ tick: Int24, _ spacing: Int24, _ lte: bool) -> (Int24, i32) {
+    let mut compressed = compress(tick, spacing)
+    if !lte {
+        compressed = wrap_int24(compressed.val + 1)
+    }
+    let (word, _) = position(compressed)
+    (compressed, word as i32)
+}
+
+#[arithmetic(unchecked)]
+fn search_word(_ compressed: Int24, _ spacing: Int24, _ lte: bool, _ word: u256) -> (Int24, bool) {
+    let (_, bit) = position(compressed)
+    let mask = if lte {
+        MAX_U256 >> (255 - (bit as u256))
+    } else {
+        !(((1 as u256) << (bit as u256)) - 1)
+    }
+    let masked = word & mask
+    let initialized = masked != 0
+    let mut next = compressed.val as i256
+    if lte {
+        let distance: i32 = if initialized {
+            (bit - most_significant_bit(masked)) as i32
+        } else {
+            bit as i32
+        }
+        next -= distance as i256
+    } else {
+        let distance: i32 = if initialized {
+            (least_significant_bit(masked) - bit) as i32
+        } else {
+            (255 - bit) as i32
+        }
+        next += distance as i256
+    }
+    let next32: i32 = (next * (spacing.val as i256)).downcast_truncate()
+    (wrap_int24(next32), initialized)
+}
+
+/// Static-layout mapping API. i32 encodes valid int16 keys identically and also
+/// preserves the +32768 intermediate for flipTick(MIN_INT24,-1).
+pub fn flip_tick(_ tick: Int24, _ spacing: Int24)
+uses (bitmap: mut StorageMap<i32, u256>)
+{
+    let (key, mask) = flip_location(tick, spacing)
+    bitmap.set(key: key, value: bitmap.get(key) ^ mask)
+}
+pub fn next_initialized_tick_within_one_word(_ tick: Int24, _ spacing: Int24, _ lte: bool) -> (
+    Int24,
+    bool,
+)
+uses (bitmap: StorageMap<i32, u256>)
+{
+    let (compressed, key) = search_location(tick, spacing, lte)
+    search_word(compressed, spacing, lte, bitmap.get(key))
+}
+
+/// Runtime-root view. Avoids the compiler's missing inferred layout root for
+/// StorPtr<StorageMap<...>>.read(), while retaining identical Solidity slot hashes.
+pub struct Bitmap { pub slot: u256 }
+impl Copy for Bitmap {}
+impl Bitmap {
+    pub fn word_slot(self, _ key: i32) -> u256 uses (mem: mut RawMem) {
+        let signed: u256 = (key as i256).downcast_truncate()
+        keccak_packed((signed, self.slot))
+    }
+    pub fn flip(self, _ tick: Int24, _ spacing: Int24)
+    uses (mem: mut RawMem, storage: mut RawStorage)
+    {
+        let (key, mask) = flip_location(tick, spacing)
+        let pointer = storage.stor_ptr<u256>(self.word_slot(key))
+        pointer.write(pointer.read() ^ mask)
+    }
+    pub fn next(self, _ tick: Int24, _ spacing: Int24, _ lte: bool) -> (Int24, bool)
+    uses (mem: mut RawMem, storage: RawStorage)
+    {
+        let (compressed, key) = search_location(tick, spacing, lte)
+        let word = storage.stor_ptr<u256>(self.word_slot(key)).read()
+        search_word(compressed, spacing, lte, word)
+    }
+}

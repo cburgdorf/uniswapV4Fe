@@ -1,0 +1,23 @@
+// SPDX-License-Identifier: MIT
+// Port of Uniswap v4-core ProtocolFeeLibrary.sol.
+use std::abi::sol::Uint24
+
+pub const MAX_PROTOCOL_FEE: u16 = 1000
+pub const PIPS_DENOMINATOR: u256 = 1000000
+
+pub fn zero_for_one_fee(_ fee: Uint24) -> u16 {
+    (fee.val & 0xfff).downcast_truncate()
+}
+pub fn one_for_zero_fee(_ fee: Uint24) -> u16 {
+    (fee.val >> 12).downcast_truncate()
+}
+pub fn is_valid_protocol_fee(_ fee: Uint24) -> bool {
+    zero_for_one_fee(fee) <= MAX_PROTOCOL_FEE && one_for_zero_fee(fee) <= MAX_PROTOCOL_FEE
+}
+pub fn calculate_swap_fee(_ protocol: u16, _ lp: Uint24) -> Uint24 {
+    // Preserve the assembly mask, including for out-of-range standalone inputs.
+    let p = (protocol & 0xfff) as u256
+    let l = (lp.val & 0xffffff) as u256
+    let result = p + l - p * l / PIPS_DENOMINATOR
+    Uint24 { val: (result & 0xffffff).downcast_truncate() }
+}

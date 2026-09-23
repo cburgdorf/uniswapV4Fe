@@ -1,0 +1,247 @@
+[
+  {
+    "number": 1568,
+    "title": "Lower full-width modular arithmetic for native execution",
+    "head": "0c89e8fbfbe706bd533826940a4bf52bd143eefd",
+    "body": "Native `addmod` and `mulmod` must preserve the mathematical sum or product when a 256-bit intermediate would overflow. Reduce the operands first, use carry-safe modular addition, and implement multiplication with a bounded shift-and-add loop that keeps its accumulator below the modulus.\n\nA zero modulus returns zero. The native implementation uses ordinary 256-bit integer operations; EVM lowering continues to emit the dedicated opcodes.\n\nDepends on #1566; stacked on `fevm-pr-native-process`.\n",
+    "url": "https://github.com/argotorg/fe/pull/1568"
+  },
+  {
+    "number": 1567,
+    "title": "Fix verification of payable value-returning handlers",
+    "head": "dbc73bff5678c96c3c230d810ebc8fac6155667b",
+    "body": "ABI wrappers for value-returning recv arms terminate through a call to ContractHost::return_value. Accept that terminal call in the package verifier; the runtime body verifier already checks its non-returning callee and argument signature. Payable arms have no nonpayable revert guard, so they previously failed verification with InvalidReturnClass.\r\n\r\nCover scalar, tuple and dynamic returns with ETH at every optimization level, and verify that a payable deposit retains its uint256 return in the ABI.",
+    "url": "https://github.com/argotorg/fe/pull/1567"
+  },
+  {
+    "number": 1566,
+    "title": "Add native process arguments and CPU timing",
+    "head": "2ea331d93e8706e42fe72e5e6e260768b8388f6b",
+    "body": "Allow native programs to receive process arguments through `pub fn main(argc: i32, argv: **u8) -> i32`. Expose bounds-checked byte access through `std::native::Args` and preserve calls to the Fe entry function from within the program.\n\nAdd process CPU timing through `std::native::cpu_clock_ticks` with an explicit compiler-owned memory-effect contract, so timing calls preserve live Fe borrows.\n\nDepends on #1565; stacked on `fevm-pr-native-runtime`.\n",
+    "url": "https://github.com/argotorg/fe/pull/1566"
+  },
+  {
+    "number": 1565,
+    "title": "Support native workspaces, tests, and host I/O",
+    "head": "498867cb55f671f956843308e80ab91692d19d8f",
+    "body": "Native builds currently cover standalone entry points but do not provide complete workspace execution, a native test runner, or supported standard-library host I/O. Resolve workspace roots and reachable dependencies, compile each test module once, and expose character I/O through `std::io` capabilities.\n\nGive supported host declarations compiler-owned memory-effect contracts; arbitrary extern declarations remain subject to opaque-call checks. Allocate native reference descriptors through the native backend so references in fields and pointer slots preserve their referents.\n\nPins Sonatina to `61fa661c23bbeeeab024c4e9936656b7a73bd8f4`, including identity-preserving allocation, aggregate loop lifetimes, and construction storage reuse. Depends on fe-lang/sonatina#321.\n\nDepends on #1564; stacked on `fevm-pr-provider-identity`.\n",
+    "url": "https://github.com/argotorg/fe/pull/1565"
+  },
+  {
+    "number": 1564,
+    "title": "Preserve effect provider identity across repeated calls",
+    "head": "d883c2102488dbf65540235f1e93d42cc81c84e0",
+    "body": "Repeated calls through a temporary trait-effect provider can falsely move the provider or update separate copies. Capture each provider and its projections once per `with` entry, then pass the same place to every effect call. Preserve actual aggregate layouts at effect boundaries and keep read-only temporaries eligible for constant storage.\n\nThis changes shared semantic and runtime lowering while preserving move, alias, and escape checks. Native execution integration follows in the runtime PR.\n\nDepends on #1549. The base branch `fevm-native-base` mirrors that PR's exact head in this repository.\n",
+    "url": "https://github.com/argotorg/fe/pull/1564"
+  },
+  {
+    "number": 1563,
+    "title": "Decode string literal escapes before semantic lowering",
+    "head": "82c9a35cdc76a97ac6eb46ecb957762090ed01ae",
+    "body": "String literals currently reach HIR with escape backslashes intact. This gives escaped strings incorrect byte lengths and makes native JSON output invalid.\n\nDecode quote, backslash, newline, carriage-return and tab escapes before interning semantic strings. Preserve original syntax spelling, diagnose unknown escapes at their source spans, and carry invalid literals through error recovery without treating their raw spelling as a valid string. Literal typing, constant evaluation, EVM and native emission now share the decoded UTF-8 value.\n\nDepends on #1568; stacked on `fevm-pr-native-modular`.\n",
+    "url": "https://github.com/argotorg/fe/pull/1563"
+  },
+  {
+    "number": 1556,
+    "title": "Fix CTFE evaluation of symbolic array repeats",
+    "head": "338e194151309624368d3457bcf409aca2a6c9d6",
+    "body": "Generic constants such as `const VALUES: [u8; N] = [7; N]` were rejected while `N` was still symbolic. Preserve repeat elements and lengths as abstract constants, then materialize them after specialization. Deferred indexing keeps its bounds check, and empty arrays still evaluate their element expressions, including deferred faults.\r\n\r\nAdd HIR coverage for generic records, nested and empty arrays, trait-associated lengths/elements, runtime reification, and invalid expressions. Add an execution fixture covering specialized arrays and independent mutation of repeated nested arrays.",
+    "url": "https://github.com/argotorg/fe/pull/1556"
+  },
+  {
+    "number": 1551,
+    "title": "build(deps): bump rand from 0.9.2 to 0.9.5",
+    "head": "e578df882babf2add76c8e8999b10c3dfa6b4790",
+    "body": "Bumps [rand](https://github.com/rust-random/rand) from 0.9.2 to 0.9.5.\n<details>\n<summary>Changelog</summary>\n<p><em>Sourced from <a href=\"https://github.com/rust-random/rand/blob/0.9.5/CHANGELOG.md\">rand's changelog</a>.</em></p>\n<blockquote>\n<h2>[0.9.5] \u2014 2026-07-02</h2>\n<h3>Fixes</h3>\n<ul>\n<li>Fix possible memory safety violation due to deserialization of <code>UniformChar</code> from bad source (<a href=\"https://redirect.github.com/rust-random/rand/issues/1803\">#1803</a>)</li>\n</ul>\n<p><a href=\"https://redirect.github.com/rust-random/rand/issues/1803\">#1803</a>: <a href=\"https://redirect.github.com/rust-random/rand/pull/1803\">rust-random/rand#1803</a></p>\n<h2>[0.9.4] \u2014 2026-04-13</h2>\n<h3>Fixes</h3>\n<ul>\n<li>Fix doc build (<a href=\"https://redirect.github.com/rust-random/rand/issues/1766\">#1766</a>)</li>\n</ul>\n<p><a href=\"https://redirect.github.com/rust-random/rand/issues/1766\">#1766</a>: <a href=\"https://redirect.github.com/rust-random/rand/pull/1766\">rust-random/rand#1766</a></p>\n<h2>[0.9.3] \u2014 2026-04-11</h2>\n<p>This release back-ports a fix from v0.10. See also <a href=\"https://redirect.github.com/rust-random/rand/issues/1763\">#1763</a>.</p>\n<h3>Changes</h3>\n<ul>\n<li>Deprecate feature <code>log</code> (<a href=\"https://redirect.github.com/rust-random/rand/issues/1764\">#1764</a>)</li>\n<li>Replace usages of <code>doc_auto_cfg</code> (<a href=\"https://redirect.github.com/rust-random/rand/issues/1764\">#1764</a>)</li>\n</ul>\n<p><a href=\"https://redirect.github.com/rust-random/rand/issues/1763\">#1763</a>: <a href=\"https://redirect.github.com/rust-random/rand/pull/1763\">rust-random/rand#1763</a></p>\n</blockquote>\n</details>\n<details>\n<summary>Commits</summary>\n<ul>\n<li><a href=\"https://github.com/rust-random/rand/commit/3474ec047279e5de32676c50154ff7d76d12a94e\"><code>3474ec0</code></a> rand v0.9.5: backport <a href=\"https://redirect.github.com/rust-random/rand/issues/1790\">#1790</a> (<a href=\"https://redirect.github.com/rust-random/rand/issues/1803\">#1803</a>)</li>\n<li><a href=\"https://github.com/rust-random/rand/commit/ba4c4c62d5a3dc73a5c975a53d9a139372c011cc\"><code>ba4c4c6</code></a> Prepare v0.9.4: fix doc build (<a href=\"https://redirect.github.com/rust-random/rand/issues/1766\">#1766</a>)</li>\n<li><a href=\"https://github.com/rust-random/rand/commit/4b8b686ef3d16f3ed0ebabc4af881bdd59fd5e80\"><code>4b8b686</code></a> Document new error-handling behaviour for ReseedingRng</li>\n<li><a href=\"https://github.com/rust-random/rand/commit/6c25c6dd07da7b25ca4299899bb348c896d05570\"><code>6c25c6d</code></a> Prepare v0.9.4: fix doc build</li>\n<li><a href=\"https://github.com/rust-random/rand/commit/1aeee9f4c506f9f737c6c37c169ccdc365bfbabf\"><code>1aeee9f</code></a> Prepare v0.9.3: deprecate feature <code>log</code> (<a href=\"https://redirect.github.com/rust-random/rand/issues/1764\">#1764</a>)</li>\n<li><a href=\"https://github.com/rust-random/rand/commit/98473ee6f9b44eb85154b59b67adade7f2a9b8a1\"><code>98473ee</code></a> Prepare rand 0.9.2 (<a href=\"https://redirect.github.com/rust-random/rand/issues/1648\">#1648</a>)</li>\n<li><a href=\"https://github.com/rust-random/rand/commit/031a1f5589e487ce95972cb3acc0833ef64cfc10\"><code>031a1f5</code></a> <code>examples/print-next.rs</code> (<a href=\"https://redirect.github.com/rust-random/rand/issues/1647\">#1647</a>)</li>\n<li><a href=\"https://github.com/rust-random/rand/commit/6cb75ee59eda73967b6a3cae4fdcf2c21f6e0e4e\"><code>6cb75ee</code></a> Make UniformUsize serializable (<a href=\"https://redirect.github.com/rust-random/rand/issues/1646\">#1646</a>)</li>\n<li><a href=\"https://github.com/rust-random/rand/commit/0c955c5b7a079bc2fe67fe946a8deb46c4bc58d8\"><code>0c955c5</code></a> Add some tests for BlockRng, BlockRng64 and Xoshiro RNGs (<a href=\"https://redirect.github.com/rust-random/rand/issues/1639\">#1639</a>)</li>\n<li><a href=\"https://github.com/rust-random/rand/commit/204084a35fc7289e9a38575fdd80869818484517\"><code>204084a</code></a> Fix: Remove accidental editor swap file (<a href=\"https://redirect.github.com/rust-random/rand/issues/1636\">#1636</a>)</li>\n<li>Additional commits viewable in <a href=\"https://github.com/rust-random/rand/compare/rand_core-0.9.2...0.9.5\">compare view</a></li>\n</ul>\n</details>\n<br />\n\n\n[![Dependabot compatibility score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=rand&package-manager=cargo&previous-version=0.9.2&new-version=0.9.5)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)\n\nDependabot will resolve any conflicts with this PR as long as you don't alter it yourself. You can also trigger a rebase manually by commenting `@dependabot rebase`.\n\n[//]: # (dependabot-automerge-start)\n[//]: # (dependabot-automerge-end)\n\n---\n\n<details>\n<summary>Dependabot commands and options</summary>\n<br />\n\nYou can trigger Dependabot actions by commenting on this PR:\n- `@dependabot rebase` will rebase this PR\n- `@dependabot recreate` will recreate this PR, overwriting any edits that have been made to it\n- `@dependabot show <dependency name> ignore conditions` will show all of the ignore conditions of the specified dependency\n- `@dependabot ignore this major version` will close this PR and stop Dependabot creating any more for this major version (unless you reopen the PR or upgrade to it yourself)\n- `@dependabot ignore this minor version` will close this PR and stop Dependabot creating any more for this minor version (unless you reopen the PR or upgrade to it yourself)\n- `@dependabot ignore this dependency` will close this PR and stop Dependabot creating any more for this dependency (unless you reopen the PR or upgrade to it yourself)\nYou can disable automated security fix PRs for this repo from the [Security Alerts page](https://github.com/argotorg/fe/network/alerts).\n\n</details>",
+    "url": "https://github.com/argotorg/fe/pull/1551"
+  },
+  {
+    "number": 1549,
+    "title": "Add experimental native executable builds",
+    "head": "30cc45087d52765fa35ecce143544c75d684b5fe",
+    "body": "Adds an optional Cranelift backend for standalone Fe programs. With the `cranelift` feature enabled, `fe build --backend native program.fe` compiles `pub fn main() -> i32` and its reachable callees into a host executable. Native executables currently support x86-64 Linux and AArch64 macOS; `--emit ir` exposes the target-neutral Sonatina IR.\n\nThe implementation preserves unchecked division/remainder behavior, lowers native wrapping power and checked power with bounded exponentiation by squaring, and preserves the entry function's identity and exported `main` symbol when helpers share its name. Metadata rebuilds retain their default artifacts and use the shared backend/emit validation.\n\nPins Sonatina to merged revision `88ff0922763016ea1d43a2f59c68018d12f2ef14`, including the narrow EVM exponentiation fix in https://github.com/fe-lang/sonatina/pull/312. The prerequisite #1548 is merged.\n",
+    "url": "https://github.com/argotorg/fe/pull/1549"
+  },
+  {
+    "number": 1541,
+    "title": "std: add checked accessors to StoragePackedArray",
+    "head": "1748cc9523e95f713c10bb396dada71e7fa71626",
+    "body": "get/set on StoragePackedArray are deliberately unbounded: indices map arithmetically onto packed slot words, so an index past the caller's modeled domain silently spills into the next storage region instead of failing. A 16-cell board backed by StoragePackedArray<4> happily accepts set(16, v) and writes a lane into bits 64-67 of the second slot word \u2014 the footgun reported in #1538.\r\n\r\nAdd get_checked/set_checked which take a const-generic modeled length and revert with Solidity's standard Panic(uint256) payload (code 0x32, IndexOutOfBounds) when the index is out of domain \u2014 the same signal the compiler emits for failed fixed-array bounds checks.\r\n\r\nNote: #1538's headline claim (fixed-array ADJACENCY[16] reading a default instead of trapping) does not reproduce: bounds-checked array indexing with an empty revert has been in place well before v26.2.0 (see checked_index_value in codegen). The silent-write behavior in that report comes from StorageMap/StoragePackedArray default-and-spill semantics, i.e. a caller-side missing guard, which these accessors now let callers express.",
+    "url": "https://github.com/argotorg/fe/pull/1541"
+  },
+  {
+    "number": 1540,
+    "title": "core/std: require exact-length returndata when decoding bool returns",
+    "head": "a7e3835f24ac9103cc4d8b4c68a8eb313485e704",
+    "body": "Fixes #1539\n\n## Problem\n\nThe msg-decode helper for external calls returning `bool` accepted any returndata buffer of at least 32 bytes whose first word was the canonical true word, silently ignoring everything past byte 32. A counterparty returning `(true, <attacker-controlled data>)` tuples or padded buffers decoded as a clean `true`, diverging from Solidity semantics and widening the cross-language composition hazard described in the issue.\n\n## Fix\n\n- Add `remaining()` to the `AbiDecoder` trait and implement it for the Sol decoder (`input.len() - pos`).\n- Enforce exactly 32 bytes in `bool::decode_payload` before accepting the word, any other length reverts via `decode_error`.\n\nFixed-width siblings (`u8`, `u64`, ...) have the same structural gap and can adopt the guard as follow-ups; this patch deliberately keeps scope to the reported bool case.\n\n## Testing\n\n- Full `cargo test -p fe` suite passes (454 tests across all targets, including contract-level ABI fixtures).\n- The 12-shape accept/reject matrix from the issue is covered: canonical true accepted; 33/47/64-byte tails and dirty-tail variants now revert through the new guard.\n- `cargo build -p fe` clean; `cargo fmt` state unchanged for touched files.",
+    "url": "https://github.com/argotorg/fe/pull/1540"
+  },
+  {
+    "number": 1536,
+    "title": "Closures",
+    "head": "7f844c03e044642da1c3b710d329db13eb28ddd5",
+    "body": null,
+    "url": "https://github.com/argotorg/fe/pull/1536"
+  },
+  {
+    "number": 1535,
+    "title": "fix: complete generic function call defaults",
+    "head": "5ba8d7596e798fc332f7317d48e8bbf72bb1037a",
+    "body": "Completes omitted generic function arguments from trailing type and const defaults.\r\n\r\nAlso:\r\n\r\n- preserves `Self` defaults on associated functions\r\n- validates generic const defaults at declaration\r\n- gives `= _` defaults distinct call-site layout identities\r\n- fixes dependent wildcard root tracking\r\n- expands coverage for inference, arity, traits, bounds, and layout parameters",
+    "url": "https://github.com/argotorg/fe/pull/1535"
+  },
+  {
+    "number": 1534,
+    "title": "Fix noesc borrow",
+    "head": "2dd6d36b67f76c8df810a28a087625c33714df2b",
+    "body": "Fix borrow checking for aggregates containing `ref` or `mut` values across function calls.\r\n\r\nThis preserves borrow identity through aggregate construction, projection, returns, and stores; handles array overwrites and reborrows precisely; and distinguishes storage views from actual borrows.",
+    "url": "https://github.com/argotorg/fe/pull/1534"
+  },
+  {
+    "number": 1530,
+    "title": "build(deps): bump quinn-proto from 0.11.14 to 0.11.16",
+    "head": "144da4c1ac5f217d6294eb06732de8583b0d992a",
+    "body": "Bumps [quinn-proto](https://github.com/quinn-rs/quinn) from 0.11.14 to 0.11.16.\n<details>\n<summary>Release notes</summary>\n<p><em>Sourced from <a href=\"https://github.com/quinn-rs/quinn/releases\">quinn-proto's releases</a>.</em></p>\n<blockquote>\n<h2>quinn-proto-0.11.16</h2>\n<h2>What's Changed</h2>\n<ul>\n<li>0.11.x: upgrade dependencies by <a href=\"https://github.com/djc\"><code>@\u200bdjc</code></a> in <a href=\"https://redirect.github.com/quinn-rs/quinn/pull/2707\">quinn-rs/quinn#2707</a></li>\n</ul>\n</blockquote>\n</details>\n<details>\n<summary>Commits</summary>\n<ul>\n<li><a href=\"https://github.com/quinn-rs/quinn/commit/a96949f6cd257c665f544626af4e8ce668a40b30\"><code>a96949f</code></a> Take semver-compatible update for anyhow</li>\n<li><a href=\"https://github.com/quinn-rs/quinn/commit/5429f60d0ee9971770e60f0407d992d3b912d274\"><code>5429f60</code></a> udp: bump version to 0.5.15</li>\n<li><a href=\"https://github.com/quinn-rs/quinn/commit/262a493629acdc979070cd36d801464a2b8dd3e2\"><code>262a493</code></a> proto: bump version to 0.11.16</li>\n<li><a href=\"https://github.com/quinn-rs/quinn/commit/c19b63a04c6eff60684a845fce29fee6d74b1acd\"><code>c19b63a</code></a> Upgrade rustls-platform-verifier to 0.7</li>\n<li><a href=\"https://github.com/quinn-rs/quinn/commit/aff3652c43be3491908ef553fac16610c9ad3e6a\"><code>aff3652</code></a> Disable default features for fastbloom</li>\n<li><a href=\"https://github.com/quinn-rs/quinn/commit/01b2eee2c68b1d73ad09485b440fbfa8f6d3e290\"><code>01b2eee</code></a> Upgrade fastbloom to 0.17</li>\n<li><a href=\"https://github.com/quinn-rs/quinn/commit/2c82013a8cd502f3dd0bba0a4c38a51e564d29cc\"><code>2c82013</code></a> Switch BBR RNG to PCG</li>\n<li><a href=\"https://github.com/quinn-rs/quinn/commit/544dd9ebabf18639cb2041f849ea406100dd3d6d\"><code>544dd9e</code></a> Upgrade to rand 0.10.1</li>\n<li><a href=\"https://github.com/quinn-rs/quinn/commit/a7499b8439e393a6299330111d9c8564cd96c464\"><code>a7499b8</code></a> Bump versions for release</li>\n<li><a href=\"https://github.com/quinn-rs/quinn/commit/7c1970f19b24280af86b1a0a1c2d06d59fc453f0\"><code>7c1970f</code></a> proto: yield error on too many gaps in assembler</li>\n<li>Additional commits viewable in <a href=\"https://github.com/quinn-rs/quinn/compare/quinn-proto-0.11.14...quinn-proto-0.11.16\">compare view</a></li>\n</ul>\n</details>\n<br />\n\n\n[![Dependabot compatibility score](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=quinn-proto&package-manager=cargo&previous-version=0.11.14&new-version=0.11.16)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)\n\nYou can trigger a rebase of this PR by commenting `@dependabot rebase`.\n\n[//]: # (dependabot-automerge-start)\n[//]: # (dependabot-automerge-end)\n\n---\n\n<details>\n<summary>Dependabot commands and options</summary>\n<br />\n\nYou can trigger Dependabot actions by commenting on this PR:\n- `@dependabot rebase` will rebase this PR\n- `@dependabot recreate` will recreate this PR, overwriting any edits that have been made to it\n- `@dependabot show <dependency name> ignore conditions` will show all of the ignore conditions of the specified dependency\n- `@dependabot ignore this major version` will close this PR and stop Dependabot creating any more for this major version (unless you reopen the PR or upgrade to it yourself)\n- `@dependabot ignore this minor version` will close this PR and stop Dependabot creating any more for this minor version (unless you reopen the PR or upgrade to it yourself)\n- `@dependabot ignore this dependency` will close this PR and stop Dependabot creating any more for this dependency (unless you reopen the PR or upgrade to it yourself)\nYou can disable automated security fix PRs for this repo from the [Security Alerts page](https://github.com/argotorg/fe/network/alerts).\n\n</details>\n\n> **Note**\n> Automatic rebases have been disabled on this pull request as it has been open for over 30 days.\n",
+    "url": "https://github.com/argotorg/fe/pull/1530"
+  },
+  {
+    "number": 1523,
+    "title": "fix(fmt): preserve syntax across formatting round trips",
+    "head": "3af10557fee5ab143c434f9cec6b792b017927f7",
+    "body": "Keep line breaks after parser-ambiguous operators, separate nested qualified-type angle brackets, and retain restricted visibility modifiers.\r\n\r\nHandle item-leading trivia without accumulating blank lines, and add corpus round-trip and regression coverage for reparsing and idempotence.",
+    "url": "https://github.com/argotorg/fe/pull/1523"
+  },
+  {
+    "number": 1508,
+    "title": "Const predicates in where clauses",
+    "head": "bac5a84d95f06d12c9bfabdc0079536c740adfb5",
+    "body": null,
+    "url": "https://github.com/argotorg/fe/pull/1508"
+  },
+  {
+    "number": 1506,
+    "title": "First-class obligations, derive providers, and trait-resolution unification",
+    "head": "8d1d99bd8284dfac211655f3ad73cd6e1c358ff1",
+    "body": "\n# First-class obligations, derive providers, and trait-resolution unification\n\nFe had grown several overlapping mechanisms for one job: deciding which trait impl satisfies a requirement, and where the compile-time policy about that decision lives. This branch coordinates them behind a single selection discriminator and moves the policy out of hardcoded Rust into Fe itself. It is one architectural change, presented end-to-end. Please review it as a design.\n\nBecause it is large, the honest framing up front: the **derive/provider/ABI/identity spine is the finished, strongly-tested core**, and the **coexistence/cascade half (scoped selection, default tier, single-impl authority) is newer, carries the open design questions, and is still being hardened**. If you would rather review in two passes, the recommended split at the bottom follows exactly that seam.\n\n## What it does\n\n- **Coordinated trait resolution.** The solver, the effect/capability environment, and coherence now share one selection discriminator and one verification primitive, and the old separate global coherence checker is deleted. This is coordination through a shared discriminator, not a single literal walk: the effect environment is deliberately kept distinct (folding it in would be a facade), and the coexistence rules add candidate-selection paths that are still being hardened (see Known limitations).\n\n- **Derive providers, recognized by what they are.** A *provider* is compile-time code that generates a trait impl (it is how `derive(Eq)` produces an `impl Eq`). Providers and the compile-time capabilities they use are identified by resolved path (`core::derive::*`), not by matching string names, so a rename or alias cannot fool the recognizer, and the authority to do privileged things rides the normal effect system rather than a side channel. (Two documented string-name fallbacks remain in goal selection, marked for removal.)\n\n- **Stable identity for generated impls.** A generated impl is identified by what it is (its goal trait and self type), not by the order it was created in. The old positional id was reset every lowering pass, so reordering `derive`s renumbered unrelated ids downstream; content-keying removes that hazard and makes \"which derive site and provider produced this impl\" reconstructable.\n\n- **ABI layout computed in Fe.** The hand-written Rust generators that compute ABI sizes (including message and error variants) are replaced by a Fe provider, `StableAbiSize`; desugar snapshots show byte-equivalent output. The layout rules now live in the language's own library.\n\n- **Compile-time predicates in `where` clauses.** You can write boolean compile-time conditions such as `where N > 0` or `where T::SIZE >= 50` (plus a brace form `where { ... }`), discharged by compile-time evaluation against concrete types. The minimal concrete-only form is also carved out as a small standalone PR for independent review. (An earlier draft additionally added trait-application constraints, `where Eq<T>`; that surface was removed in the final commit, since it was notationally incoherent and unlocked nothing concrete. Only the predicate form above ships.)\n\n- **EVM intrinsics gated by capability.** Low-level EVM ops carry a real obligation resolved against the compilation target, keyed by trait identity. The *intended* rule is that a target which does not grant the capability rejects the op, which is what would make the gate meaningful across backends. Today that root capability is hardcoded to the EVM target and the gate covers `sload`/`sstore` (the remaining externs are a mechanical follow-up), so the cross-backend rejection is design intent, not yet a realized mechanism, and is untestable until a second backend exists.\n\n- **Single-implementation traits.** Some traits must have exactly one impl program-wide (consensus, ABI, and storage-layout witnesses, where a second impl silently breaks agreement). Marking such a trait `#[fixed]` enforces at-most-one by a count, checked pairwise per ingot environment and reported as a diagnostic. An accompanying authority token is threaded but currently inert (computed, not yet enforcing); the count is what enforces today.\n\n- **Scoped impl selection (provisional surface).** `impl T for Y as Name` together with `with (Name)` lets an inner scope choose among several real impls without naming an impl directly. Global coherence is no longer the only law: selection can be scoped, on purpose. This surface is labeled provisional in its own fixtures and will change; it also carries the coexistence soundness work noted below.\n\n## The part deliberately left as-is: provider bodies are staged generation, not evaluation\n\n`derive` provider *bodies* do not run as ordinary compile-time evaluation. They run through a small dedicated generator that builds a fragment of code, which is then fed back through normal checking. The distinction is the point: ordinary compile-time evaluation produces a *value*; a provider body produces a *piece of the program*.\n\nThis boundary is deliberate and rests on a real limitation. There is a known result (P\u00e9drot and Tabareau, \"The Fire Triangle\", POPL 2020) that you cannot freely combine observable effects, substitution, and dependent elimination without breaking the type theory. A provider body is effectful: it reads the target's shape and emits code. We avoid the unsafe combination by *staging*: the effects run to completion during generation, the result is sealed into a stable, content-identified impl, and only that sealed impl crosses into the solver, never the running computation. The generator is never run inside a solver query (enforced by a compile-time source gate); it runs before, and its output re-enters checking like any hand-written impl.\n\nSo what is finished here is everything *around* the body: selection, authority, goal-checking, identity, and provenance. The body's generation machinery lands its first two principled steps: a provider can emit a whole method from one quote with its structural signature (name, receiver, parameter names) validated against the trait, and a provider's pure numeric decisions reuse the compiler's shared `compare_nats` primitive rather than a private copy, with a guard blocking a second copy. Deleting the generation backend is not a goal (emitting code is an effect, and that effect is the kept layer). What is deferred is further potentiation of that layer, not its removal. This is post-merge direction, and we would value reviewers' view on where the boundary should ultimately sit.\n\n## Known limitations and residuals\n\nSurfaced rather than left in code comments:\n\n- **Coexistence resolution soundness (cascade half).** With more than one coexisting impl for a concrete goal, the default-tier / dedup selection path can currently mis-resolve. This branch converts the previously-observed backend abort into a clean named diagnostic (`unresolved trait selection`) that points the user at a `with (...)` disambiguation; the underlying fix (deciding the default tier over the solver's confirmed solution set) is deferred to the cascade follow-up. This is the primary reason the split below is recommended.\n- **Non-fragment `where` predicates.** A predicate that is not a simple comparison (an `if`/`match`/block form) over a still-symbolic parameter is silently treated as satisfied rather than turned into a caller-side proof obligation; the planned undroppability mechanism is not yet built. Concrete-site predicates are checked.\n- **Tree-sitter grammar is stale.** `grammar.js` does not model `quote`/`derive`/provider syntax or the compile-time `where` predicates, and still accepts the removed `where Eq<T>` form. Editor/playground tooling will diverge from the compiler until it is regenerated (the compiler's own hand-written parser is correct).\n- **EIP-712 provider** is correct only within a documented envelope (no signed ints or dynamic `Bytes`, single nesting level, field-order type descriptors); outside it the hashes are silently nonconformant rather than a compile error. Tightening to a hard error is a follow-up.\n- **`with (Name)` alias namespace is global** across all traits, and single-impl coverage does not yet extend to every consensus-bearing trait (`MsgVariant`, `EventAbiEncode`, `AbiSpan`); until it does, their dispatch metadata is selected first-match by environment/file order rather than pinned to a unique impl.\n- **Cosmetic:** a redundant `dynamic_payload_size` note still rides an already-rejected `#[error]` field; the error is sound, only the extra note is noise.\n\n## Tests and CI\n\nThe full workspace suite passes locally on the author's machine with the exact CI command (`cargo nextest run --release --workspace --all-features --no-fail-fast --locked`, language-server and bench excluded): 2451 tests, 0 failures, including the end-to-end suites that compile to EVM bytecode and execute it, so intrinsic and effect-capability codegen is checked at runtime, not only as IR text. Upstream Actions on this PR are pending fork-run approval, so these results are author-side until then. Lint, formatting, and the invariant source-gates are clean.\n\n## Recommended split\n\nThe pieces share one dependency spine, but acceptance strength and open questions sit on a clean seam, so rather than one 35k-line review we suggest two:\n\n1. **Spine (land first):** derive/provider recognition by identity, staged generation, content-keyed generated-impl identity, `StableAbiSize` and retiring the Rust ABI generators, and the EVM capability gate. Acceptance is strongest here (byte-identical codegen locks, identity tripwires, end-to-end EVM execution), and the one open question that touches it is narrow: Q1 below, where post-lowering generated code should live.\n2. **Coexistence/cascade (follow-up):** scoped selection (`as`/`with`), the default tier, N-way coexistence, and the `#[fixed]` authority rail. This half is self-labeled provisional, carries the resolution-soundness limitation above, and implicitly answers scoping questions that are still open with the maintainers.\n\nTwo questions from the June review remain open and this branch's design leans on their answers, so reviewer input is especially welcome: (Q1) does post-lowering provider expansion match where generated code should live, and (Q3) should traits and effects be one mechanism with the orphan rule retired in favor of scoped provisions.\n",
+    "url": "https://github.com/argotorg/fe/pull/1506"
+  },
+  {
+    "number": 1495,
+    "title": "hir: reject nested storage map fields",
+    "head": "7af815633babe39de257473750c1bbd6934b4eff",
+    "body": null,
+    "url": "https://github.com/argotorg/fe/pull/1495"
+  },
+  {
+    "number": 1494,
+    "title": "Support struct values in storage maps",
+    "head": "168787afaeae56757ac147998bedbaa60871ae52",
+    "body": "Adds typed pointers to `StorageMap` entries, allowing maps to store and access multi-word values such as structs without requiring those values to implement `WordRepr`.\r\n\r\nPointer-based access uses the normal storage effect model. Existing `get` and `set` APIs remain available for single-word `WordRepr` values.\r\n\r\n## API\r\n\r\n  - Adds `StorageMap::ptr`, returning a read-only `StoragePtr<V>`.\r\n  - Adds `StorageMap::mut_ptr`, returning a mutable `StorageMutPtr<V>`.\r\n  - Requires mutable access to the map before creating a mutable entry pointer.\r\n  - Implements the standard effect-handle and effect-reference traits for these pointers.\r\n  - Keeps `StorageMap::get` and `StorageMap::set` restricted to `V: WordRepr`.\r\n\r\n## Storage layout\r\n\r\nThe map entry hash is treated as the base storage slot for the value. Aggregate fields are projected relative to that slot using the compiler's storage layout.\r\n\r\nThis PR also defines consistent packed storage layout for nominal structs:\r\n\r\n  - Adjacent scalar fields smaller than one word may share a storage slot.\r\n  - Writes to shared slots use read-modify-write operations so neighboring fields are preserved.\r\n  - Nested structs use their recursively computed packed storage span.\r\n  - Tuples, arrays, and other aggregate transitions remain storage boundaries.\r\n  - Signed and narrow scalar values are stored in their canonical bit representation.\r\n\r\nHIR layout reporting and MIR/codegen now use the same shared field-layout planner. The same rules therefore apply to both ordinary contract struct fields and structs reached through storage-map entry pointers. Memory and ABI layouts are unchanged.\r\n\r\n## Example\r\n\r\n```fe\r\nstruct Position {\r\n  owner: u256,\r\n  collateral: u256,\r\n  debt: u256,\r\n}\r\n\r\nstruct Store {\r\n   positions: StorageMap<u256, Position>,\r\n}\r\n\r\nlet position = store.positions.ptr(key: account)\r\nlet mut position = store.positions.mut_ptr(key: account)\r\n```\r\n\r\nThe read-only pointer can inspect the entry, while the mutable pointer can replace the value or update individual fields through normal storage-provider semantics.",
+    "url": "https://github.com/argotorg/fe/pull/1494"
+  },
+  {
+    "number": 1462,
+    "title": "Recv specialization: type-aware calldata loading, direct scalar return, view types",
+    "head": "f908e98f81afd6264c29bcdff34b7408a28e63ef",
+    "body": "## Summary\n\n- Specialize contract recv wrappers based on compile-time ABI trait queries. Types with known-size non-dynamic fields skip the malloc/calldatacopy/SolDecoder pipeline and load directly from calldata\n- Three recv input strategies: `DirectCalldataLoad` (all fields are fixed-size scalars), `LazyCalldataLoad` (mixed, some fields from calldataload, others decoded), and the existing decode path as fallback\n- `DirectScalarReturn` for single-word return values: mstore + return instead of the full encode-alloc pipeline\n- `ArrayView`, `BytesView`, `StringView` in the stdlib for zero-copy calldata-backed access\n- All internal to the MIR layer and stdlib, no new syntax, no language changes\n\n## Test plan\n- [ ] All 52 existing MIR tests pass\n- [ ] `raw(uint256)` and `swap(uint64,uint64)` fixture tests assert `DirectCalldataLoad` selection\n- [ ] Existing contract codegen fixtures (ERC20, deposit contract) still compile and verify\n- [ ] Gas benchmarks on deposit contract to measure improvement",
+    "url": "https://github.com/argotorg/fe/pull/1462"
+  },
+  {
+    "number": 1455,
+    "title": "Metaprogramming stuff",
+    "head": "ee7d105df1bdee90f6750e426a751fc27b23f754",
+    "body": "messy first draft",
+    "url": "https://github.com/argotorg/fe/pull/1455"
+  },
+  {
+    "number": 1451,
+    "title": "Optimization: type-aware recv codegen, zero-copy views, #[abi] structs",
+    "head": "fae7880197906213e1240ac3c524b8a847f298b6",
+    "body": "## Summary\n\nGas optimizations for the ABI decode path and contract entry points. The builder now uses CTFE to query trait constants and emit specialized code per msg type.\n\nThese optimizations will need a total refactor once compile-time reflection + builder rework land (stay tuned).\n\n**Benchmark results (rosetta-fe, O2):**\n\n| Contract | Function | Before | After | Delta | vs Solidity |\n|---|---|---|---|---|---|\n| Math | mulDiv_simple | 6483 | 5682 | -12.4% | -0.3% (beats) |\n| AMM | getK | 9894 | 9658 | -2.4% | -0.7% (beats) |\n| Merkle | computeRoot | 21602 | 10513 | -51.3% | +3.9% |\n| Merkle | verify | 38393 | 16099 | -58.1% | +7.0% |\n| Gov | execute | 32856 | 32350 | -1.5% | -4.2% (beats) |\n\n## Changes\n\n- **Type-aware recv wrappers**: builder queries `AbiSize::HEAD_SIZE` and `Encode::DIRECT_ENCODE` via CTFE. Static-only msg types get direct calldataload instead of malloc + decode\n- **View types**: `ArrayView<T, N>`, `BytesView`, `StringView` with default type params for zero-copy calldata access\n- **Lazy field loading**: per-field strategy (Direct / Decode / LazyDynamicView) based on mutability analysis\n- **`#[abi]` attribute**: auto-derives `AbiSize`, `Encode<Sol>`, `Decode<Sol>` for user structs\n- **Binary-search dispatch**: auto-selected for contracts with >3 selectors\n- **Type checker fix**: method generics on default-type-param structs were clobbered by the struct's default\n\n## Notes\n\n- Overlaps with #1448 (ABI decode optimization) in the recv/synthetic builder area. Will need coordination on merge order\n- Const predicates prototype (`where { const_expr }`) included but separate from the gas work\n- This work led into an ongoing detour on effect-driven derive functionality (generating trait impls via `uses` capabilities), which is making good strides and will land separately",
+    "url": "https://github.com/argotorg/fe/pull/1451"
+  },
+  {
+    "number": 1446,
+    "title": "where { const_expr } predicates in where clauses",
+    "head": "06656cad42b7b9f0f8beead56a0a83a2769cffb1",
+    "body": "This PR makes `ConstraintListId` the canonical internal representation for where-clause assumptions and type-checking obligations, with const predicates treated as ordinary internal constraints.\n\nConst predicates now participate in the same obligation flow as trait constraints:\n\n- declarations collect trait and const predicates into `ConstraintListId`\n- call sites instantiate callee constraints as `ConstraintId` obligations\n- generic const predicates can be proven from `ParamEnv` assumptions\n- concrete const predicates are discharged by CTFE bool evaluation\n- impl candidate const side conditions are returned as residual obligations\n- ADT/type well-formedness and trait method conformance account for const predicates\n\n`PredicateListId` remains only as a compatibility projection for the current trait solver and resolver seams. Public `Constraint` kind syntax, `Evidence<C>`, typed reflection, generated overlays, and metaprogramming providers are intentionally out of scope for this PR.\n\nValidation:\n\n- `CARGO_TARGET_DIR=/tmp/fe-constraints-target cargo test -p fe-hir --test constraints`\n- `CARGO_TARGET_DIR=/tmp/fe-constraints-target cargo check -p fe-hir`",
+    "url": "https://github.com/argotorg/fe/pull/1446"
+  },
+  {
+    "number": 1427,
+    "title": "Generalize ABI selectors and typed EVM calls",
+    "head": "3d3631be2fe45708289af4879458b0fc62992bf7",
+    "body": null,
+    "url": "https://github.com/argotorg/fe/pull/1427"
+  },
+  {
+    "number": 1422,
+    "title": "Solidity ABI optimizations",
+    "head": "7008838dcf43539733594b224018759a7bf2609a",
+    "body": "| Commit | Area | Change |\r\n| --- | --- | --- |\r\n| [`5f093f79c`](https://github.com/argotorg/fe/commit/5f093f79c0f135f8481793f98be0f150c4540d4d) | Runtime selector dispatch | Replace linear selector dispatch with binary search. Reviewer feedback asks for this to be split into a separate configurable PR. |\r\n| [`18df0e539`](https://github.com/argotorg/fe/commit/18df0e539996667ab58f71d499cca524611d25c1) | ABI passthrough runtime | Avoid malloc in trivial ABI passthrough recv arms by validating calldata and returning it directly. |\r\n| [`7008838dc`](https://github.com/argotorg/fe/commit/7008838dcf43539733594b224018759a7bf2609a) | Test/bench/docs artifacts | Add ABI optimization benchmark artifacts, gas reports, docs, and updated snapshots. |",
+    "url": "https://github.com/argotorg/fe/pull/1422"
+  },
+  {
+    "number": 1384,
+    "title": "Fix iOS Safari code block rendering",
+    "head": "4dc98cb98d9eafbf46453c81235ef311829d92c9",
+    "body": "- Wait for stylesheet load before adopting into shadow DOM\n- Fix iOS TextAutoSizing inflating font-size on overflowing code blocks\n- Catppuccin Mocha/Latte syntax colors with data-theme toggle support\n- Remove duplicate mobile button styles, position top-right\n- Mobile overflow containment for code blocks",
+    "url": "https://github.com/argotorg/fe/pull/1384"
+  },
+  {
+    "number": 1362,
+    "title": "Fuzz fix 3",
+    "head": "0233d76a48c769b9156b83d870f988e821b7c0db",
+    "body": null,
+    "url": "https://github.com/argotorg/fe/pull/1362"
+  },
+  {
+    "number": 1234,
+    "title": "git cache read only warning",
+    "head": "1c2badcc2beaf76cceffba5ca44c7dbc9e0b76b3",
+    "body": null,
+    "url": "https://github.com/argotorg/fe/pull/1234"
+  },
+  {
+    "number": 1222,
+    "title": "Async graph resolution",
+    "head": "be5c9ae73a230c62e9eee64b2ad504fb13e88213",
+    "body": null,
+    "url": "https://github.com/argotorg/fe/pull/1222"
+  },
+  {
+    "number": 1083,
+    "title": "Map added to core libraries",
+    "head": "c22f6361373b7810be89a84f2eea91fe0be1b1ba",
+    "body": "This PR adds generic libraries centered around the Map structure and other types needed to implement it. Only additions are done, no code was removed.\r\n\r\nChanges:\r\n\r\n1. **`casting.fe`**: Added interfaces for casting, both upcast and downcast between two types.\r\n2. **`codec.fe`**: Defines traits and implementations for encoding and decoding data to and from a buffer, using a cursor to read and write.\r\n3. **`default.fe`**: Included the `u256` default value of  `0`\r\n4. **`map.fe`**: Added a generic `MapStorage` centered on the `set` and entry `entry interface`. Uses a customazible `Hasher` under the hood. This is wrapped by the `Map` type. Also supports generic arithmetic operations. \r\n5. **`operators.fe`**: Basic arithmetic traits that can be used for method overloading in the future.\r\n\r\n**Still TODO/not covered by this PR:**\r\n\r\n* Casting imlementation is still TODO\r\n* Through this PR I use a lot of `u256` which is not ideal. Waiting for the implementation of higher kind types in the future to improve it\r\n* The operators added on `operators.fe` should implement method overloading when the feature is added on fe.\r\n\r\nThis is currently being tested by the following two repos:\r\n* [fe-evm](https://github.com/Turupawn/fe-evm) a fe library for the ethereum virtual machine\r\n* [fe-cookbook](https://github.com/Turupawn/fe-cookbook), fe examples. It currently has an ERC20 and ERC721 contracts",
+    "url": "https://github.com/argotorg/fe/pull/1083"
+  },
+  {
+    "number": 969,
+    "title": "WIP",
+    "head": "60bbe6ff506dfd7f461789579413d74959685b52",
+    "body": "### What was wrong?\r\n\r\nFuzzer for driver2 was missing\r\n\r\n### How was it fixed?\r\n\r\nBy adding the said fuzzer using the same API as the one used by the driver2 main application.\r\n\r\n### To-Do\r\n\r\n[//]: # (Stay ahead of things, add list items here!)\r\n- [ ] Clean up commit history\r\n",
+    "url": "https://github.com/argotorg/fe/pull/969"
+  },
+  {
+    "number": 963,
+    "title": "ADT recursion",
+    "head": "c41af09bc113c106b060cc6c5bfbdddf2bb16499",
+    "body": "Added an accumulator that collects constituents of ADT recursions. These constituents are then combined and used to form diagnostics. \r\n\r\n### To-Do\r\n\r\n[//]: # (Stay ahead of things, add list items here!)\r\n- [ ] OPTIONAL: Update [Spec](https://github.com/ethereum/fe/blob/master/docs/src/spec/index.md) if applicable\r\n- [ ] Add entry to the [release notes](https://github.com/ethereum/fe/blob/master/newsfragments/README.md) (may forgo for trivial changes)\r\n- [x] Clean up commit history\r\n",
+    "url": "https://github.com/argotorg/fe/pull/963"
+  },
+  {
+    "number": 958,
+    "title": "Add a single file compilation fuzzer",
+    "head": "a7ee7f803cb425e87a54e35e34bb179c702c6bfe",
+    "body": "### What was wrong?\r\n\r\nSingle file compilation fuzzer was missing.\r\n\r\n### How was it fixed?\r\n\r\nAdding a fuzzer harness.\r\n\r\n### To-Do\r\n\r\n[//]: # (Stay ahead of things, add list items here!)\r\n- [ ] Fix build: Currently building a fuzzer library, what we need is a binary\r\n- [ ] Add entry to the [release notes](https://github.com/ethereum/fe/blob/master/newsfragments/README.md) (may forgo for trivial changes)\r\n\r\n- [ ] Clean up commit history\r\n",
+    "url": "https://github.com/argotorg/fe/pull/958"
+  },
+  {
+    "number": 887,
+    "title": "Symbolic testing",
+    "head": "5f017caf26674f7273fb676845c5994465a2cacb",
+    "body": "This PR includes the following:\r\n- basic groundwork for invariant support\r\n- invariants that verify the `std::lib` \r\n\r\nInvariants in Fe are similar to tests. The difference being that invaraints are executed symbolically instead of concretely.\r\n\r\nexample:\r\n\r\n```\r\n#invariant\r\nfn de_morgan_true(a: bool, b: bool) {\r\n    spec::given_true(a and b)\r\n    spec::assert_true(not ((not a) or (not b)))\r\n}\r\n\r\n#invariant\r\nfn de_morgan_false(a: bool, b: bool) {\r\n    spec::given_false(a and b)\r\n    spec::assert_false(not ((not a) or (not b)))\r\n}\r\n```\r\n\r\nIn the example given above, we provide the invariants with two arguments: `a` and `b`. These variables do not have concrete values, so we need to evaluate the invariant symbolically. This is done using kevm.\r\n",
+    "url": "https://github.com/argotorg/fe/pull/887"
+  }
+]

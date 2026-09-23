@@ -1,0 +1,11 @@
+Compiling 58 files with Solc 0.8.26
+Solc 0.8.26 finished in 5.44s
+Compiler run successful!
+
+Ran 3 tests for test/QuoterWorkflows.t.sol:QuoterWorkflowsTest
+[PASS] testFuzz_multi(uint64,bool,bool,bool) (runs: 10000, μ: 26776335, ~: 26791417)
+[PASS] testFuzz_single(uint64,bool,bool,bool) (runs: 10000, μ: 25777169, ~: 25804743)
+[PASS] test_rejectionsAndTinyAmounts() (gas: 452346046)
+Suite result: ok. 3 passed; 0 failed; 0 skipped; finished in 22.33s (37.94s CPU time)
+
+Ran 1 test suite in 22.33s (22.33s CPU time): 3 tests passed, 0 failed, 0 skipped (3 total tests)

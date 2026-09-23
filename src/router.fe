@@ -1,0 +1,401 @@
+// SPDX-License-Identifier: MIT
+// Pinned V4Router action dispatch. Calldata fields stay lazy so that validation
+// is performed at their point of use, including after external swap calls.
+use std::abi::{Bytes, sol::{self, Uint160}}
+use std::evm::{Address, Ctx, Call, RawMem, revert_error}
+use super::{
+    actions,
+    bips,
+    delta_resolver as resolver,
+    payments::{self, TokenPayer},
+    calldata_decoder::{self, View},
+    router_params as params,
+    pool_types::{PoolKey, SwapParams},
+    balance_delta::BalanceDelta,
+    safe_cast,
+    tick_math,
+}
+
+#[error]
+pub struct InputLengthMismatch {}
+#[error]
+pub struct UnsupportedAction { pub action: u256 }
+#[error]
+pub struct V4TooLittleReceived { pub minAmountOutReceived: u256, pub amountReceived: u256 }
+#[error]
+pub struct V4TooMuchRequested { pub maxAmountInRequested: u256, pub amountRequested: u256 }
+#[error]
+pub struct V4TooLittleReceivedPerHop { pub hopIndex: u256, pub minPrice: u256, pub price: u256 }
+#[error]
+pub struct V4TooMuchRequestedPerHop { pub hopIndex: u256, pub minPrice: u256, pub price: u256 }
+#[error]
+pub struct V4TooLittleReceivedPerHopSingle { pub minPrice: u256, pub price: u256 }
+#[error]
+pub struct V4TooMuchRequestedPerHopSingle { pub minPrice: u256, pub price: u256 }
+#[error]
+pub struct InvalidHopPriceLength {}
+#[error]
+pub struct V4ExactOutputUnfilled { pub amountOutRequested: u256, pub amountOutReceived: u256 }
+const PRECISION: u256 = 1000000000000000000000000000000000000
+
+msg SwapMsg {
+    #[selector = sol(
+        "swap((address,address,uint24,int24,address),(bool,int256,uint160),bytes)",
+    )]
+    Swap { key: PoolKey, params: SwapParams, hookData: Bytes } -> i256,
+}
+// Allows the permissioned router to reject each pool before calling the manager.
+pub trait PoolValidator {
+    fn validate(self, _ key: PoolKey) uses (ctx: Ctx, mem: mut RawMem)
+}
+pub struct AnyPool {}
+impl Copy for AnyPool {}
+impl PoolValidator for AnyPool {
+    fn validate(self, _ key: PoolKey) uses (ctx: Ctx, mem: mut RawMem) {}
+}
+pub fn map_recipient(_ recipient: Address, _ sender: Address) -> Address
+uses (ctx: Ctx)
+{
+    if recipient.inner == actions::MSG_SENDER {
+        sender
+    } else if recipient.inner == actions::ADDRESS_THIS {
+        ctx.address()
+    } else {
+        recipient
+    }
+}
+fn output(_ delta: BalanceDelta, _ direction: bool) -> u128 {
+    safe_cast::signed_to_uint128(if direction {
+            delta.amount1()
+        } else {
+            delta.amount0()
+        })
+}
+fn input(_ delta: BalanceDelta, _ direction: bool) -> u128 {
+    let spent = if direction {
+        delta.amount0()
+    } else {
+        delta.amount1()
+    }
+    let positive = -(spent as i256)
+    safe_cast::to_uint128(positive.downcast_truncate())
+}
+fn swap<V: PoolValidator>(
+    _ validator: V,
+    _ manager: Address,
+    _ key: PoolKey,
+    _ direction: bool,
+    _ amount: i256,
+    _ hook: View,
+) -> BalanceDelta
+uses (ctx: Ctx, call: mut Call, mem: mut RawMem)
+{
+    validator.validate(key)
+    BalanceDelta {
+        bits: call.call(
+            addr: manager,
+            gas: ctx.gas(),
+            value: 0,
+            message: SwapMsg::Swap {
+                key,
+                params: SwapParams {
+                    zeroForOne: direction,
+                    amountSpecified: amount,
+                    sqrtPriceLimitX96: Uint160 {
+                        val: if direction {
+                            tick_math::MIN_SQRT_PRICE + 1
+                        } else {
+                            tick_math::MAX_SQRT_PRICE - 1
+                        },
+                    },
+                },
+                hookData: hook.bytes(),
+            },
+        ),
+    }
+}
+pub fn single<V: PoolValidator>(
+    _ validator: V,
+    _ manager: Address,
+    _ encoded: View,
+    _ exact_out: bool,
+)
+uses (ctx: Ctx, call: mut Call, mem: mut RawMem)
+{
+    let p = View { offset: encoded.swap_struct(true), len: 320 }
+    let mut amount = params::uint128(p.word(192))
+    if amount == 0 {
+        let direction = params::boolean(p.word(160))
+        let currency = params::address(p.word(if direction != exact_out { 0 } else { 32 }))
+        amount = safe_cast::to_uint128(
+            if exact_out {
+                resolver::full_debt(manager, currency)
+            } else {
+                resolver::full_credit(manager, currency)
+            },
+        )
+    }
+    let hook = params::array(p.offset, 288, 1)
+    let direction = params::boolean(p.word(160))
+    let key = calldata_decoder::pool_key(p.offset)
+    let specified = if exact_out {
+        amount as i256
+    } else {
+        -(amount as i256)
+    }
+    let delta = swap(validator, manager, key, direction, specified, hook)
+    let actual_out = output(delta, direction)
+    let amount_in = if exact_out {
+        if actual_out < amount {
+            revert_error(
+                V4ExactOutputUnfilled {
+                    amountOutRequested: amount as u256,
+                    amountOutReceived: actual_out as u256,
+                },
+            )
+        }
+        let spent = input(delta, direction)
+        let maximum = params::uint128(p.word(224))
+        if spent > maximum {
+            revert_error(
+                V4TooMuchRequested {
+                    maxAmountInRequested: maximum as u256,
+                    amountRequested: spent as u256,
+                },
+            )
+        }
+        spent
+    } else {
+        let minimum = params::uint128(p.word(224))
+        if actual_out < minimum {
+            revert_error(
+                V4TooLittleReceived {
+                    minAmountOutReceived: minimum as u256,
+                    amountReceived: actual_out as u256,
+                },
+            )
+        }
+        amount
+    }
+    let minimum_price = p.word(256)
+    if minimum_price != 0 {
+        let price = (actual_out as u256) * PRECISION / (amount_in as u256)
+        if price < minimum_price {
+            if exact_out {
+                revert_error(
+                    V4TooMuchRequestedPerHopSingle { minPrice: minimum_price, price },
+                )
+            } else {
+                revert_error(
+                    V4TooLittleReceivedPerHopSingle { minPrice: minimum_price, price },
+                )
+            }
+        }
+    }
+}
+pub fn multi<V: PoolValidator>(
+    _ validator: V,
+    _ manager: Address,
+    _ encoded: View,
+    _ exact_out: bool,
+)
+uses (ctx: Ctx, call: mut Call, mem: mut RawMem)
+{
+    let p = View { offset: encoded.swap_struct(false), len: 160 }
+    let paths = params::array(p.offset, 32, 32)
+    // Reference exact-output reads amount before currency; input does the reverse.
+    let mut currency = Address { inner: 0 }
+    let mut amount: u128 = 0
+    if exact_out {
+        amount = params::uint128(p.word(96))
+        currency = params::address(p.word(0))
+    } else {
+        currency = params::address(p.word(0))
+        amount = params::uint128(p.word(96))
+    }
+    if amount == 0 {
+        amount = safe_cast::to_uint128(
+            if exact_out {
+                resolver::full_debt(manager, currency)
+            } else {
+                resolver::full_credit(manager, currency)
+            },
+        )
+    }
+    let prices = params::array(p.offset, 64, 32)
+    if prices.len != 0 && prices.len != paths.len {
+        revert_error(InvalidHopPriceLength {})
+    }
+    let mut result: u128 = 0
+    let mut step: u256 = 0
+    while step < paths.len {
+        let index = if exact_out {
+            paths.len - 1 - step
+        } else {
+            step
+        }
+        let path = params::path_at(paths, index)
+        let (key, forward) = params::path_pool(path, currency)
+        let direction = if exact_out { !forward } else { forward }
+        let hook = params::array(path.offset, 128, 1)
+        let specified = if exact_out {
+            amount as i256
+        } else {
+            -(amount as i256)
+        }
+        let delta = swap(validator, manager, key, direction, specified, hook)
+        let actual_out = output(delta, direction)
+        let actual_in = if exact_out {
+            if actual_out < amount {
+                revert_error(
+                    V4ExactOutputUnfilled {
+                        amountOutRequested: amount as u256,
+                        amountOutReceived: actual_out as u256,
+                    },
+                )
+            }
+            input(delta, direction)
+        } else {
+            amount
+        }
+        if prices.len != 0 {
+            let price = (actual_out as u256) * PRECISION / (actual_in as u256)
+            let minimum = params::word_at(prices, index)
+            if price < minimum {
+                if exact_out {
+                    revert_error(
+                        V4TooMuchRequestedPerHop { hopIndex: index, minPrice: minimum, price },
+                    )
+                } else {
+                    revert_error(
+                        V4TooLittleReceivedPerHop { hopIndex: index, minPrice: minimum, price },
+                    )
+                }
+            }
+        }
+        result = if exact_out { actual_in } else { actual_out }
+        amount = result
+        currency = params::address(path.word(0))
+        step += 1
+    }
+    let bound = params::uint128(p.word(128))
+    if exact_out {
+        if result > bound {
+            revert_error(
+                V4TooMuchRequested {
+                    maxAmountInRequested: bound as u256,
+                    amountRequested: result as u256,
+                },
+            )
+        }
+    } else {
+        if result < bound {
+            revert_error(
+                V4TooLittleReceived {
+                    minAmountOutReceived: bound as u256,
+                    amountReceived: result as u256,
+                },
+            )
+        }
+    }
+}
+pub fn handle<P: TokenPayer, V: PoolValidator>(
+    _ payment: P,
+    _ validator: V,
+    _ manager: Address,
+    _ sender: Address,
+    _ action: u256,
+    _ data: View,
+)
+uses (ctx: Ctx, call: mut Call, mem: mut RawMem)
+{
+    if action == actions::SWAP_EXACT_IN_SINGLE || action == actions::SWAP_EXACT_OUT_SINGLE {
+        single(
+            validator,
+            manager,
+            data,
+            action == actions::SWAP_EXACT_OUT_SINGLE,
+        )
+    } else if action == actions::SWAP_EXACT_IN || action == actions::SWAP_EXACT_OUT {
+        multi(
+            validator,
+            manager,
+            data,
+            action == actions::SWAP_EXACT_OUT,
+        )
+    } else if action == actions::SETTLE_ALL {
+        let (currency, maximum) = data.currency_uint()
+        let amount = resolver::full_debt(manager, currency)
+        if amount > maximum {
+            revert_error(
+                V4TooMuchRequested { maxAmountInRequested: maximum, amountRequested: amount },
+            )
+        }
+        payments::settle(payment, manager, currency, sender, amount)
+    } else if action == actions::TAKE_ALL {
+        let (currency, minimum) = data.currency_uint()
+        let amount = resolver::full_credit(manager, currency)
+        if amount < minimum {
+            revert_error(
+                V4TooLittleReceived { minAmountOutReceived: minimum, amountReceived: amount },
+            )
+        }
+        payment.take(manager, currency, sender, amount)
+    } else if action == actions::SETTLE {
+        let (currency, amount, user) = data.currency_uint_bool()
+        let payer = if user { sender } else { ctx.address() }
+        payments::settle(
+            payment,
+            manager,
+            currency,
+            payer,
+            payment.map_settle(manager, amount, currency),
+        )
+    } else if action == actions::TAKE {
+        let (currency, recipient, amount) = data.currency_address_uint()
+        payment.take(
+            manager,
+            currency,
+            map_recipient(recipient, sender),
+            resolver::map_take(manager, amount, currency),
+        )
+    } else if action == actions::TAKE_PORTION {
+        let (currency, recipient, portion) = data.currency_address_uint()
+        let amount = bips::calculate_portion(resolver::full_credit(manager, currency), portion)
+        payment.take(
+            manager,
+            currency,
+            map_recipient(recipient, sender),
+            amount,
+        )
+    } else {
+        revert_error(UnsupportedAction { action })
+    }
+}
+pub fn execute<P: TokenPayer, V: PoolValidator>(
+    _ payment: P,
+    _ validator: V,
+    _ manager: Address,
+    _ sender: Address,
+    _ data: View,
+)
+uses (ctx: Ctx, call: mut Call, mem: mut RawMem)
+{
+    let decoded = data.decode_actions()
+    if decoded.actions.len != decoded.params_len {
+        revert_error(InputLengthMismatch {})
+    }
+    let mut index: u256 = 0
+    while index < decoded.actions.len {
+        let action = decoded.actions.word(index) >> 248
+        handle(
+            payment,
+            validator,
+            manager,
+            sender,
+            action,
+            decoded.parameter(index),
+        )
+        index += 1
+    }
+}

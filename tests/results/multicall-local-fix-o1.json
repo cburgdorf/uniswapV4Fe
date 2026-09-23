@@ -1,0 +1,35 @@
+{
+  "suite": "multicall",
+  "build_full_ingot": false,
+  "timestamp_utc": "2026-09-23T05:34:34.245393+00:00",
+  "compiler_version": "fe 26.3.0 (8b43741b4)",
+  "compiler_sha256": "3237760c6e2bbc33ca03d02d65459523d9d8cb718a7d5903e668e9dcbd7b5ca3",
+  "compiler_worktree_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "forge_version": "forge Version: 1.5.1-stable\nCommit SHA: b0a9dd9ceda36f63e2326ce530c10e6916f4b8a2\nBuild Timestamp: 2025-12-22T11:39:01.425730780Z (1766403541)\nBuild Profile: maxperf",
+  "solc_version": "0.8.26",
+  "solc_setting": "/tmp/fe-v4-solc-0.8.26",
+  "solc_optimizer": true,
+  "solc_optimizer_runs": 200,
+  "solc_via_ir": true,
+  "evm_version": "cancun",
+  "optimization": "1",
+  "fuzz_runs_per_property": 10000,
+  "fuzz_seed": "0x554e495634",
+  "reference_revision": "46c6834698c48bc4a463a86d8420f4eb1d7f3b75",
+  "periphery_revision": "9969eec44cfdf07e24b41de47f40276a58401976",
+  "dependency_revisions": {
+    "solmate": "4b47a19038b798b4a33d9749d25e570443520647"
+  },
+  "openzeppelin_revision": null,
+  "permit2_revision": null,
+  "permit2_reference_validation": null,
+  "manager_artifact_validation": null,
+  "reused_fe_build": null,
+  "sources": {
+    "src/multicall.fe": "eb495f5e5afd13bd20da01594b4e5d570bb61ab708a5d510d85618c11fc69cf7",
+    "src/multicall_harness.fe": "c8b88c328cff2405523f3e532bedc853043b3edaf9d25dd010508b6002164c8f"
+  },
+  "test_source_sha256": "63d023880b65062bb2ced0a3be064d7624be0a2af1cb425a8599787420bda925",
+  "creation_bytecode_sha256": "fc70b934d34a1b1b28b7d6ef05cf8d220ce78dd7e8ee626dfb3d5ee011015a20",
+  "result": "passed"
+}

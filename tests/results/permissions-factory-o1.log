@@ -1,0 +1,13 @@
+Compiling 41 files with Solc 0.8.26
+Solc 0.8.26 finished in 4.09s
+Compiler run successful!
+
+Ran 5 tests for test/PermissionsFactoryParity.t.sol:PermissionsFactoryParityTest
+[PASS] testFuzz_constructorFailure(address,uint8) (runs: 10000, μ: 3011186, ~: 1918076)
+[PASS] testFuzz_createAndVerify(uint128,bool,bool) (runs: 10000, μ: 11901138, ~: 11711214)
+[PASS] testFuzz_pool(address) (runs: 10000, μ: 10474090, ~: 10474542)
+[PASS] testFuzz_unknown(address) (runs: 10000, μ: 3528520, ~: 3528520)
+[PASS] test_boundaries() (gas: 23737616)
+Suite result: ok. 5 passed; 0 failed; 0 skipped; finished in 31.54s (63.05s CPU time)
+
+Ran 1 test suite in 31.54s (31.54s CPU time): 5 tests passed, 0 failed, 0 skipped (5 total tests)

@@ -1,0 +1,16 @@
+Compiling 10 files with Solc 0.8.30
+Solc 0.8.30 finished in 132.26ms
+Compiler run successful!
+
+Ran 8 tests for test/TransientParity.t.sol:TransientParityTest
+[PASS] testFuzz_accountSequence(address,address,int128,int128) (runs: 10000, μ: 47193, ~: 47296)
+[PASS] testFuzz_countWrap(uint256,bool) (runs: 10000, μ: 16048, ~: 16057)
+[PASS] testFuzz_lockAndReserves(address,uint256,bool) (runs: 10000, μ: 30786, ~: 30769)
+[PASS] testFuzz_poolDelta(address,address,address,int128,int128) (runs: 10000, μ: 27705, ~: 27792)
+[PASS] testFuzz_revertAndStaticcall(uint256,uint256,uint256) (runs: 10000, μ: 219972, ~: 219972)
+[PASS] testFuzz_slotsAndCheckedAddition(address,address,int256,int128) (runs: 10000, μ: 24018, ~: 24021)
+[PASS] test_atomicPoolDeltaOverflow() (gas: 28715)
+[PASS] test_boundariesAndIsolation() (gas: 703778)
+Suite result: ok. 8 passed; 0 failed; 0 skipped; finished in 1.14s (3.22s CPU time)
+
+Ran 1 test suite in 1.14s (1.14s CPU time): 8 tests passed, 0 failed, 0 skipped (8 total tests)

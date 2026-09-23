@@ -1,0 +1,1392 @@
+// SPDX-License-Identifier: MIT
+// Generated text composition from pinned SVG.sol; numeric helpers are in svg_math.fe.
+use core::ops::Eq
+use std::abi::{DynString, sol::Int24}
+use std::evm::{Address, RawMem}
+use super::{metadata_text as text, svg_math::{getCurve, substring, tickToString, rangeLocation, isRare}}
+
+pub struct SVGParams {
+    pub quoteCurrency: DynString,
+    pub baseCurrency: DynString,
+    pub hooks: Address,
+    pub quoteCurrencySymbol: DynString,
+    pub baseCurrencySymbol: DynString,
+    pub feeTier: DynString,
+    pub tickLower: Int24,
+    pub tickUpper: Int24,
+    pub tickSpacing: Int24,
+    pub overRange: i8,
+    pub tokenId: u256,
+    pub color0: DynString,
+    pub color1: DynString,
+    pub color2: DynString,
+    pub color3: DynString,
+    pub x1: DynString,
+    pub y1: DynString,
+    pub x2: DynString,
+    pub y2: DynString,
+    pub x3: DynString,
+    pub y3: DynString,
+}
+
+pub fn generateSVG(_ params: SVGParams) -> DynString uses (mem: mut RawMem) {
+    return text::concat([(generateSVGDefs(params)).payload_span(), (generateSVGBorderText(params.quoteCurrency, params.baseCurrency, params.quoteCurrencySymbol, params.baseCurrencySymbol)).payload_span(), (generateSVGCardMantle(params.quoteCurrencySymbol, params.baseCurrencySymbol, params.feeTier)).payload_span(), (generageSvgCurve(params.tickLower, params.tickUpper, params.tickSpacing, params.overRange)).payload_span(), (generateSVGPositionDataAndLocationCurve(text::decimal(params.tokenId), params.hooks, params.tickLower, params.tickUpper)).payload_span(), (generateSVGRareSparkle(params.tokenId, params.hooks)).payload_span(), (literal_0()).payload_span()])
+}
+
+pub fn generateSVGDefs(_ params: SVGParams) -> DynString uses (mem: mut RawMem) {
+    let mut svg = text::from_span(core::ptr::MemSpan::empty())
+    svg = text::concat([(literal_1()).payload_span(), (literal_2()).payload_span(), (literal_3()).payload_span(), (literal_4()).payload_span(), (text::base64((text::concat([(literal_5()).payload_span(), (params.color0).payload_span(), (literal_6()).payload_span()])).payload_span())).payload_span(), (literal_7()).payload_span(), (text::base64((text::concat([(literal_8()).payload_span(), (params.x1).payload_span(), (literal_9()).payload_span(), (params.y1).payload_span(), (literal_10()).payload_span(), (params.color1).payload_span(), (literal_6()).payload_span()])).payload_span())).payload_span(), (literal_11()).payload_span(), (text::base64((text::concat([(literal_8()).payload_span(), (params.x2).payload_span(), (literal_9()).payload_span(), (params.y2).payload_span(), (literal_10()).payload_span(), (params.color2).payload_span(), (literal_6()).payload_span()])).payload_span())).payload_span(), (literal_12()).payload_span(), (literal_13()).payload_span(), (text::base64((text::concat([(literal_8()).payload_span(), (params.x3).payload_span(), (literal_9()).payload_span(), (params.y3).payload_span(), (literal_14()).payload_span(), (params.color3).payload_span(), (literal_6()).payload_span()])).payload_span())).payload_span(), (literal_15()).payload_span(), (literal_16()).payload_span(), (literal_17()).payload_span(), (literal_18()).payload_span(), (literal_19()).payload_span(), (literal_20()).payload_span(), (literal_21()).payload_span(), (literal_22()).payload_span(), (literal_23()).payload_span(), (literal_24()).payload_span(), (literal_25()).payload_span(), (literal_26()).payload_span(), (literal_27()).payload_span(), (literal_28()).payload_span(), (literal_29()).payload_span(), (params.color0).payload_span(), (literal_30()).payload_span(), (literal_31()).payload_span(), (literal_32()).payload_span(), (literal_33()).payload_span(), (literal_34()).payload_span(), (literal_35()).payload_span()])
+    svg
+}
+
+pub fn generateSVGBorderText(_ quoteCurrency: DynString, _ baseCurrency: DynString, _ quoteCurrencySymbol: DynString, _ baseCurrencySymbol: DynString) -> DynString uses (mem: mut RawMem) {
+    let mut svg = text::from_span(core::ptr::MemSpan::empty())
+    svg = text::concat([(literal_36()).payload_span(), (literal_37()).payload_span(), (baseCurrency).payload_span(), (literal_38()).payload_span(), (baseCurrencySymbol).payload_span(), (literal_39()).payload_span(), (literal_40()).payload_span(), (baseCurrency).payload_span(), (literal_38()).payload_span(), (baseCurrencySymbol).payload_span(), (literal_41()).payload_span(), (literal_42()).payload_span(), (quoteCurrency).payload_span(), (literal_38()).payload_span(), (quoteCurrencySymbol).payload_span(), (literal_43()).payload_span(), (literal_44()).payload_span(), (quoteCurrency).payload_span(), (literal_38()).payload_span(), (quoteCurrencySymbol).payload_span(), (literal_45()).payload_span()])
+    svg
+}
+
+pub fn generateSVGCardMantle(_ quoteCurrencySymbol: DynString, _ baseCurrencySymbol: DynString, _ feeTier: DynString) -> DynString uses (mem: mut RawMem) {
+    let mut svg = text::from_span(core::ptr::MemSpan::empty())
+    svg = text::concat([(literal_46()).payload_span(), (quoteCurrencySymbol).payload_span(), (literal_47()).payload_span(), (baseCurrencySymbol).payload_span(), (literal_48()).payload_span(), (feeTier).payload_span(), (literal_49()).payload_span(), (literal_50()).payload_span()])
+    svg
+}
+
+pub fn generageSvgCurve(_ tickLower: Int24, _ tickUpper: Int24, _ tickSpacing: Int24, _ overRange: i8) -> DynString uses (mem: mut RawMem) {
+    let mut svg = text::from_span(core::ptr::MemSpan::empty())
+    let fade = (if (overRange == 1) { literal_51() } else { (if (overRange == (-1)) { literal_52() } else { literal_53() }) })
+    let curve = getCurve(tickLower, tickUpper, tickSpacing)
+    svg = text::concat([(literal_54()).payload_span(), (fade).payload_span(), (literal_55()).payload_span(), (literal_56()).payload_span(), (curve).payload_span(), (literal_57()).payload_span(), (literal_58()).payload_span(), (fade).payload_span(), (literal_55()).payload_span(), (literal_59()).payload_span(), (literal_60()).payload_span(), (literal_61()).payload_span(), (curve).payload_span(), (literal_62()).payload_span(), (generateSVGCurveCircle(overRange)).payload_span()])
+    svg
+}
+
+pub fn generateSVGCurveCircle(_ overRange: i8) -> DynString uses (mem: mut RawMem) {
+    let mut svg = text::from_span(core::ptr::MemSpan::empty())
+    let curvex1 = literal_63()
+    let curvey1 = literal_64()
+    let curvex2 = literal_65()
+    let curvey2 = literal_66()
+    if ((overRange == 1) || (overRange == (-1))) {
+        svg = text::concat([(literal_67()).payload_span(), ((if (overRange == (-1)) { curvex1 } else { curvex2 })).payload_span(), (literal_68()).payload_span(), ((if (overRange == (-1)) { curvey1 } else { curvey2 })).payload_span(), (literal_69()).payload_span(), ((if (overRange == (-1)) { curvex1 } else { curvex2 })).payload_span(), (literal_68()).payload_span(), ((if (overRange == (-1)) { curvey1 } else { curvey2 })).payload_span(), (literal_70()).payload_span()])
+    } else {
+        svg = text::concat([(literal_67()).payload_span(), (curvex1).payload_span(), (literal_68()).payload_span(), (curvey1).payload_span(), (literal_71()).payload_span(), (literal_67()).payload_span(), (curvex2).payload_span(), (literal_68()).payload_span(), (curvey2).payload_span(), (literal_71()).payload_span()])
+    }
+    svg
+}
+
+pub fn generateSVGPositionDataAndLocationCurve(_ tokenId: DynString, _ hook: Address, _ tickLower: Int24, _ tickUpper: Int24) -> DynString uses (mem: mut RawMem) {
+    let mut svg = text::from_span(core::ptr::MemSpan::empty())
+    let hookStr = text::concat([text::word(0x3078000000000000000000000000000000000000000000000000000000000000, 2).payload_span(), text::hex(((hook .inner as u256) as u256), 20).payload_span()])
+    let tickLowerStr = tickToString(tickLower)
+    let tickUpperStr = tickToString(tickUpper)
+    let str1length = (tokenId.len() + 4)
+    let hookSlice = (if (hook.inner == (Address { inner: 0 }).inner) { literal_72() } else { text::concat([(substring(hookStr, 0, 5)).payload_span(), (literal_73()).payload_span(), (substring(hookStr, 39, 42)).payload_span()]) })
+    let str2length = (hookSlice.len() + 5)
+    let str3length = (tickLowerStr.len() + 10)
+    let str4length = (tickUpperStr.len() + 10)
+    let (xCoord, yCoord) = rangeLocation(tickLower, tickUpper)
+    svg = text::concat([(literal_74()).payload_span(), (literal_75()).payload_span(), (text::decimal(((7 * (str1length + 4)) as u256))).payload_span(), (literal_76()).payload_span(), (literal_77()).payload_span(), (tokenId).payload_span(), (literal_49()).payload_span(), (literal_78()).payload_span(), (literal_75()).payload_span(), (text::decimal(((7 * (str2length + 4)) as u256))).payload_span(), (literal_76()).payload_span(), (literal_79()).payload_span(), (hookSlice).payload_span(), (literal_49()).payload_span(), (literal_80()).payload_span(), (literal_75()).payload_span(), (text::decimal(((7 * (str3length + 4)) as u256))).payload_span(), (literal_76()).payload_span(), (literal_81()).payload_span(), (tickLowerStr).payload_span(), (literal_49()).payload_span(), (literal_82()).payload_span(), (literal_75()).payload_span(), (text::decimal(((7 * (str4length + 4)) as u256))).payload_span(), (literal_76()).payload_span(), (literal_83()).payload_span(), (tickUpperStr).payload_span(), (literal_84()).payload_span(), (literal_85()).payload_span(), (literal_86()).payload_span(), (literal_87()).payload_span(), (xCoord).payload_span(), (literal_88()).payload_span(), (yCoord).payload_span(), (literal_89()).payload_span()])
+    svg
+}
+
+pub fn generateSVGRareSparkle(_ tokenId: u256, _ hooks: Address) -> DynString uses (mem: mut RawMem) {
+    let mut svg = text::from_span(core::ptr::MemSpan::empty())
+    if isRare(tokenId, hooks) {
+        svg = text::concat([(literal_90()).payload_span(), (literal_91()).payload_span(), (literal_92()).payload_span(), (literal_93()).payload_span(), (literal_94()).payload_span()])
+    } else {
+        svg = literal_95()
+    }
+    svg
+}
+
+pub fn curvePath(_ index: u8) -> DynString uses (mem: mut RawMem) {
+
+    if index == 1 { return literal_96() }
+
+    if index == 2 { return literal_97() }
+
+    if index == 3 { return literal_98() }
+
+    if index == 4 { return literal_99() }
+
+    if index == 5 { return literal_100() }
+
+    if index == 6 { return literal_101() }
+
+    if index == 7 { return literal_102() }
+
+    literal_103()
+}
+
+// "</svg>"
+fn literal_0() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c2f7376673e0000000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 6))
+}
+
+// "<svg width=\"290\" height=\"500\" viewBox=\"0 0 290 500\" xmlns=\"http://www.w3.org/2000/svg\""
+fn literal_1() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(96)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c7376672077696474683d2232393022206865696768743d2235303022207669)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x6577426f783d2230203020323930203530302220786d6c6e733d22687474703a)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x2f2f7777772e77332e6f72672f323030302f7376672200000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 86))
+}
+
+// " xmlns:xlink='http://www.w3.org/1999/xlink'>"
+fn literal_2() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(64)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x20786d6c6e733a786c696e6b3d27687474703a2f2f7777772e77332e6f72672f)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x313939392f786c696e6b273e0000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 44))
+}
+
+// "<defs>"
+fn literal_3() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c646566733e0000000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 6))
+}
+
+// "<filter id=\"f1\"><feImage result=\"p0\" xlink:href=\"data:image/svg+xml;base64,"
+fn literal_4() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(96)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c66696c7465722069643d226631223e3c6665496d61676520726573756c743d)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x2270302220786c696e6b3a687265663d22646174613a696d6167652f7376672b)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x786d6c3b6261736536342c000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 75))
+}
+
+// "<svg width='290' height='500' viewBox='0 0 290 500' xmlns='http://www.w3.org/2000/svg'><rect width='290px' height='500px' fill='#"
+fn literal_5() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(160)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c7376672077696474683d2732393027206865696768743d2735303027207669)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x6577426f783d2730203020323930203530302720786d6c6e733d27687474703a)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x2f2f7777772e77332e6f72672f323030302f737667273e3c7265637420776964)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 96), value: 0x74683d27323930707827206865696768743d273530307078272066696c6c3d27)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 128), value: 0x2300000000000000000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 129))
+}
+
+// "'/></svg>"
+fn literal_6() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x272f3e3c2f7376673e0000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 9))
+}
+
+// "\"/><feImage result=\"p1\" xlink:href=\"data:image/svg+xml;base64,"
+fn literal_7() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(64)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x222f3e3c6665496d61676520726573756c743d2270312220786c696e6b3a6872)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x65663d22646174613a696d6167652f7376672b786d6c3b6261736536342c0000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 62))
+}
+
+// "<svg width='290' height='500' viewBox='0 0 290 500' xmlns='http://www.w3.org/2000/svg'><circle cx='"
+fn literal_8() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(128)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c7376672077696474683d2732393027206865696768743d2735303027207669)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x6577426f783d2730203020323930203530302720786d6c6e733d27687474703a)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x2f2f7777772e77332e6f72672f323030302f737667273e3c636972636c652063)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 96), value: 0x783d270000000000000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 99))
+}
+
+// "' cy='"
+fn literal_9() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x272063793d270000000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 6))
+}
+
+// "' r='120px' fill='#"
+fn literal_10() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x2720723d273132307078272066696c6c3d272300000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 19))
+}
+
+// "\"/><feImage result=\"p2\" xlink:href=\"data:image/svg+xml;base64,"
+fn literal_11() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(64)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x222f3e3c6665496d61676520726573756c743d2270322220786c696e6b3a6872)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x65663d22646174613a696d6167652f7376672b786d6c3b6261736536342c0000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 62))
+}
+
+// "\" />"
+fn literal_12() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x22202f3e00000000000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 4))
+}
+
+// "<feImage result=\"p3\" xlink:href=\"data:image/svg+xml;base64,"
+fn literal_13() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(64)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c6665496d61676520726573756c743d2270332220786c696e6b3a687265663d)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x22646174613a696d6167652f7376672b786d6c3b6261736536342c0000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 59))
+}
+
+// "' r='100px' fill='#"
+fn literal_14() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x2720723d273130307078272066696c6c3d272300000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 19))
+}
+
+// "\" /><feBlend mode=\"overlay\" in=\"p0\" in2=\"p1\" /><feBlend mode=\"exclusion\" in2=\"p2\" /><feBlend mode=\"overlay\" in2=\"p3\" result=\"blendOut\" /><feGaussianBlur "
+fn literal_15() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(160)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x22202f3e3c6665426c656e64206d6f64653d226f7665726c61792220696e3d22)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x70302220696e323d22703122202f3e3c6665426c656e64206d6f64653d226578)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x636c7573696f6e2220696e323d22703222202f3e3c6665426c656e64206d6f64)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 96), value: 0x653d226f7665726c61792220696e323d2270332220726573756c743d22626c65)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 128), value: 0x6e644f757422202f3e3c6665476175737369616e426c75722000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 153))
+}
+
+// "in=\"blendOut\" stdDeviation=\"42\" /></filter> <clipPath id=\"corners\"><rect width=\"290\" height=\"500\" rx=\"42\" ry=\"42\" /></clipPath>"
+fn literal_16() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(128)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x696e3d22626c656e644f75742220737464446576696174696f6e3d2234322220)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x2f3e3c2f66696c7465723e203c636c6970506174682069643d22636f726e6572)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x73223e3c726563742077696474683d2232393022206865696768743d22353030)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 96), value: 0x222072783d223432222072793d22343222202f3e3c2f636c6970506174683e00)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 127))
+}
+
+// "<path id=\"text-path-a\" d=\"M40 12 H250 A28 28 0 0 1 278 40 V460 A28 28 0 0 1 250 488 H40 A28 28 0 0 1 12 460 V40 A28 28 0 0 1 40 12 z\" />"
+fn literal_17() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(160)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c706174682069643d22746578742d706174682d612220643d224d3430203132)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x2048323530204132382032382030203020312032373820343020563436302041)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x3238203238203020302031203235302034383820483430204132382032382030)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 96), value: 0x2030203120313220343630205634302041323820323820302030203120343020)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 128), value: 0x3132207a22202f3e000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 136))
+}
+
+// "<path id=\"minimap\" d=\"M234 444C234 457.949 242.21 463 253 463\" />"
+fn literal_18() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(96)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c706174682069643d226d696e696d61702220643d224d323334203434344332)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x3334203435372e393439203234322e323120343633203235332034363322202f)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x3e00000000000000000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 65))
+}
+
+// "<filter id=\"top-region-blur\"><feGaussianBlur in=\"SourceGraphic\" stdDeviation=\"24\" /></filter>"
+fn literal_19() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(96)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c66696c7465722069643d22746f702d726567696f6e2d626c7572223e3c6665)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x476175737369616e426c757220696e3d22536f75726365477261706869632220)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x737464446576696174696f6e3d22323422202f3e3c2f66696c7465723e000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 93))
+}
+
+// "<linearGradient id=\"grad-up\" x1=\"1\" x2=\"0\" y1=\"1\" y2=\"0\"><stop offset=\"0.0\" stop-color=\"white\" stop-opacity=\"1\" />"
+fn literal_20() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(128)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c6c696e6561724772616469656e742069643d22677261642d7570222078313d)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x2231222078323d2230222079313d2231222079323d2230223e3c73746f70206f)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x66667365743d22302e30222073746f702d636f6c6f723d227768697465222073)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 96), value: 0x746f702d6f7061636974793d223122202f3e0000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 114))
+}
+
+// "<stop offset=\".9\" stop-color=\"white\" stop-opacity=\"0\" /></linearGradient>"
+fn literal_21() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(96)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c73746f70206f66667365743d222e39222073746f702d636f6c6f723d227768)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x697465222073746f702d6f7061636974793d223022202f3e3c2f6c696e656172)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x4772616469656e743e0000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 73))
+}
+
+// "<linearGradient id=\"grad-down\" x1=\"0\" x2=\"1\" y1=\"0\" y2=\"1\"><stop offset=\"0.0\" stop-color=\"white\" stop-opacity=\"1\" /><stop offset=\"0.9\" stop-color=\"white\" stop-opacity=\"0\" /></linearGradient>"
+fn literal_22() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(192)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c6c696e6561724772616469656e742069643d22677261642d646f776e222078)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x313d2230222078323d2231222079313d2230222079323d2231223e3c73746f70)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x206f66667365743d22302e30222073746f702d636f6c6f723d22776869746522)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 96), value: 0x2073746f702d6f7061636974793d223122202f3e3c73746f70206f6666736574)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 128), value: 0x3d22302e39222073746f702d636f6c6f723d227768697465222073746f702d6f)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 160), value: 0x7061636974793d223022202f3e3c2f6c696e6561724772616469656e743e0000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 190))
+}
+
+// "<mask id=\"fade-up\" maskContentUnits=\"objectBoundingBox\"><rect width=\"1\" height=\"1\" fill=\"url(#grad-up)\" /></mask>"
+fn literal_23() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(128)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c6d61736b2069643d22666164652d757022206d61736b436f6e74656e74556e)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x6974733d226f626a656374426f756e64696e67426f78223e3c72656374207769)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x6474683d223122206865696768743d2231222066696c6c3d2275726c28236772)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 96), value: 0x61642d75702922202f3e3c2f6d61736b3e000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 113))
+}
+
+// "<mask id=\"fade-down\" maskContentUnits=\"objectBoundingBox\"><rect width=\"1\" height=\"1\" fill=\"url(#grad-down)\" /></mask>"
+fn literal_24() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(128)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c6d61736b2069643d22666164652d646f776e22206d61736b436f6e74656e74)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x556e6974733d226f626a656374426f756e64696e67426f78223e3c7265637420)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x77696474683d223122206865696768743d2231222066696c6c3d2275726c2823)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 96), value: 0x677261642d646f776e2922202f3e3c2f6d61736b3e0000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 117))
+}
+
+// "<mask id=\"none\" maskContentUnits=\"objectBoundingBox\"><rect width=\"1\" height=\"1\" fill=\"white\" /></mask>"
+fn literal_25() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(128)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c6d61736b2069643d226e6f6e6522206d61736b436f6e74656e74556e697473)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x3d226f626a656374426f756e64696e67426f78223e3c72656374207769647468)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x3d223122206865696768743d2231222066696c6c3d22776869746522202f3e3c)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 96), value: 0x2f6d61736b3e0000000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 102))
+}
+
+// "<linearGradient id=\"grad-symbol\"><stop offset=\"0.7\" stop-color=\"white\" stop-opacity=\"1\" /><stop offset=\".95\" stop-color=\"white\" stop-opacity=\"0\" /></linearGradient>"
+fn literal_26() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(192)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c6c696e6561724772616469656e742069643d22677261642d73796d626f6c22)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x3e3c73746f70206f66667365743d22302e37222073746f702d636f6c6f723d22)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x7768697465222073746f702d6f7061636974793d223122202f3e3c73746f7020)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 96), value: 0x6f66667365743d222e3935222073746f702d636f6c6f723d2277686974652220)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 128), value: 0x73746f702d6f7061636974793d223022202f3e3c2f6c696e6561724772616469)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 160), value: 0x656e743e00000000000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 164))
+}
+
+// "<mask id=\"fade-symbol\" maskContentUnits=\"userSpaceOnUse\"><rect width=\"290px\" height=\"200px\" fill=\"url(#grad-symbol)\" /></mask></defs>"
+fn literal_27() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(160)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c6d61736b2069643d22666164652d73796d626f6c22206d61736b436f6e7465)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x6e74556e6974733d227573657253706163654f6e557365223e3c726563742077)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x696474683d22323930707822206865696768743d223230307078222066696c6c)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 96), value: 0x3d2275726c2823677261642d73796d626f6c2922202f3e3c2f6d61736b3e3c2f)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 128), value: 0x646566733e000000000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 133))
+}
+
+// "<g clip-path=\"url(#corners)\">"
+fn literal_28() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c6720636c69702d706174683d2275726c2823636f726e65727329223e000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 29))
+}
+
+// "<rect fill=\""
+fn literal_29() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c726563742066696c6c3d220000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 12))
+}
+
+// "\" x=\"0px\" y=\"0px\" width=\"290px\" height=\"500px\" />"
+fn literal_30() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(64)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x2220783d223070782220793d22307078222077696474683d2232393070782220)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x6865696768743d22353030707822202f3e000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 49))
+}
+
+// "<rect style=\"filter: url(#f1)\" x=\"0px\" y=\"0px\" width=\"290px\" height=\"500px\" />"
+fn literal_31() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(96)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c72656374207374796c653d2266696c7465723a2075726c2823663129222078)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x3d223070782220793d22307078222077696474683d2232393070782220686569)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x6768743d22353030707822202f3e000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 78))
+}
+
+// " <g style=\"filter:url(#top-region-blur); transform:scale(1.5); transform-origin:center top;\">"
+fn literal_32() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(96)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x203c67207374796c653d2266696c7465723a75726c2823746f702d726567696f)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x6e2d626c7572293b207472616e73666f726d3a7363616c6528312e35293b2074)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x72616e73666f726d2d6f726967696e3a63656e74657220746f703b223e000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 93))
+}
+
+// "<rect fill=\"none\" x=\"0px\" y=\"0px\" width=\"290px\" height=\"500px\" />"
+fn literal_33() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(96)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c726563742066696c6c3d226e6f6e652220783d223070782220793d22307078)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x222077696474683d22323930707822206865696768743d22353030707822202f)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x3e00000000000000000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 65))
+}
+
+// "<ellipse cx=\"50%\" cy=\"0px\" rx=\"180px\" ry=\"120px\" fill=\"#000\" opacity=\"0.85\" /></g>"
+fn literal_34() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(96)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c656c6c697073652063783d22353025222063793d22307078222072783d2231)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x38307078222072793d223132307078222066696c6c3d222330303022206f7061)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x636974793d22302e383522202f3e3c2f673e0000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 82))
+}
+
+// "<rect x=\"0\" y=\"0\" width=\"290\" height=\"500\" rx=\"42\" ry=\"42\" fill=\"rgba(0,0,0,0)\" stroke=\"rgba(255,255,255,0.2)\" /></g>"
+fn literal_35() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(128)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c7265637420783d22302220793d2230222077696474683d2232393022206865)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x696768743d22353030222072783d223432222072793d223432222066696c6c3d)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x227267626128302c302c302c302922207374726f6b653d227267626128323535)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 96), value: 0x2c3235352c3235352c302e322922202f3e3c2f673e0000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 117))
+}
+
+// "<text text-rendering=\"optimizeSpeed\">"
+fn literal_36() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(64)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c7465787420746578742d72656e646572696e673d226f7074696d697a655370)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x656564223e000000000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 37))
+}
+
+// "<textPath startOffset=\"-100%\" fill=\"white\" font-family=\"'Courier New', monospace\" font-size=\"10px\" xlink:href=\"#text-path-a\">"
+fn literal_37() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(128)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c74657874506174682073746172744f66667365743d222d3130302522206669)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x6c6c3d2277686974652220666f6e742d66616d696c793d2227436f7572696572)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x204e6577272c206d6f6e6f73706163652220666f6e742d73697a653d22313070)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 96), value: 0x782220786c696e6b3a687265663d2223746578742d706174682d61223e000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 125))
+}
+
+// " • "
+fn literal_38() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x20e280a220000000000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 5))
+}
+
+// " <animate additive=\"sum\" attributeName=\"startOffset\" from=\"0%\" to=\"100%\" begin=\"0s\" dur=\"30s\" repeatCount=\"indefinite\" />"
+fn literal_39() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(128)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x203c616e696d6174652061646469746976653d2273756d222061747472696275)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x74654e616d653d2273746172744f6666736574222066726f6d3d223025222074)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x6f3d22313030252220626567696e3d22307322206475723d2233307322207265)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 96), value: 0x70656174436f756e743d22696e646566696e69746522202f3e00000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 121))
+}
+
+// "</textPath> <textPath startOffset=\"0%\" fill=\"white\" font-family=\"'Courier New', monospace\" font-size=\"10px\" xlink:href=\"#text-path-a\">"
+fn literal_40() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(160)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c2f74657874506174683e203c74657874506174682073746172744f66667365)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x743d223025222066696c6c3d2277686974652220666f6e742d66616d696c793d)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x2227436f7572696572204e6577272c206d6f6e6f73706163652220666f6e742d)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 96), value: 0x73697a653d22313070782220786c696e6b3a687265663d2223746578742d7061)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 128), value: 0x74682d61223e0000000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 134))
+}
+
+// " <animate additive=\"sum\" attributeName=\"startOffset\" from=\"0%\" to=\"100%\" begin=\"0s\" dur=\"30s\" repeatCount=\"indefinite\" /> </textPath>"
+fn literal_41() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(160)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x203c616e696d6174652061646469746976653d2273756d222061747472696275)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x74654e616d653d2273746172744f6666736574222066726f6d3d223025222074)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x6f3d22313030252220626567696e3d22307322206475723d2233307322207265)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 96), value: 0x70656174436f756e743d22696e646566696e69746522202f3e203c2f74657874)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 128), value: 0x506174683e000000000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 133))
+}
+
+// "<textPath startOffset=\"50%\" fill=\"white\" font-family=\"'Courier New', monospace\" font-size=\"10px\" xlink:href=\"#text-path-a\">"
+fn literal_42() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(128)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c74657874506174682073746172744f66667365743d22353025222066696c6c)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x3d2277686974652220666f6e742d66616d696c793d2227436f7572696572204e)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x6577272c206d6f6e6f73706163652220666f6e742d73697a653d223130707822)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 96), value: 0x20786c696e6b3a687265663d2223746578742d706174682d61223e0000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 123))
+}
+
+// " <animate additive=\"sum\" attributeName=\"startOffset\" from=\"0%\" to=\"100%\" begin=\"0s\" dur=\"30s\""
+fn literal_43() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(96)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x203c616e696d6174652061646469746976653d2273756d222061747472696275)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x74654e616d653d2273746172744f6666736574222066726f6d3d223025222074)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x6f3d22313030252220626567696e3d22307322206475723d2233307322000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 93))
+}
+
+// " repeatCount=\"indefinite\" /></textPath><textPath startOffset=\"-50%\" fill=\"white\" font-family=\"'Courier New', monospace\" font-size=\"10px\" xlink:href=\"#text-path-a\">"
+fn literal_44() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(192)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x20726570656174436f756e743d22696e646566696e69746522202f3e3c2f7465)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x7874506174683e3c74657874506174682073746172744f66667365743d222d35)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x3025222066696c6c3d2277686974652220666f6e742d66616d696c793d222743)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 96), value: 0x6f7572696572204e6577272c206d6f6e6f73706163652220666f6e742d73697a)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 128), value: 0x653d22313070782220786c696e6b3a687265663d2223746578742d706174682d)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 160), value: 0x61223e0000000000000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 163))
+}
+
+// " <animate additive=\"sum\" attributeName=\"startOffset\" from=\"0%\" to=\"100%\" begin=\"0s\" dur=\"30s\" repeatCount=\"indefinite\" /></textPath></text>"
+fn literal_45() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(160)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x203c616e696d6174652061646469746976653d2273756d222061747472696275)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x74654e616d653d2273746172744f6666736574222066726f6d3d223025222074)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x6f3d22313030252220626567696e3d22307322206475723d2233307322207265)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 96), value: 0x70656174436f756e743d22696e646566696e69746522202f3e3c2f7465787450)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 128), value: 0x6174683e3c2f746578743e000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 139))
+}
+
+// "<g mask=\"url(#fade-symbol)\"><rect fill=\"none\" x=\"0px\" y=\"0px\" width=\"290px\" height=\"200px\" /> <text y=\"70px\" x=\"32px\" fill=\"white\" font-family=\"'Courier New', monospace\" font-weight=\"200\" font-size=\"36px\">"
+fn literal_46() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(224)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c67206d61736b3d2275726c2823666164652d73796d626f6c29223e3c726563)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x742066696c6c3d226e6f6e652220783d223070782220793d2230707822207769)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x6474683d22323930707822206865696768743d22323030707822202f3e203c74)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 96), value: 0x65787420793d22373070782220783d2233327078222066696c6c3d2277686974)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 128), value: 0x652220666f6e742d66616d696c793d2227436f7572696572204e6577272c206d)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 160), value: 0x6f6e6f73706163652220666f6e742d7765696768743d223230302220666f6e74)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 192), value: 0x2d73697a653d2233367078223e00000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 205))
+}
+
+// "/"
+fn literal_47() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x2f00000000000000000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 1))
+}
+
+// "</text><text y=\"115px\" x=\"32px\" fill=\"white\" font-family=\"'Courier New', monospace\" font-weight=\"200\" font-size=\"36px\">"
+fn literal_48() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(128)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c2f746578743e3c7465787420793d2231313570782220783d22333270782220)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x66696c6c3d2277686974652220666f6e742d66616d696c793d2227436f757269)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x6572204e6577272c206d6f6e6f73706163652220666f6e742d7765696768743d)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 96), value: 0x223230302220666f6e742d73697a653d2233367078223e000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 119))
+}
+
+// "</text></g>"
+fn literal_49() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c2f746578743e3c2f673e000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 11))
+}
+
+// "<rect x=\"16\" y=\"16\" width=\"258\" height=\"468\" rx=\"26\" ry=\"26\" fill=\"rgba(0,0,0,0)\" stroke=\"rgba(255,255,255,0.2)\" />"
+fn literal_50() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(128)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c7265637420783d2231362220793d223136222077696474683d223235382220)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x6865696768743d22343638222072783d223236222072793d223236222066696c)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x6c3d227267626128302c302c302c302922207374726f6b653d22726762612832)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 96), value: 0x35352c3235352c3235352c302e322922202f3e00000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 115))
+}
+
+// "#fade-up"
+fn literal_51() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x23666164652d7570000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 8))
+}
+
+// "#fade-down"
+fn literal_52() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x23666164652d646f776e00000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 10))
+}
+
+// "#none"
+fn literal_53() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x236e6f6e65000000000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 5))
+}
+
+// "<g mask=\"url("
+fn literal_54() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c67206d61736b3d2275726c2800000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 13))
+}
+
+// ")\""
+fn literal_55() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x2922000000000000000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 2))
+}
+
+// " style=\"transform:translate(72px,189px)\"><rect x=\"-16px\" y=\"-16px\" width=\"180px\" height=\"180px\" fill=\"none\" /><path d=\""
+fn literal_56() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(128)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x207374796c653d227472616e73666f726d3a7472616e736c6174652837327078)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x2c313839707829223e3c7265637420783d222d313670782220793d222d313670)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x78222077696474683d22313830707822206865696768743d2231383070782220)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 96), value: 0x66696c6c3d226e6f6e6522202f3e3c7061746820643d22000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 119))
+}
+
+// "\" stroke=\"rgba(0,0,0,0.3)\" stroke-width=\"32px\" fill=\"none\" stroke-linecap=\"round\" />"
+fn literal_57() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(96)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x22207374726f6b653d227267626128302c302c302c302e332922207374726f6b)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x652d77696474683d2233327078222066696c6c3d226e6f6e6522207374726f6b)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x652d6c696e656361703d22726f756e6422202f3e000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 84))
+}
+
+// "</g><g mask=\"url("
+fn literal_58() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c2f673e3c67206d61736b3d2275726c28000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 17))
+}
+
+// " style=\"transform:translate(72px,189px)\">"
+fn literal_59() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(64)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x207374796c653d227472616e73666f726d3a7472616e736c6174652837327078)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x2c313839707829223e0000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 41))
+}
+
+// "<rect x=\"-16px\" y=\"-16px\" width=\"180px\" height=\"180px\" fill=\"none\" />"
+fn literal_60() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(96)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c7265637420783d222d313670782220793d222d31367078222077696474683d)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x22313830707822206865696768743d223138307078222066696c6c3d226e6f6e)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x6522202f3e000000000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 69))
+}
+
+// "<path d=\""
+fn literal_61() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c7061746820643d220000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 9))
+}
+
+// "\" stroke=\"rgba(255,255,255,1)\" fill=\"none\" stroke-linecap=\"round\" /></g>"
+fn literal_62() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(96)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x22207374726f6b653d2272676261283235352c3235352c3235352c3129222066)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x696c6c3d226e6f6e6522207374726f6b652d6c696e656361703d22726f756e64)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x22202f3e3c2f673e000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 72))
+}
+
+// "73"
+fn literal_63() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3733000000000000000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 2))
+}
+
+// "190"
+fn literal_64() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3139300000000000000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 3))
+}
+
+// "217"
+fn literal_65() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3231370000000000000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 3))
+}
+
+// "334"
+fn literal_66() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3333340000000000000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 3))
+}
+
+// "<circle cx=\""
+fn literal_67() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c636972636c652063783d220000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 12))
+}
+
+// "px\" cy=\""
+fn literal_68() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x7078222063793d22000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 8))
+}
+
+// "px\" r=\"4px\" fill=\"white\" /><circle cx=\""
+fn literal_69() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(64)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x70782220723d22347078222066696c6c3d22776869746522202f3e3c63697263)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x6c652063783d2200000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 39))
+}
+
+// "px\" r=\"24px\" fill=\"none\" stroke=\"white\" />"
+fn literal_70() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(64)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x70782220723d2232347078222066696c6c3d226e6f6e6522207374726f6b653d)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x22776869746522202f3e00000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 42))
+}
+
+// "px\" r=\"4px\" fill=\"white\" />"
+fn literal_71() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x70782220723d22347078222066696c6c3d22776869746522202f3e0000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 27))
+}
+
+// "No Hook"
+fn literal_72() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x4e6f20486f6f6b00000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 7))
+}
+
+// "..."
+fn literal_73() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x2e2e2e0000000000000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 3))
+}
+
+// " <g style=\"transform:translate(29px, 354px)\">"
+fn literal_74() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(64)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x203c67207374796c653d227472616e73666f726d3a7472616e736c6174652832)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x3970782c20333534707829223e00000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 45))
+}
+
+// "<rect width=\""
+fn literal_75() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c726563742077696474683d2200000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 13))
+}
+
+// "px\" height=\"26px\" rx=\"8px\" ry=\"8px\" fill=\"rgba(0,0,0,0.6)\" />"
+fn literal_76() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(64)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x707822206865696768743d2232367078222072783d22387078222072793d2238)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x7078222066696c6c3d227267626128302c302c302c302e362922202f3e000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 61))
+}
+
+// "<text x=\"12px\" y=\"17px\" font-family=\"'Courier New', monospace\" font-size=\"11px\" fill=\"white\"><tspan fill=\"rgba(255,255,255,0.6)\">ID: </tspan>"
+fn literal_77() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(160)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c7465787420783d22313270782220793d22313770782220666f6e742d66616d)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x696c793d2227436f7572696572204e6577272c206d6f6e6f7370616365222066)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x6f6e742d73697a653d2231317078222066696c6c3d227768697465223e3c7473)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 96), value: 0x70616e2066696c6c3d2272676261283235352c3235352c3235352c302e362922)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 128), value: 0x3e49443a203c2f747370616e3e00000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 141))
+}
+
+// " <g style=\"transform:translate(29px, 384px)\">"
+fn literal_78() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(64)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x203c67207374796c653d227472616e73666f726d3a7472616e736c6174652832)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x3970782c20333834707829223e00000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 45))
+}
+
+// "<text x=\"12px\" y=\"17px\" font-family=\"'Courier New', monospace\" font-size=\"11px\" fill=\"white\"><tspan fill=\"rgba(255,255,255,0.6)\">Hook: </tspan>"
+fn literal_79() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(160)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c7465787420783d22313270782220793d22313770782220666f6e742d66616d)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x696c793d2227436f7572696572204e6577272c206d6f6e6f7370616365222066)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x6f6e742d73697a653d2231317078222066696c6c3d227768697465223e3c7473)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 96), value: 0x70616e2066696c6c3d2272676261283235352c3235352c3235352c302e362922)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 128), value: 0x3e486f6f6b3a203c2f747370616e3e0000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 143))
+}
+
+// " <g style=\"transform:translate(29px, 414px)\">"
+fn literal_80() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(64)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x203c67207374796c653d227472616e73666f726d3a7472616e736c6174652832)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x3970782c20343134707829223e00000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 45))
+}
+
+// "<text x=\"12px\" y=\"17px\" font-family=\"'Courier New', monospace\" font-size=\"11px\" fill=\"white\"><tspan fill=\"rgba(255,255,255,0.6)\">Min Tick: </tspan>"
+fn literal_81() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(160)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c7465787420783d22313270782220793d22313770782220666f6e742d66616d)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x696c793d2227436f7572696572204e6577272c206d6f6e6f7370616365222066)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x6f6e742d73697a653d2231317078222066696c6c3d227768697465223e3c7473)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 96), value: 0x70616e2066696c6c3d2272676261283235352c3235352c3235352c302e362922)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 128), value: 0x3e4d696e205469636b3a203c2f747370616e3e00000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 147))
+}
+
+// " <g style=\"transform:translate(29px, 444px)\">"
+fn literal_82() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(64)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x203c67207374796c653d227472616e73666f726d3a7472616e736c6174652832)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x3970782c20343434707829223e00000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 45))
+}
+
+// "<text x=\"12px\" y=\"17px\" font-family=\"'Courier New', monospace\" font-size=\"11px\" fill=\"white\"><tspan fill=\"rgba(255,255,255,0.6)\">Max Tick: </tspan>"
+fn literal_83() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(160)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c7465787420783d22313270782220793d22313770782220666f6e742d66616d)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x696c793d2227436f7572696572204e6577272c206d6f6e6f7370616365222066)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x6f6e742d73697a653d2231317078222066696c6c3d227768697465223e3c7473)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 96), value: 0x70616e2066696c6c3d2272676261283235352c3235352c3235352c302e362922)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 128), value: 0x3e4d6178205469636b3a203c2f747370616e3e00000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 147))
+}
+
+// "</text></g><g style=\"transform:translate(226px, 433px)\">"
+fn literal_84() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(64)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c2f746578743e3c2f673e3c67207374796c653d227472616e73666f726d3a74)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x72616e736c6174652832323670782c20343333707829223e0000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 56))
+}
+
+// "<rect width=\"36px\" height=\"36px\" rx=\"8px\" ry=\"8px\" fill=\"none\" stroke=\"rgba(255,255,255,0.2)\" />"
+fn literal_85() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(96)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c726563742077696474683d223336707822206865696768743d223336707822)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x2072783d22387078222072793d22387078222066696c6c3d226e6f6e65222073)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x74726f6b653d2272676261283235352c3235352c3235352c302e322922202f3e)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 96))
+}
+
+// "<path stroke-linecap=\"round\" d=\"M8 9C8.00004 22.9494 16.2099 28 27 28\" fill=\"none\" stroke=\"white\" />"
+fn literal_86() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(128)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c70617468207374726f6b652d6c696e656361703d22726f756e642220643d22)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x4d38203943382e30303030342032322e393439342031362e3230393920323820)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x3237203238222066696c6c3d226e6f6e6522207374726f6b653d227768697465)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 96), value: 0x22202f3e00000000000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 100))
+}
+
+// "<circle style=\"transform:translate3d("
+fn literal_87() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(64)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c636972636c65207374796c653d227472616e73666f726d3a7472616e736c61)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x7465336428000000000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 37))
+}
+
+// "px, "
+fn literal_88() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x70782c2000000000000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 4))
+}
+
+// "px, 0px)\" cx=\"0px\" cy=\"0px\" r=\"4px\" fill=\"white\"/></g>"
+fn literal_89() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(64)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x70782c2030707829222063783d22307078222063793d223070782220723d2234)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x7078222066696c6c3d227768697465222f3e3c2f673e00000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 54))
+}
+
+// "<g style=\"transform:translate(226px, 392px)\"><rect width=\"36px\" height=\"36px\" rx=\"8px\" ry=\"8px\" fill=\"none\" stroke=\"rgba(255,255,255,0.2)\" />"
+fn literal_90() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(160)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c67207374796c653d227472616e73666f726d3a7472616e736c617465283232)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x3670782c20333932707829223e3c726563742077696474683d22333670782220)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x6865696768743d2233367078222072783d22387078222072793d223870782220)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 96), value: 0x66696c6c3d226e6f6e6522207374726f6b653d2272676261283235352c323535)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 128), value: 0x2c3235352c302e322922202f3e00000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 141))
+}
+
+// "<g><path style=\"transform:translate(6px,6px)\" d=\"M12 0L12.6522 9.56587L18 1.6077L13.7819 10.2181L22.3923 6L14.4341 "
+fn literal_91() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(128)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c673e3c70617468207374796c653d227472616e73666f726d3a7472616e736c)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x617465283670782c367078292220643d224d313220304c31322e363532322039)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x2e35363538374c313820312e363037374c31332e373831392031302e32313831)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 96), value: 0x4c32322e3339323320364c31342e343334312000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 115))
+}
+
+// "11.3478L24 12L14.4341 12.6522L22.3923 18L13.7819 13.7819L18 22.3923L12.6522 14.4341L12 24L11.3478 14.4341L6 22.39"
+fn literal_92() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(128)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x31312e333437384c32342031324c31342e343334312031322e363532324c3232)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x2e333932332031384c31332e373831392031332e373831394c31382032322e33)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x3932334c31322e363532322031342e343334314c31322032344c31312e333437)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 96), value: 0x382031342e343334314c362032322e3339000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 113))
+}
+
+// "23L10.2181 13.7819L1.6077 18L9.56587 12.6522L0 12L9.56587 11.3478L1.6077 6L10.2181 10.2181L6 1.6077L11.3478 9.56587L12 0Z\" fill=\"white\" />"
+fn literal_93() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(160)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x32334c31302e323138312031332e373831394c312e363037372031384c392e35)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x363538372031322e363532324c302031324c392e35363538372031312e333437)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x384c312e3630373720364c31302e323138312031302e323138314c3620312e36)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 96), value: 0x3037374c31312e3334373820392e35363538374c313220305a222066696c6c3d)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 128), value: 0x22776869746522202f3e00000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 138))
+}
+
+// "<animateTransform attributeName=\"transform\" type=\"rotate\" from=\"0 18 18\" to=\"360 18 18\" dur=\"10s\" repeatCount=\"indefinite\"/></g></g>"
+fn literal_94() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(160)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x3c616e696d6174655472616e73666f726d206174747269627574654e616d653d)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 32), value: 0x227472616e73666f726d2220747970653d22726f74617465222066726f6d3d22)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 64), value: 0x302031382031382220746f3d2233363020313820313822206475723d22313073)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 96), value: 0x2220726570656174436f756e743d22696e646566696e697465222f3e3c2f673e)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 128), value: 0x3c2f673e00000000000000000000000000000000000000000000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 132))
+}
+
+// ""
+fn literal_95() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(0)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 0))
+}
+
+// "M1 1C41 41 105 105 145 145"
+fn literal_96() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x4d31203143343120343120313035203130352031343520313435000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 26))
+}
+
+// "M1 1C33 49 97 113 145 145"
+fn literal_97() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x4d31203143333320343920393720313133203134352031343500000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 25))
+}
+
+// "M1 1C33 57 89 113 145 145"
+fn literal_98() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x4d31203143333320353720383920313133203134352031343500000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 25))
+}
+
+// "M1 1C25 65 81 121 145 145"
+fn literal_99() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x4d31203143323520363520383120313231203134352031343500000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 25))
+}
+
+// "M1 1C17 73 73 129 145 145"
+fn literal_100() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x4d31203143313720373320373320313239203134352031343500000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 25))
+}
+
+// "M1 1C9 81 65 137 145 145"
+fn literal_101() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x4d31203143392038312036352031333720313435203134350000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 24))
+}
+
+// "M1 1C1 89 57.5 145 145 145"
+fn literal_102() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x4d31203143312038392035372e35203134352031343520313435000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 26))
+}
+
+// "M1 1C1 97 49 145 145 145"
+fn literal_103() -> DynString uses (mem: mut RawMem) {
+    let data = core::ptr::alloc_bytes(32)
+
+    mem.mstore(addr: core::ptr::offset_bytes(data, 0), value: 0x4d31203143312039372034392031343520313435203134350000000000000000)
+
+    text::from_span(core::ptr::MemSpan::from_raw_parts(ptr: data, len: 24))
+}

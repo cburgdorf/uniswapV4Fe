@@ -1,0 +1,9 @@
+Parity artifacts: /tmp/fe-v4-permit-foundations-o1
+Compiler: fe 26.3.0 (6a2c08093); sha256=f2b52d52983b63d62f7cb147bdc8bace8af10037185c12d4fe1ade2093c472c7
+error[3-0033]: string type exceeds inline capacity
+   ┌─ src/eip712.fe:21:19
+   │
+21 │         let text: String<67> = "EIP712Domain(string name,uint256 chainId,address verifyingContract)"
+   │                   ^^^^^^^^^^ `String<67>` exceeds the current inline limit of `String<31>`
+   │
+   = strings currently use one word of storage: 1 length byte and 31 payload bytes

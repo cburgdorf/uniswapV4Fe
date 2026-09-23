@@ -1,0 +1,330 @@
+// SPDX-License-Identifier: UNLICENSED
+// Fe ports of the upstream v4-periphery test mocks that make abstract routers
+// concrete (test/mocks/MockV4Router.sol). They let the unmodified upstream
+// router tests exercise the Fe router; they are not production contracts.
+use core::abi::{ByteInput, Decode, checked_tail, store_word}
+use core::ptr::{self, MemBuffer}
+use std::abi::{Bytes, DynString, Sol, sol}
+use std::evm::{Address, Ctx, Call, RawMem, RawOps, CallData, copy_returndata, revert, revert_error}
+use super::{router::{self, AnyPool}, payments::{TokenPayer, Permit2Payment}}
+use super::calldata_decoder::{View, SliceOutOfBounds, argument_bytes}
+use super::permissioned_router::{PermissionedPayment, PermissionedPools}
+use super::multicall::Calls
+use super::{currency::Currency, permissions_adapter_io, metadata_text}
+
+// Locker.LOCKED_BY_SLOT
+const LOCKED_BY_SLOT: u256 = 0x0aedd6bde10e3aa2adec092b02a3e3e805795516cda41f27aa145b8f300af87a
+#[error]
+pub struct ContractLocked {}
+#[error]
+pub struct NotPoolManager {}
+#[error]
+pub struct Error { pub reason: DynString }
+
+// MockV4Router._pay: own funds are transferred, others use solmate safeTransferFrom.
+pub struct DirectPayment {}
+impl Copy for DirectPayment {}
+impl TokenPayer for DirectPayment {
+    fn pay(self, _ manager: Address, _ token: Address, _ payer: Address, _ amount: u256)
+    uses (ctx: Ctx, call: mut Call, mem: mut RawMem)
+    {
+        if payer == ctx.address() {
+            Currency { address: token }.transfer(manager, amount)
+        } else {
+            permissions_adapter_io::transfer_from(token, payer, manager, amount)
+        }
+    }
+}
+
+msg MockRouterMsg {
+    #[selector = sol("executeActions(bytes)")]
+    Execute { params: Bytes },
+    #[selector = sol("executeActionsAndSweepExcessETH(bytes)")]
+    ExecuteAndSweep { params: Bytes },
+    #[selector = sol("unlockCallback(bytes)")]
+    Callback { data: Bytes } -> Bytes,
+    #[selector = sol("poolManager()")]
+    Manager {} -> Address,
+    #[selector = sol("msgSender()")]
+    Sender {} -> Address,
+}
+msg UnlockMsg {
+    #[selector = sol("unlock(bytes)")]
+    Unlock { data: Bytes } -> Bytes,
+}
+
+// ReentrancyLock.isNotLocked around BaseActionsRouter._executeActions.
+fn execute_locked(_ manager: Address, _ params: Bytes)
+uses (ctx: Ctx, call: mut Call, ops: mut RawOps)
+{
+    let slot = ops.tstor_ptr<Address>(LOCKED_BY_SLOT)
+    if slot.read().inner != 0 {
+        revert_error(ContractLocked {})
+    }
+    slot.write(ctx.caller())
+    let _ = call.call(addr: manager, gas: ctx.gas(), value: 0, message: UnlockMsg::Unlock { data: params })
+    slot.write(Address { inner: 0 })
+}
+
+pub contract MockV4Router {
+    manager: Address,
+    init(_poolManager: Address) uses (mut manager) {
+        manager = _poolManager
+    }
+    recv {
+        #[payable]
+        MockRouterMsg::Execute { params } uses (manager, ctx: Ctx, call: mut Call, ops: mut RawOps) {
+            execute_locked(manager, params)
+        }
+        #[payable]
+        MockRouterMsg::ExecuteAndSweep { params } uses (manager, ctx: Ctx, call: mut Call, ops: mut RawOps) {
+            execute_locked(manager, params)
+            let balance = ctx.selfbalance()
+            if balance > 0 {
+                // solmate SafeTransferLib.safeTransferETH
+                let mut ret = MemBuffer::empty()
+                let args = MemBuffer::empty()
+                let result = call.raw_call(addr: ctx.caller(), gas: ctx.gas(), value: balance, args: args.span(), ret: mut ret)
+                if !result.success() {
+                    revert_error(Error { reason: metadata_text::word((eth_transfer_failed() as u256) << 104, 19) })
+                }
+            }
+        }
+        MockRouterMsg::Callback { data } -> Bytes uses (
+            manager,
+            ctx: Ctx,
+            call: mut Call,
+            mem: mut RawMem,
+            ops: RawOps,
+        ) {
+            if ctx.caller() != manager {
+                revert_error(NotPoolManager {})
+            }
+            router::execute(
+                DirectPayment {},
+                AnyPool {},
+                manager,
+                ops.tstor_ptr<Address>(LOCKED_BY_SLOT).read(),
+                argument_bytes(0),
+            )
+            Bytes::from_word_prefix(word: 0, len: 0)
+        }
+        MockRouterMsg::Manager {} -> Address uses (manager) {
+            manager
+        }
+        MockRouterMsg::Sender {} -> Address uses (ops: RawOps) {
+            ops.tstor_ptr<Address>(LOCKED_BY_SLOT).read()
+        }
+        #[payable]
+        _ {
+            if CallData::new().len() != 0 {
+                revert(())
+            }
+        }
+    }
+}
+
+fn eth_transfer_failed() -> String<19> {
+    "ETH_TRANSFER_FAILED"
+}
+
+// test/mocks/MockPermissionedRouter.sol: Universal Router style commands around
+// the abstract PermissionedV4Router with Permit2 funding.
+#[error]
+pub struct InvalidEthSender {}
+#[error]
+pub struct TransactionDeadlinePassed {}
+#[error]
+pub struct LengthMismatch {}
+#[error]
+pub struct InvalidCommandType { pub commandType: u256 }
+#[error]
+pub struct ExecutionFailed { pub commandIndex: u256, pub message: Bytes }
+const COMMAND_V4_SWAP: u256 = 0x10
+const COMMAND_PERMIT2_PERMIT: u256 = 0x0a
+const COMMAND_FLAG_ALLOW_REVERT: u256 = 0x80
+const COMMAND_TYPE_MASK: u256 = 0x3f
+const ADDRESS_MAX: u256 = 0xffffffffffffffffffffffffffffffffffffffff
+const UINT48_MAX: u256 = 0xffffffffffff
+
+msg MockPermissionedMsg {
+    // Explicit selectors: Calls implements the lazy bytes[] calldata codec.
+    #[selector = 0x3593564c]
+    ExecuteDeadline { commands: Bytes, inputs: Calls, deadline: u256 },
+    #[selector = 0x24856bc3]
+    Execute { commands: Bytes, inputs: Calls },
+    #[selector = sol("unlockCallback(bytes)")]
+    Callback { data: Bytes } -> Bytes,
+    #[selector = sol("poolManager()")]
+    Manager {} -> Address,
+    #[selector = sol("PERMISSIONS_ADAPTER_FACTORY()")]
+    Factory {} -> Address,
+    #[selector = sol("PERMIT2()")]
+    Permit {} -> Address,
+    #[selector = sol("WETH9()")]
+    Weth {} -> Address,
+    #[selector = sol("msgSender()")]
+    Sender {} -> Address,
+}
+
+// ReentrancyLock.isNotLocked around the command loop.
+fn run_commands(_ manager: Address, _ permit2: Address, _ commands: View, _ inputs: Calls)
+uses (ctx: Ctx, call: mut Call, mem: mut RawMem, ops: mut RawOps)
+{
+    let slot = ops.tstor_ptr<Address>(LOCKED_BY_SLOT)
+    if slot.read().inner != 0 {
+        revert_error(ContractLocked {})
+    }
+    slot.write(ctx.caller())
+    let count = commands.len
+    if inputs.len != count { revert_error(LengthMismatch {}) }
+    let input = CallData::new()
+    let mut i: u256 = 0
+    while i < count {
+        let command = input.word_at(commands.offset + i) >> 248
+        let tail = checked_tail<Sol>(inputs.offset, input.word_at(inputs.offset + i * 32))
+        let _ = <Bytes as Decode<Sol>>::decode_from(input, tail)
+        let item = View { offset: tail + 32, len: input.word_at(tail) }
+        let (success, output) = dispatch(manager, permit2, slot.read(), command, item)
+        if !success && command & COMMAND_FLAG_ALLOW_REVERT == 0 {
+            revert_error(ExecutionFailed { commandIndex: i, message: output })
+        }
+        i += 1
+    }
+    slot.write(Address { inner: 0 })
+}
+
+fn dispatch(_ manager: Address, _ permit2: Address, _ sender: Address, _ command_type: u256, _ inputs: View) -> (bool, Bytes)
+uses (ctx: Ctx, call: mut Call, mem: mut RawMem)
+{
+    let command = command_type & COMMAND_TYPE_MASK
+    if command == COMMAND_PERMIT2_PERMIT {
+        permit(permit2, sender, inputs)
+    } else if command == COMMAND_V4_SWAP {
+        let _ = call.call(addr: manager, gas: ctx.gas(), value: 0, message: UnlockMsg::Unlock { data: inputs.bytes() })
+        (true, Bytes::from_word_prefix(word: 0, len: 0))
+    } else {
+        revert_error(InvalidCommandType { commandType: command })
+    }
+}
+
+// PERMIT2.call(abi.encodeWithSignature("permit(...)", msgSender(), permitSingle, _toBytes(inputs, 6)))
+fn permit(_ permit2: Address, _ owner: Address, _ inputs: View) -> (bool, Bytes)
+uses (ctx: Ctx, call: mut Call, mem: mut RawMem)
+{
+    let data = to_bytes(inputs, 6)
+    // Calldata struct fields are validated while abi-encoding them.
+    if inputs.word(0) > ADDRESS_MAX || inputs.word(32) > ADDRESS_MAX || inputs.word(64) > UINT48_MAX
+        || inputs.word(96) > UINT48_MAX || inputs.word(128) > ADDRESS_MAX {
+        revert(())
+    }
+    let padded = (data.len + 31) / 32 * 32
+    let size = 4 + 9 * 32 + padded
+    let args = MemBuffer::alloc(size)
+    ptr::zero_bytes(args.ptr(), size)
+    store_word(ptr: args.ptr(), value: (sol("permit(address,((address,uint160,uint48,uint48),address,uint256),bytes)") as u256) << 224)
+    store_word(ptr: ptr::offset_bytes(args.ptr(), 4), value: owner.inner)
+    let mut i: u256 = 0
+    while i < 6 {
+        store_word(ptr: ptr::offset_bytes(args.ptr(), 36 + i * 32), value: inputs.word(i * 32))
+        i += 1
+    }
+    store_word(ptr: ptr::offset_bytes(args.ptr(), 228), value: 0x100)
+    store_word(ptr: ptr::offset_bytes(args.ptr(), 260), value: data.len)
+    CallData::new().copy_to_memory_unchecked_aligned(dest: ptr::offset_bytes(args.ptr(), 292), src_offset: data.offset, len: data.len)
+    let mut ret = MemBuffer::with_capacity(0)
+    let outcome = call.raw_call(addr: permit2, gas: ctx.gas(), value: 0, args: args.span(), ret: mut ret)
+    (outcome.success(), Bytes::from_payload(source: copy_returndata().span()))
+}
+
+// MockPermissionedRouter._toBytes: unmasked offsets and a checked end.
+#[arithmetic(unchecked)]
+fn to_bytes(_ bytes: View, _ arg: u256) -> View {
+    let length_ptr = bytes.offset + bytes.word(arg << 5)
+    let length = CallData::new().word_at(length_ptr)
+    let offset = length_ptr + 32
+    let relative = offset - bytes.offset
+    if bytes.len < checked_add(length, relative) { revert_error(SliceOutOfBounds {}) }
+    View { offset, len: length }
+}
+fn checked_add(_ a: u256, _ b: u256) -> u256 {
+    a + b
+}
+
+pub contract MockPermissionedRouter {
+    manager: Address,
+    permit2: Address,
+    factory: Address,
+    weth: Address,
+    init(poolManager_: Address, permit2_: Address, permissionsAdapterFactory_: Address, weth9_: Address)
+    uses (mut manager, mut permit2, mut factory, mut weth)
+    {
+        manager = poolManager_
+        permit2 = permit2_
+        factory = permissionsAdapterFactory_
+        weth = weth9_
+    }
+    recv {
+        #[payable]
+        MockPermissionedMsg::ExecuteDeadline { commands, inputs, deadline } uses (
+            manager,
+            permit2,
+            ctx: Ctx,
+            call: mut Call,
+            mem: mut RawMem,
+            ops: mut RawOps,
+        ) {
+            if ctx.timestamp() > deadline { revert_error(TransactionDeadlinePassed {}) }
+            run_commands(manager, permit2, argument_bytes(0), inputs)
+        }
+        #[payable]
+        MockPermissionedMsg::Execute { commands, inputs } uses (
+            manager,
+            permit2,
+            ctx: Ctx,
+            call: mut Call,
+            mem: mut RawMem,
+            ops: mut RawOps,
+        ) {
+            run_commands(manager, permit2, argument_bytes(0), inputs)
+        }
+        MockPermissionedMsg::Callback { data } -> Bytes uses (
+            manager,
+            permit2,
+            factory,
+            ctx: Ctx,
+            call: mut Call,
+            mem: mut RawMem,
+            ops: RawOps,
+        ) {
+            if ctx.caller() != manager {
+                revert_error(NotPoolManager {})
+            }
+            let sender = ops.tstor_ptr<Address>(LOCKED_BY_SLOT).read()
+            router::execute(
+                PermissionedPayment { funding: Permit2Payment { permit2 }, factory, sender },
+                PermissionedPools { factory },
+                manager,
+                sender,
+                argument_bytes(0),
+            )
+            Bytes::from_word_prefix(word: 0, len: 0)
+        }
+        MockPermissionedMsg::Manager {} -> Address uses (manager) { manager }
+        MockPermissionedMsg::Factory {} -> Address uses (factory) { factory }
+        MockPermissionedMsg::Permit {} -> Address uses (permit2) { permit2 }
+        MockPermissionedMsg::Weth {} -> Address uses (weth) { weth }
+        MockPermissionedMsg::Sender {} -> Address uses (ops: RawOps) {
+            ops.tstor_ptr<Address>(LOCKED_BY_SLOT).read()
+        }
+        #[payable]
+        _ uses (manager, weth, ctx: Ctx) {
+            if CallData::new().len() != 0 {
+                revert(())
+            }
+            if ctx.caller() != weth && ctx.caller() != manager {
+                revert_error(InvalidEthSender {})
+            }
+        }
+    }
+}

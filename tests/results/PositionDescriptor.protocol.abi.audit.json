@@ -1,0 +1,30 @@
+{
+  "fe_abi_sha256": "69cdfb370bbb120d758892a9e96cfb772379f6def1ea21c83fe02973cb1b385b",
+  "reference_artifact_sha256": "742df25434704c88cc8d3529ba0b55d7e69bd910f036e546f811180232b0a7af",
+  "protocol_abi_sha256": "140f2f8adb11b1a859727054192d03709a6a3e524719b2ce4664d55f69c2ce1c",
+  "adapter_sha256": "ffd85641a3d37178f97aa5a389d46f40711c1195e658e97af9fb028f0812d3e5",
+  "callable_and_event_layouts": "compatible",
+  "reference_metadata_applied": [
+    "constructor:(address,address,bytes32)",
+    "function:currencyRatioPriority(address)",
+    "function:flipRatio(address,address)",
+    "function:nativeCurrencyLabel()",
+    "function:poolManager()",
+    "function:tokenURI(address,uint256)",
+    "function:wrappedNative()"
+  ],
+  "explicit_fallback_receive": false,
+  "explicit_lazy_multicall": false,
+  "explicit_flat_dynamic_returns": [],
+  "fe_error_signatures": [
+    "error:InvalidAddressLength(uint256)",
+    "error:InvalidTick(int24)",
+    "error:InvalidTokenId(uint256)",
+    "error:Panic(uint256)"
+  ],
+  "reference_error_signatures": [
+    "error:InvalidAddressLength(uint256)",
+    "error:InvalidTokenId(uint256)",
+    "error:StringsInsufficientHexLength(uint256,uint256)"
+  ]
+}

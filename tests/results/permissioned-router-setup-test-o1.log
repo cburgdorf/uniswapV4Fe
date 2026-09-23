@@ -1,0 +1,138 @@
+Parity artifacts: /tmp/fe-permissioned-router-test-o1
+Compiler: fe 26.3.0 (31e5b965e); sha256=e1a92b53c0a5859da469e9d8e4c9830ec1d335c5357202ae7469471ca2c320cd
+error[2-0002]: `sqrt_price_math` is not found
+   ┌─ src/lib.fe:17:9
+   │
+17 │ pub use sqrt_price_math
+   │         ^^^^^^^^^^^^^^^ `sqrt_price_math` is not found
+
+error[2-0002]: `unsafe_math` is not found
+   ┌─ src/lib.fe:19:9
+   │
+19 │ pub use unsafe_math
+   │         ^^^^^^^^^^^ `unsafe_math` is not found
+
+error[2-0002]: `swap_math` is not found
+   ┌─ src/lib.fe:20:9
+   │
+20 │ pub use swap_math
+   │         ^^^^^^^^^ `swap_math` is not found
+
+error[2-0002]: `lp_fee` is not found
+   ┌─ src/lib.fe:21:9
+   │
+21 │ pub use lp_fee
+   │         ^^^^^^ `lp_fee` is not found
+
+error[2-0002]: `protocol_fee` is not found
+   ┌─ src/lib.fe:22:9
+   │
+22 │ pub use protocol_fee
+   │         ^^^^^^^^^^^^ `protocol_fee` is not found
+
+error[2-0002]: `liquidity_math` is not found
+   ┌─ src/lib.fe:23:9
+   │
+23 │ pub use liquidity_math
+   │         ^^^^^^^^^^^^^^ `liquidity_math` is not found
+
+error[2-0002]: `before_swap_delta` is not found
+   ┌─ src/lib.fe:25:9
+   │
+25 │ pub use before_swap_delta
+   │         ^^^^^^^^^^^^^^^^^ `before_swap_delta` is not found
+
+error[2-0002]: `slot0` is not found
+   ┌─ src/lib.fe:26:9
+   │
+26 │ pub use slot0
+   │         ^^^^^ `slot0` is not found
+
+error[2-0002]: `fixed_point` is not found
+   ┌─ src/lib.fe:27:9
+   │
+27 │ pub use fixed_point
+   │         ^^^^^^^^^^^ `fixed_point` is not found
+
+error[2-0002]: `tick_bitmap` is not found
+   ┌─ src/lib.fe:28:9
+   │
+28 │ pub use tick_bitmap
+   │         ^^^^^^^^^^^ `tick_bitmap` is not found
+
+error[2-0002]: `position` is not found
+   ┌─ src/lib.fe:29:9
+   │
+29 │ pub use position
+   │         ^^^^^^^^ `position` is not found
+
+error[2-0002]: `pool` is not found
+   ┌─ src/lib.fe:30:9
+   │
+30 │ pub use pool
+   │         ^^^^ `pool` is not found
+
+error[2-0002]: `pool_swap` is not found
+   ┌─ src/lib.fe:31:9
+   │
+31 │ pub use pool_swap
+   │         ^^^^^^^^^ `pool_swap` is not found
+
+error[2-0002]: `hooks` is not found
+   ┌─ src/lib.fe:38:9
+   │
+38 │ pub use hooks
+   │         ^^^^^ `hooks` is not found
+
+error[2-0002]: `claims` is not found
+   ┌─ src/lib.fe:40:9
+   │
+40 │ pub use claims
+   │         ^^^^^^ `claims` is not found
+
+error[2-0002]: `owned` is not found
+   ┌─ src/lib.fe:42:9
+   │
+42 │ pub use owned
+   │         ^^^^^ `owned` is not found
+
+error[2-0002]: `protocol_fees` is not found
+   ┌─ src/lib.fe:44:9
+   │
+44 │ pub use protocol_fees
+   │         ^^^^^^^^^^^^^ `protocol_fees` is not found
+
+error[2-0002]: `extload` is not found
+   ┌─ src/lib.fe:46:9
+   │
+46 │ pub use extload
+   │         ^^^^^^^ `extload` is not found
+
+error[2-0002]: `manager` is not found
+   ┌─ src/lib.fe:48:9
+   │
+48 │ pub use manager
+   │         ^^^^^^^ `manager` is not found
+
+error[2-0002]: `liquidity_amounts` is not found
+   ┌─ src/lib.fe:50:9
+   │
+50 │ pub use liquidity_amounts
+   │         ^^^^^^^^^^^^^^^^^ `liquidity_amounts` is not found
+
+error[2-0002]: `slippage_check` is not found
+   ┌─ src/lib.fe:51:9
+   │
+51 │ pub use slippage_check
+   │         ^^^^^^^^^^^^^^ `slippage_check` is not found
+
+Traceback (most recent call last):
+  File "/home/cburgdorf/Documents/hacking/fe/uniswap_v4_demo/tests/run_math_parity.py", line 155, in <module>
+    subprocess.run([str(args.fe.resolve()), 'build', str(build_root), '--contract', harness,
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                    '-O', args.optimize, '--out-dir', str(work / 'fe')], check=True)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/linuxbrew/.linuxbrew/Cellar/python@3.14/3.14.4/lib/python3.14/subprocess.py", line 578, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['/tmp/fe-uniswap-current2/target/release/fe', 'build', '/tmp/fe-permissioned-router-test-o1/ingot', '--contract', 'PermissionedRouterHarness', '-O', '1', '--out-dir', '/tmp/fe-permissioned-router-test-o1/fe']' returned non-zero exit status 1.

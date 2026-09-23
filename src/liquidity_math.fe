@@ -1,0 +1,12 @@
+// SPDX-License-Identifier: MIT
+// Port of Uniswap v4-core LiquidityMath.sol.
+use std::evm::revert_error
+use super::safe_cast::SafeCastOverflow
+
+pub fn add_delta(_ liquidity: u128, _ delta: i128) -> u128 {
+    let result = (liquidity as i256) + (delta as i256)
+    if result < 0 || result > 0xffffffffffffffffffffffffffffffff {
+        revert_error(SafeCastOverflow {})
+    }
+    result.downcast_truncate()
+}

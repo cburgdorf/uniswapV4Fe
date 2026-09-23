@@ -1,0 +1,808 @@
+{
+  "v4-core": {
+    "url": "https://github.com/Uniswap/v4-core",
+    "revision": "46c6834698c48bc4a463a86d8420f4eb1d7f3b75",
+    "dependencies": [
+      "160000 commit 1de6eecf821de7fe2c908cc48d3ab3dced20717f\tforge-std",
+      "160000 commit dbb6104ce834628e473d2173bbc9d47f81a9eec3\topenzeppelin-contracts",
+      "160000 commit 4b47a19038b798b4a33d9749d25e570443520647\tsolmate"
+    ],
+    "sources": {
+      "src/ERC6909.sol": {
+        "sha256": "0f1bf94844851b561ae53d57263366d18f4c4431eb47096871e8715837c6ec9d",
+        "status": "ported in claims.fe; 70000 differential cases per O1/O2, each at roots 0 and 3, plus rollback/lifecycle/boundary scenarios; raw storage and all logs match; PoolManager mint/burn integration pending; see tests/results/claims-parity-o2.json"
+      },
+      "src/ERC6909Claims.sol": {
+        "sha256": "6fa9989899398646fd7c33f837254a69e7c75b77af120970ede397c3d0fbdc37",
+        "status": "ported in claims.fe; 70000 differential cases per O1/O2, each at roots 0 and 3, plus rollback/lifecycle/boundary scenarios; raw storage and all logs match; PoolManager mint/burn integration pending; see tests/results/claims-parity-o2.json"
+      },
+      "src/Extsload.sol": {
+        "sha256": "ac157c05d62562eed212cdf290046a85d192e7b1f8aba69c3ce358b0ebac4279",
+        "status": "ported in extload.fe; O1/O2 each pass 50000 differential cases plus two scenarios, malformed ABI and wrapping range cases included; complete harness ABI matches; requires recorded local core ABI bounds fix; PoolManager integration pending; see tests/results/extload-parity-o2.json"
+      },
+      "src/Exttload.sol": {
+        "sha256": "386b5618307a20144a44308b81188c7755a6c279db6c5824cf63a910864324d4",
+        "status": "ported in extload.fe; O1/O2 each pass 50000 differential cases plus two scenarios, malformed ABI and wrapping range cases included; complete harness ABI matches; requires recorded local core ABI bounds fix; PoolManager integration pending; see tests/results/extload-parity-o2.json"
+      },
+      "src/NoDelegateCall.sol": {
+        "sha256": "525bf4df92c4ac0fd582e1b6ac18fdfb5d147d410f38f19231e4c9a469187415",
+        "status": "pending"
+      },
+      "src/PoolManager.sol": {
+        "sha256": "3b6ab111dadf613e3cfd617e4b1c6ab75b5445cd15cbe52d7c6207fc02449717",
+        "status": "pending; delta-accounting helpers ported in transient.fe and tested against a mirrored reference helper; complete PoolManager/unlock/settlement not implemented"
+      },
+      "src/ProtocolFees.sol": {
+        "sha256": "bdabfbdfa0d8692ee187ffab948c295c2c6ebcc2dcf86e552fba3491309843c6",
+        "status": "ported in protocol_fees.fe; 50000 differential cases per O1/O2 plus three scenarios each; exact state/events/reverts and transfer rollback; PoolManager integration pending; see tests/results/protocol-fees-parity-o2.json"
+      },
+      "src/interfaces/IExtsload.sol": {
+        "sha256": "9421ef4ba198d94058cd9a4c9fd2d663c61fc682f7dafa449a873456853f0025",
+        "status": "ported in extload.fe; O1/O2 each pass 50000 differential cases plus two scenarios, malformed ABI and wrapping range cases included; complete harness ABI matches; requires recorded local core ABI bounds fix; PoolManager integration pending; see tests/results/extload-parity-o2.json"
+      },
+      "src/interfaces/IExttload.sol": {
+        "sha256": "c21643d2c7f48d2d2407438a64a3ff0f376324cf6a0c62608977713652308c9e",
+        "status": "ported in extload.fe; O1/O2 each pass 50000 differential cases plus two scenarios, malformed ABI and wrapping range cases included; complete harness ABI matches; requires recorded local core ABI bounds fix; PoolManager integration pending; see tests/results/extload-parity-o2.json"
+      },
+      "src/interfaces/IHooks.sol": {
+        "sha256": "6eb35c9c598eb932e963219f1ff180748bc4c30ac6a02d924893b3c29abb1d73",
+        "status": "all ten callback wire signatures/call data implemented and validated through hooks.fe dispatch; separate hook-author interface module not yet provided"
+      },
+      "src/interfaces/IPoolManager.sol": {
+        "sha256": "a98405333567e4ab344489728014795721cf0071c151536377d2fcc986e0600c",
+        "status": "pending"
+      },
+      "src/interfaces/IProtocolFees.sol": {
+        "sha256": "807d68adea106ec2aa51a8009155de09ebfe09e1ee7053d5a5ae448d7e840654",
+        "status": "external protocol fee harness implemented; O1/O2 runtime/event parity validated; ABI errors, accrued getter mutability and return names still differ; see tests/results/protocol-fees-abi-o2.json"
+      },
+      "src/interfaces/callback/IUnlockCallback.sol": {
+        "sha256": "2e4a514730654da2e08a82eff5b3eabae12dc1c6198951396e1d466d4c0e223e",
+        "status": "pending"
+      },
+      "src/interfaces/external/IERC20Minimal.sol": {
+        "sha256": "5e966a2d22b3b234a56af4b17e36bf7be90f9b29b1ddb6a15bfefc0b6dab4282",
+        "status": "pending"
+      },
+      "src/interfaces/external/IERC6909Claims.sol": {
+        "sha256": "1cd65496c829036bc6aee67bc71363ab5fb6989c65e793087d0e1e2379f7d7d8",
+        "status": "all methods/events implemented by claims library and test harness; event ABI metadata validated; final PoolManager exposure and getter metadata remain pending"
+      },
+      "src/libraries/BitMath.sol": {
+        "sha256": "e8a45eb3d57f9427fc47bbb2543c1a6a5f394113b378123ac7ca9f113a7502b4",
+        "status": "ported; Solidity differential tests passed at O1 and O2 with Fe aad737010; see tests/results"
+      },
+      "src/libraries/CurrencyDelta.sol": {
+        "sha256": "dfbb3d232c2d52bb09c8dcbb38b4a8fd16c616b8e6bf49e6f4ee948760530f7b",
+        "status": "ported in transient.fe; 60000 differential fuzz cases plus two scenarios passed at each of O1/O2; transaction reset verified with Anvil; see tests/results/transient-parity-o2.json and transient-transactions-o2.json"
+      },
+      "src/libraries/CurrencyReserves.sol": {
+        "sha256": "b38f1d3807d90bbccb865c0d96caf1ef92d6df9b69adbbe43b1d12e1241523c9",
+        "status": "ported in transient.fe; 60000 differential fuzz cases plus two scenarios passed at each of O1/O2; transaction reset verified with Anvil; see tests/results/transient-parity-o2.json and transient-transactions-o2.json"
+      },
+      "src/libraries/CustomRevert.sol": {
+        "sha256": "9d3dbe6b742cb1ac30f57df89d879ade9649389de1165fc637114bd062d39fca",
+        "status": "partial: ERC-7751 bubbleUpAndRevertWith implemented as currency::wrap_last_error and tested; general overload helpers remain pending (callers use typed Fe errors)"
+      },
+      "src/libraries/FixedPoint128.sol": {
+        "sha256": "1ca2f55160697b73bd66fd27c8724d79a57108121ce1e8a0ab8b79f38bb58fbb",
+        "status": "ported; foundation differential suite passed at O2, 60000 fuzz cases plus boundaries; see tests/results/foundation-parity-o2.json"
+      },
+      "src/libraries/FixedPoint96.sol": {
+        "sha256": "66ee26d4fb3ac639124bdfa27d3256d196970997fa127c09e9bf7154e30d4590",
+        "status": "ported; foundation differential suite passed at O2, 60000 fuzz cases plus boundaries; see tests/results/foundation-parity-o2.json"
+      },
+      "src/libraries/FullMath.sol": {
+        "sha256": "a9607255a6fd604d9c92f6b7416811c38b9d86e5dfdb0c345a494ebd35f7a4a3",
+        "status": "ported; Solidity differential tests passed at O1 and O2 with Fe aad737010; see tests/results"
+      },
+      "src/libraries/Hooks.sol": {
+        "sha256": "297d577998cdede64d48b47b12f15e4f442eea032fbb9676bb3c2f89da89b83c",
+        "status": "ported in hooks.fe: all permissions, callbacks, response/delta rules; 80000 differential cases plus four scenarios passed at each O1/O2; callback calldata/counts and independent delta models checked; PoolManager integration pending; see tests/results/hooks-parity-o2.json"
+      },
+      "src/libraries/LPFeeLibrary.sol": {
+        "sha256": "e96c3fa7deac991dc09b6c5e560a340d01d6c68ccba483d4b29f8a66e5aa44e0",
+        "status": "ported; foundation differential suite passed at O2, 60000 fuzz cases plus boundaries; see tests/results/foundation-parity-o2.json"
+      },
+      "src/libraries/LiquidityMath.sol": {
+        "sha256": "67a39e58732340af4870342ba9230691f35501d89ed8725ca1b338deaa0eb26a",
+        "status": "ported; foundation differential suite passed at O2, 60000 fuzz cases plus boundaries; see tests/results/foundation-parity-o2.json"
+      },
+      "src/libraries/Lock.sol": {
+        "sha256": "29cd41a53de22514164e638e7bc965ccf4d9f34b455b43a1a15e06a8cb86e7f1",
+        "status": "ported in transient.fe; 60000 differential fuzz cases plus two scenarios passed at each of O1/O2; transaction reset verified with Anvil; see tests/results/transient-parity-o2.json and transient-transactions-o2.json"
+      },
+      "src/libraries/NonzeroDeltaCount.sol": {
+        "sha256": "0ae35ca64da2527b4e1f7afa4ca10c4b65af952dc473c33b6663101e8d199f40",
+        "status": "ported in transient.fe; 60000 differential fuzz cases plus two scenarios passed at each of O1/O2; transaction reset verified with Anvil; see tests/results/transient-parity-o2.json and transient-transactions-o2.json"
+      },
+      "src/libraries/ParseBytes.sol": {
+        "sha256": "6a6f3d1cec0143fd70ea68c34e6dce3bde72f368b213f1a225ada23dbfd99bb8",
+        "status": "bounded hook-response parsing implemented inside hooks.fe and differentially validated; standalone unchecked parsing of arbitrary memory is not exposed"
+      },
+      "src/libraries/Pool.sol": {
+        "sha256": "59c493035ad25d56f24a457e8b40d9d1e3784504b8ff13d171db1eb25c6f128e",
+        "status": "ported in pool.fe and pool_swap.fe; complete Pool library actions/tick accounting verified by 50000 fuzz cases each at O1/O2 plus multi-tick, multiple-root and error scenarios; PoolManager still pending; see tests/results/pool-parity-o2.json"
+      },
+      "src/libraries/Position.sol": {
+        "sha256": "3dc4e2ad1564fa94eddf3ff06ce9ac592c9d578ea64ca194050382da454c8fcb",
+        "status": "ported; stateful differential suite passed at O1 and O2, including exact storage and reverting operations; see tests/results/state-parity-o2.json"
+      },
+      "src/libraries/ProtocolFeeLibrary.sol": {
+        "sha256": "f8d96d9c8b5d12ab927b34551699bd7086750475f70254c9505e636f2cafe56a",
+        "status": "ported; foundation differential suite passed at O2, 60000 fuzz cases plus boundaries; see tests/results/foundation-parity-o2.json"
+      },
+      "src/libraries/SafeCast.sol": {
+        "sha256": "c1a815a41607be5b4c86ca588a951f368156da8ee21bdfc18b5d51b58a0f27be",
+        "status": "ported; Solidity differential tests passed at O1 and O2 with Fe aad737010; see tests/results"
+      },
+      "src/libraries/SqrtPriceMath.sol": {
+        "sha256": "42440c21bbab86c7eed4716b281ed5ca281cf14af8b5e06dc6dc3bc6864bcfdf",
+        "status": "ported; Solidity differential tests passed at O1 and O2 with Fe aad737010; see tests/results"
+      },
+      "src/libraries/StateLibrary.sol": {
+        "sha256": "eebdbc1b6e431072ce5521b9e1b603d43831e3b6e062743e6665e070d5cf8a1a",
+        "status": "pending"
+      },
+      "src/libraries/SwapMath.sol": {
+        "sha256": "eb3971ea0ba84ff0a01f2fbe43f62f9c393121ef1724774ed3f3ab7760780e4a",
+        "status": "ported; Solidity differential tests passed at O1 and O2 with Fe aad737010; see tests/results"
+      },
+      "src/libraries/TickBitmap.sol": {
+        "sha256": "19b25dccfac8bd90f9d615fb182547eb7b5908a5cbf21a1c5920b92c47383cb6",
+        "status": "ported with static StorageMap and explicit runtime-root views; shared algorithms verified by state-bitmap-refactor-o2 and pool-parity-o1/o2; dynamic inferred-layout limitation documented"
+      },
+      "src/libraries/TickMath.sol": {
+        "sha256": "272d4f6d3ff9ae33596ebcdb84a71a3c2d4542ae8fb5c88ddf1aca8043f5d06b",
+        "status": "ported; Solidity differential tests passed at O1 and O2 with Fe aad737010; see tests/results"
+      },
+      "src/libraries/TransientStateLibrary.sol": {
+        "sha256": "9835fca9df8b3f649def66835c5d7ee68de6a6cbe92bf255eb5d8b92a6a8d60e",
+        "status": "pending"
+      },
+      "src/libraries/UnsafeMath.sol": {
+        "sha256": "2de236e7ca0b9572a6b0184557565b6fd54e177224e202c727fe248785ede427",
+        "status": "ported; Solidity differential tests passed at O1 and O2 with Fe aad737010; see tests/results"
+      },
+      "src/test/ActionsRouter.sol": {
+        "sha256": "b3a0e95010e4d7051b7579c81821addc1d81279a05ca5b6bcf136a93e8acc478",
+        "status": "pending"
+      },
+      "src/test/BaseTestHooks.sol": {
+        "sha256": "ac535ee6301586f36b6240e2f496fb299915c1c54dfcc3eb90fb57f76432abf4",
+        "status": "pending"
+      },
+      "src/test/CurrencyTest.sol": {
+        "sha256": "ba662cda5b0f018dc7a7348aa343920b0a922bc860e9ad6f6c4ec66489a07bc0",
+        "status": "pending"
+      },
+      "src/test/CustomCurveHook.sol": {
+        "sha256": "145216cb0c4f263125efba66df91f02dd96f7d4b733e8ade1fc3a3cc56009ffb",
+        "status": "pending"
+      },
+      "src/test/DeltaReturningHook.sol": {
+        "sha256": "5360edad1d60b16fa290a3dbe16f4f3008b0102ded70ea3f52d258ab57933b9f",
+        "status": "pending"
+      },
+      "src/test/DynamicFeesTestHook.sol": {
+        "sha256": "d26f59050cca55c4af697285c1259988ccc245bc357e8ee2f330fd723613bdbf",
+        "status": "pending"
+      },
+      "src/test/DynamicReturnFeeTestHook.sol": {
+        "sha256": "1c0971ff01541ce9b5084b269847e760e9da2e40e0414376adeb38d24b21ce85",
+        "status": "pending"
+      },
+      "src/test/EmptyRevertContract.sol": {
+        "sha256": "95b7fc4af49b832668fb380a5b221a3b1ec481f881ababac627a039cd0896ab0",
+        "status": "pending"
+      },
+      "src/test/EmptyTestHooks.sol": {
+        "sha256": "13adf0d1447ef0b35f94acdd410dd9e3ca6c899f8c6fa53b2ead61917fbc8b78",
+        "status": "pending"
+      },
+      "src/test/FeeTakingHook.sol": {
+        "sha256": "2f7e9222cdb5bbe185af69de513edb3f307134ce9f75d52699929592a9e3a20f",
+        "status": "pending"
+      },
+      "src/test/Fuzzers.sol": {
+        "sha256": "0a5d87497ebdf5a5b492abe82e426622bf82cff42e54f4924f6a2bc435fed1e1",
+        "status": "pending"
+      },
+      "src/test/HooksTest.sol": {
+        "sha256": "dd05136bb7ae48a6533486a4f5d11d90c9d8551d187d673b6752444176a3aa93",
+        "status": "pending"
+      },
+      "src/test/LPFeeTakingHook.sol": {
+        "sha256": "151103331bf4d3a85abca2a6de3749b61d9d4022d23bd6d4e4177047c88d77b8",
+        "status": "pending"
+      },
+      "src/test/LiquidityMathTest.sol": {
+        "sha256": "0f210baea1699e8f9b897434c6e2882fa87e41d5d971983d7c65bc3a1c0c64b5",
+        "status": "pending"
+      },
+      "src/test/MockContract.sol": {
+        "sha256": "a0b2843481f9932a1bdf14404ebe3564a352281352db19e2d2dd0a73b88dac3a",
+        "status": "pending"
+      },
+      "src/test/MockERC6909Claims.sol": {
+        "sha256": "fa96e4f5e5a8af72065269ecc34bc37f293c2850653a1aef9d3fb0997f25b491",
+        "status": "pending"
+      },
+      "src/test/MockHooks.sol": {
+        "sha256": "c3f930c9e5a28f289881885bf6bea42ea2d9833d2a7f21cf3c8f9e4279f8f972",
+        "status": "pending"
+      },
+      "src/test/NativeERC20.sol": {
+        "sha256": "21b6490d0657608436a9272d383c3f41361ee9ee47318a0704f46bcfc1e55a18",
+        "status": "pending"
+      },
+      "src/test/NoDelegateCallTest.sol": {
+        "sha256": "9041d3a11fb22cc790a104dd550d9098a9491f4d55086be24b8407e5c232cc31",
+        "status": "pending"
+      },
+      "src/test/PoolClaimsTest.sol": {
+        "sha256": "73e4488e5db8eedff5001d83b46a8aa620d337b4b26bf38b27bf9b56eedcf07a",
+        "status": "pending"
+      },
+      "src/test/PoolDonateTest.sol": {
+        "sha256": "d78aeca9df8d49c621d5f0dfba8637174a1dd36e9d7daed97fc65ecf2083369a",
+        "status": "pending"
+      },
+      "src/test/PoolEmptyUnlockTest.sol": {
+        "sha256": "43f0d3e60ba9f48d48a43723100f1c4b40802b1fa5366517e77bba7bfb7ec3eb",
+        "status": "pending"
+      },
+      "src/test/PoolModifyLiquidityTest.sol": {
+        "sha256": "43be2141b83cae264fa9d5278c8a061d4074698458822358a7c09a9748741e9a",
+        "status": "pending"
+      },
+      "src/test/PoolModifyLiquidityTestNoChecks.sol": {
+        "sha256": "9c5638d19c731cf53e6fcab8e18825ab856709c09ee8da8f370c7da80d759212",
+        "status": "pending"
+      },
+      "src/test/PoolNestedActionsTest.sol": {
+        "sha256": "9a1f545764e6b1e68a02504d9c54ccf23e78662f549dedfd696a6c77b6377695",
+        "status": "pending"
+      },
+      "src/test/PoolSwapTest.sol": {
+        "sha256": "1bfd112087ec3abc30ea92cef6e39c9fd502502c9f28dac3d4df9fee7155e6d2",
+        "status": "pending"
+      },
+      "src/test/PoolTakeTest.sol": {
+        "sha256": "7caed276fff2011a310a5ea4f56f491a1617b714c05c0846ba15cff079efca35",
+        "status": "pending"
+      },
+      "src/test/PoolTestBase.sol": {
+        "sha256": "e3ab1cd908af2302b1abfdfa327ea344c297fb879312164392d7020321943833",
+        "status": "pending"
+      },
+      "src/test/ProtocolFeesImplementation.sol": {
+        "sha256": "9d1077571b00ea0748a374c9b1bfb4a08edac504646960a812dd0d2796057c18",
+        "status": "pending"
+      },
+      "src/test/ProxyPoolManager.sol": {
+        "sha256": "6b4bd984b629569c0e368a05f5364da0c6f52ec7b06d4cfd8023fe2d5d9eac56",
+        "status": "pending"
+      },
+      "src/test/SkipCallsTestHook.sol": {
+        "sha256": "4221cb288e46484d50b68840ef5f1f2af643ebb43f4f10eb851eef9dd5701f80",
+        "status": "pending"
+      },
+      "src/test/SqrtPriceMathEchidnaTest.sol": {
+        "sha256": "f1f5fed730f6f363cd8cabf0bb8f0955d11476175f9eeeed643beb752f54cb3e",
+        "status": "pending"
+      },
+      "src/test/SwapRouterNoChecks.sol": {
+        "sha256": "5cc3cc02942091ba5313df221203e453ba85fe6b7246584ecb8e8ef3adc945d5",
+        "status": "pending"
+      },
+      "src/test/TestERC20.sol": {
+        "sha256": "13fb407f26cac7913fefdb1804809ff2cd84d69c39d68ff02810016e9dd94699",
+        "status": "pending"
+      },
+      "src/test/TestInvalidERC20.sol": {
+        "sha256": "d0dad399a898ec1df9f580c1e698e7574f5d0e8bc2050b73efe9be109d765636",
+        "status": "pending"
+      },
+      "src/test/TickMathEchidnaTest.sol": {
+        "sha256": "5c9c5ab1b27361f074eab7b3c3338610133155cce58377124021ec6a1f1bba21",
+        "status": "pending"
+      },
+      "src/test/TickMathTest.sol": {
+        "sha256": "38742c63d785edef51521092047098a58bf0894eb58544ef9555072e3e770156",
+        "status": "pending"
+      },
+      "src/test/TickOverflowSafetyEchidnaTest.sol": {
+        "sha256": "550f91de65fd3a36cefea9866cef19ee1ea62e3f3c5dc7fe34a63a72e09fbbe1",
+        "status": "pending"
+      },
+      "src/types/BalanceDelta.sol": {
+        "sha256": "320d9c13dec135c3903729e66d3a1040fe86d537a7ee53728915012ca183af32",
+        "status": "ported; foundation differential suite passed at O2, including bit layout, signed arithmetic and exact reverts; see tests/results/foundation-parity-o2.json"
+      },
+      "src/types/BeforeSwapDelta.sol": {
+        "sha256": "6aee06f1553e879f5909e8f4c0eac26ec23dd4821a7e56e4d5077db39a227e12",
+        "status": "ported; foundation differential suite passed at O2, including bit layout, signed arithmetic and exact reverts; see tests/results/foundation-parity-o2.json"
+      },
+      "src/types/Currency.sol": {
+        "sha256": "ba6726fd24fbc66848208dfbb2899116c10729c505e6e5552316ac2444f1dfc3",
+        "status": "runtime behavior ported in currency.fe; native/ERC20 differential suite passed at O1/O2; external Currency representation uses canonical Address, verified through PoolKey; complete protocol ABI metadata still pending"
+      },
+      "src/types/PoolId.sol": {
+        "sha256": "548424ac50ad58212545da70207283fb8990731578c115c85d5acbcb0e1d3c9f",
+        "status": "ported in pool_types.fe; canonical structured ABI and PoolId hash verified with 50000 differential cases per O1/O2 plus boundary/truncation scenarios; ABI shapes verified, known mutability metadata mismatch remains; see tests/results/types-parity-o2.json"
+      },
+      "src/types/PoolKey.sol": {
+        "sha256": "99e1afe285b5c614ebc9586ab5196db9d24a63fd924a449f5d99f490a6a6d6a9",
+        "status": "ported in pool_types.fe; canonical structured ABI and PoolId hash verified with 50000 differential cases per O1/O2 plus boundary/truncation scenarios; ABI shapes verified, known mutability metadata mismatch remains; see tests/results/types-parity-o2.json"
+      },
+      "src/types/PoolOperation.sol": {
+        "sha256": "cf72ad0c3e5e91662029e862acd841fabce8753040b0d4e802dee64ef1157232",
+        "status": "ported in pool_types.fe; canonical structured ABI and PoolId hash verified with 50000 differential cases per O1/O2 plus boundary/truncation scenarios; ABI shapes verified, known mutability metadata mismatch remains; see tests/results/types-parity-o2.json"
+      },
+      "src/types/Slot0.sol": {
+        "sha256": "378b45486644dc7e49726358e83d0e2fffdaee088d18cac1a3df00d02c3635b4",
+        "status": "ported; foundation differential suite passed at O2, including bit layout, signed arithmetic and exact reverts; see tests/results/foundation-parity-o2.json"
+      }
+    }
+  },
+  "v4-periphery": {
+    "url": "https://github.com/Uniswap/v4-periphery",
+    "revision": "9969eec44cfdf07e24b41de47f40276a58401976",
+    "dependencies": [
+      "160000 commit cc56ad0f3439c502c246fc5cfcc3db92bb8b7219\tpermit2",
+      "160000 commit 59d3ecf53afa9264a16bba0e38f4c5d2231f80bc\tv4-core"
+    ],
+    "sources": {
+      "src/PositionDescriptor.sol": {
+        "sha256": "91004973a439b5ce80bdb7f68a284bebd41a48355c62493fa14745ec0624aa48",
+        "status": "pending"
+      },
+      "src/PositionManager.sol": {
+        "sha256": "2e3c0043654fea263377c5e09c31344946751c8b8ace60580f5090385d3b4428",
+        "status": "pending"
+      },
+      "src/UniswapV4DeployerCompetition.sol": {
+        "sha256": "3a5b2a1d9aa3f6875746bbd151b25709bf7672a795afa9b2438bf206aecf0b7b",
+        "status": "pending"
+      },
+      "src/V4Router.sol": {
+        "sha256": "2a5046ad7dbc39e12e89b4cfa6536cb7ca79da4116b2fe9bc54a0638ea1bf93a",
+        "status": "pending"
+      },
+      "src/base/BaseActionsRouter.sol": {
+        "sha256": "e3ceda8c5bb24d3e439aef94d004fdce7956439bc74c5c5bcd86e2cb9455e813",
+        "status": "pending"
+      },
+      "src/base/BaseV4Quoter.sol": {
+        "sha256": "78c4d90510c21e90dfd20242bf42bf79ed911d172a6f5fa67912cee936a2632a",
+        "status": "pending"
+      },
+      "src/base/DeltaResolver.sol": {
+        "sha256": "f72fc92131cf8fe0d6797ffe50290dbd6f12338a5773ba61847211652527f5f5",
+        "status": "pending"
+      },
+      "src/base/EIP712_v4.sol": {
+        "sha256": "5468276540ebe52a5e84dd9b0f45e7af833a0ec17c83a87b8a80c9dde1ea70cb",
+        "status": "pending"
+      },
+      "src/base/ERC721Permit_v4.sol": {
+        "sha256": "20ea450546f8904fc2325ecfc096144a46ab946b2543b8f91e9f16ca688e74c8",
+        "status": "pending"
+      },
+      "src/base/ImmutableState.sol": {
+        "sha256": "d3ef34f9c00fae08ec1eb24aa341d5d916c4d6d62e6c2118ef4afe9c7470fde5",
+        "status": "pending"
+      },
+      "src/base/Multicall_v4.sol": {
+        "sha256": "4abf8420610db70687e200ff315db4d9093a79fe640a3a7c457ce427100ea4e4",
+        "status": "pending"
+      },
+      "src/base/NativeWrapper.sol": {
+        "sha256": "8ca41a32e3c8e42866e6486fccd2e805b702cb583bf222c2d2da4bd429a23aa2",
+        "status": "pending"
+      },
+      "src/base/Notifier.sol": {
+        "sha256": "71d667d5abb48c1767f177ad781196fccc74e75082021df3630df7574e4a44a8",
+        "status": "pending"
+      },
+      "src/base/Permit2Forwarder.sol": {
+        "sha256": "be0db7277904908724b64b31e9a1ed266f96d8e98914b1c5ae43930121708935",
+        "status": "pending"
+      },
+      "src/base/PoolInitializer_v4.sol": {
+        "sha256": "142555120536369dcdd8e9ea363945f0babb256048054c9318091c7cb2d80461",
+        "status": "pending"
+      },
+      "src/base/ReentrancyLock.sol": {
+        "sha256": "a30c768301d6a3fb9befefd9efeecca7ba22b8bfac5e5e2c891410e14775fb10",
+        "status": "pending"
+      },
+      "src/base/SafeCallback.sol": {
+        "sha256": "0c25eef89a860e579d6e26f53e32240da787bd75827d7833b6f29e63af87b571",
+        "status": "pending"
+      },
+      "src/base/UnorderedNonce.sol": {
+        "sha256": "c64fa82d222e7ab25b37c21660b888a1843a5ed57996f5f010f28ad3a7960bf3",
+        "status": "pending"
+      },
+      "src/hooks/permissionedPools/BaseAllowListChecker.sol": {
+        "sha256": "f606f815ba668be69e29a07ceba75274b237b1e2a309df059bdcd572bc64a59b",
+        "status": "pending"
+      },
+      "src/hooks/permissionedPools/PermissionedPositionManager.sol": {
+        "sha256": "3675568bf200355690b4d43a9f60b1232edbc01de2730b99e77c8a408193cbc3",
+        "status": "pending"
+      },
+      "src/hooks/permissionedPools/PermissionedV4Router.sol": {
+        "sha256": "6135c8f56c38cf7a98fa06cccd3fa77a8ddd7fd16fe15d2c6146307f4892ed74",
+        "status": "pending"
+      },
+      "src/hooks/permissionedPools/PermissionsAdapter.sol": {
+        "sha256": "2f7ca5c7d8960daee0e7892b98596a06da1250aa299b96f76c634586c599299a",
+        "status": "pending"
+      },
+      "src/hooks/permissionedPools/PermissionsAdapterFactory.sol": {
+        "sha256": "32c64de6ab53080a841a2151dda8f765813c874019942c999d693ba8154a5b99",
+        "status": "pending"
+      },
+      "src/hooks/permissionedPools/interfaces/IAllowlistChecker.sol": {
+        "sha256": "62a496ce7b65abbea7ebb01d64282b89e15bf390a082ad55d5104051b937a523",
+        "status": "pending"
+      },
+      "src/hooks/permissionedPools/interfaces/IPermissionsAdapter.sol": {
+        "sha256": "ba7fe0818ea7c22b744da2f12700b67c15b9d0002345067218894fb5a728b94d",
+        "status": "pending"
+      },
+      "src/hooks/permissionedPools/interfaces/IPermissionsAdapterFactory.sol": {
+        "sha256": "4e53af185e209d556e4278adb94bf4c7d38144065012957261cdeb07709a6199",
+        "status": "pending"
+      },
+      "src/hooks/permissionedPools/libraries/PermissionFlags.sol": {
+        "sha256": "77b675a67fc2786ce5e2794819ad9ebdc9ff1dc2cb5ea47be638d8db7459b9d8",
+        "status": "pending"
+      },
+      "src/interfaces/IEIP712_v4.sol": {
+        "sha256": "ee4cc46349cc7f1f894197f368ddea0f71f2564c2962822eead755714f3ba57d",
+        "status": "pending"
+      },
+      "src/interfaces/IERC721Permit_v4.sol": {
+        "sha256": "80680771bccd7bf47641417d5a656f950746072766e24703f354e58c2ee0875c",
+        "status": "pending"
+      },
+      "src/interfaces/IImmutableState.sol": {
+        "sha256": "86f06a1f388f91ee0185495cb5d2912d564f73fabb163b3767e9c292c5069276",
+        "status": "pending"
+      },
+      "src/interfaces/IMsgSender.sol": {
+        "sha256": "cb96ee72c46755a67f9ca304df192365ae7c3923eaab9539f0ce74a88de10cf7",
+        "status": "pending"
+      },
+      "src/interfaces/IMulticall_v4.sol": {
+        "sha256": "0c0f4f1cccb7cf63c1ee3dc53e8d48cf867cbff08f5a8f85dd820873277e9481",
+        "status": "pending"
+      },
+      "src/interfaces/INotifier.sol": {
+        "sha256": "7fadc8550f73d9ae57925bb27f5ab3a134d4c020972a13683e1121fc11691249",
+        "status": "pending"
+      },
+      "src/interfaces/IPermit2Forwarder.sol": {
+        "sha256": "3b28167d65673e7de2bbed1e6f3508350cf889f8439e8680da23ad7586f4cc57",
+        "status": "pending"
+      },
+      "src/interfaces/IPoolInitializer_v4.sol": {
+        "sha256": "ca6ecf95cfbc647d49b774801d84c49c8213010771b44555b056118102d644fc",
+        "status": "pending"
+      },
+      "src/interfaces/IPositionDescriptor.sol": {
+        "sha256": "ea68397628ff5d386fdfbea48af0556acb537f8d63edccb22d2fa61ac4175cdd",
+        "status": "pending"
+      },
+      "src/interfaces/IPositionManager.sol": {
+        "sha256": "439bcd1310f47092a15fa1cc98971898a536eaaff91ac397d8b12eee3c7d79c1",
+        "status": "pending"
+      },
+      "src/interfaces/IReservesLens.sol": {
+        "sha256": "9907d2c3e128b52b40a1fc735bb99197de453971933f36756487c404e3fee0fb",
+        "status": "pending"
+      },
+      "src/interfaces/IStateView.sol": {
+        "sha256": "28bb7523693dd487f3fe0c4ea44f1aeb4c1bed6371c6bc74d76bd625003e62f2",
+        "status": "pending"
+      },
+      "src/interfaces/ISubscriber.sol": {
+        "sha256": "9672e03c964da7cd484df290ad3395b6beacd90adcdd8ea2236f835407fb8e2e",
+        "status": "pending"
+      },
+      "src/interfaces/IUniswapV4DeployerCompetition.sol": {
+        "sha256": "24ae6df904f363ffbcebc0e8bd6bf41ee86d251496b6b42a6199cf67851e6570",
+        "status": "pending"
+      },
+      "src/interfaces/IUnorderedNonce.sol": {
+        "sha256": "12e02d4e7e03a668fc1d493840315b4f2aaee2f366ca677574d37d3811d45701",
+        "status": "pending"
+      },
+      "src/interfaces/IV4Quoter.sol": {
+        "sha256": "93041b7c8ef2587b52c4e0aea6183924b26079f9d822c451cc01f7f2efab99c5",
+        "status": "pending"
+      },
+      "src/interfaces/IV4Router.sol": {
+        "sha256": "a577e593bd1948ffcf9ce26964ae1e47bafcf6dffcd40baeb700bcb902367a53",
+        "status": "pending"
+      },
+      "src/interfaces/external/IHookStats.sol": {
+        "sha256": "f81fb18bc37bc6478ec373beca5b20860af442aa16945b3349f96e5d8efd5355",
+        "status": "pending"
+      },
+      "src/interfaces/external/IWETH9.sol": {
+        "sha256": "d6b24fe796517f53292d6679adf173e1f3c1fc0dc5efedfc69fa4955c1a9c058",
+        "status": "pending"
+      },
+      "src/lens/ReservesLens.sol": {
+        "sha256": "eb3f0bd3d4646c537fb8eccb8849fbfc0d8de25d632730b1a10c2a7a8567ff14",
+        "status": "pending"
+      },
+      "src/lens/StateView.sol": {
+        "sha256": "cee9aff0c7d832d93a59f813c62613ac288a66898f49b9ad1de17e6007d7dab5",
+        "status": "pending"
+      },
+      "src/lens/V4Quoter.sol": {
+        "sha256": "0466f1e83d6362836c0b5256996d13e222a33a2b2810d7992d32a84753a8c0ef",
+        "status": "pending"
+      },
+      "src/libraries/ActionConstants.sol": {
+        "sha256": "8e88393dd8b50b25b818e2f6c246aae5cfe63106b56b6e0609869e599c81ec79",
+        "status": "pending"
+      },
+      "src/libraries/Actions.sol": {
+        "sha256": "6e8981fcc1fe709e71f85befa2e8656fac6601a565d8ce677b41cff24a838437",
+        "status": "pending"
+      },
+      "src/libraries/AddressStringUtil.sol": {
+        "sha256": "f57613ab19a41ea7eb95f645b5ec424dd0c1097c9ef66539959bf61544f53d2e",
+        "status": "pending"
+      },
+      "src/libraries/BipsLibrary.sol": {
+        "sha256": "7410a60efd885a9e9b7bbcc994c8323cd0624200d8594296754504b4ea62504f",
+        "status": "pending"
+      },
+      "src/libraries/CalldataDecoder.sol": {
+        "sha256": "93ee8bc3b166407c3f66227713849ba6560297a0ba4abed8ad6235ec02fc2ed3",
+        "status": "pending"
+      },
+      "src/libraries/CurrencyRatioSortOrder.sol": {
+        "sha256": "6773a2564c1eeb9b9165a818d245d56aed1428021ccc9b23b0341026b878b588",
+        "status": "pending"
+      },
+      "src/libraries/Descriptor.sol": {
+        "sha256": "d106a5a4008de4eac20c1805b456d02c42a368504c1198c2ed0a953b1116a19f",
+        "status": "pending"
+      },
+      "src/libraries/ERC721PermitHash.sol": {
+        "sha256": "0d692bf7c7806644db1dbea2b2b4dd11151a16090a4bcc2ffcd904e61bcd7c2f",
+        "status": "pending"
+      },
+      "src/libraries/HexStrings.sol": {
+        "sha256": "bf3dc237ff833f4ca53be1f4117ebd900c5a144fe6b4df3a68deab60601edd3f",
+        "status": "pending"
+      },
+      "src/libraries/LiquidityAmounts.sol": {
+        "sha256": "02d6eaaa62d45ac8170b3668e92a31808d2003b0f8eb821581cb4a028b175b45",
+        "status": "pending"
+      },
+      "src/libraries/Locker.sol": {
+        "sha256": "aa0481cc66c87ab579438728dbeaee5bf351eac37e4876f0ab899d8c7f7bdbeb",
+        "status": "pending"
+      },
+      "src/libraries/PathKey.sol": {
+        "sha256": "0c00bae5a64829334a0b5d5541807faf7d18dff5a667cd74cadf9effaf5f0885",
+        "status": "pending"
+      },
+      "src/libraries/PositionConfig.sol": {
+        "sha256": "7db6e14c9383b1f6f426646009c059ad48be97a23d65724893948ff504022e02",
+        "status": "pending"
+      },
+      "src/libraries/PositionConfigId.sol": {
+        "sha256": "ba11a9aea4feeadb13a1a884a22c860948db8b3688f9959ff5c019bab92f19b5",
+        "status": "pending"
+      },
+      "src/libraries/PositionInfoLibrary.sol": {
+        "sha256": "6abfa1c06d62753d177df1a4ce7af8028ea3724943ca8673f7083c1cf09bc4d9",
+        "status": "pending"
+      },
+      "src/libraries/QuoterRevert.sol": {
+        "sha256": "954b9e18c2b4d9b48f3d1d761c9d68dd94b995ff871ab561884a803bc09e6c75",
+        "status": "pending"
+      },
+      "src/libraries/SVG.sol": {
+        "sha256": "57e3a5b9c70ffe38d738a689a100267dd8546d1a880c1297bdef67515b7c78fb",
+        "status": "pending"
+      },
+      "src/libraries/SafeCurrencyMetadata.sol": {
+        "sha256": "d9f7e2512c847c7711bec7dc7b6f079badd33c4d2a35d84ca77ef1d54aaabda2",
+        "status": "pending"
+      },
+      "src/libraries/SlippageCheck.sol": {
+        "sha256": "2f106f2f4773b8d7ef8c2364a95074ceb07ec2c80d38a7751e80fdfc9996ec02",
+        "status": "pending"
+      },
+      "src/libraries/VanityAddressLib.sol": {
+        "sha256": "8db5802d6307d1bbf974d8f97d348cfe55858c97a6155db6b5cff9f5c700d234",
+        "status": "pending"
+      }
+    }
+  },
+  "solmate": {
+    "url": "https://github.com/transmissions11/solmate",
+    "revision": "4b47a19038b798b4a33d9749d25e570443520647",
+    "provenance": "v4-core pinned dependency gitlink",
+    "sources": {
+      "src/auth/Owned.sol": {
+        "sha256": "8ac2f2dc41ab8012e93adb3791326ffa1e4059a20c306a777109dd81816b9125",
+        "license": "AGPL-3.0-only",
+        "status": "ported in owned.fe; 10000 fuzz cases plus zero/self-owner scenario per O1/O2; constructor/events/storage/reverts and complete harness ABI match; see tests/results/owned-parity-o2.json"
+      },
+      "LICENSE": {
+        "sha256": "20b067f86de375aae6db0f283ab2e65de24d537733b89bd58432c101259d84cf",
+        "status": "license text retained as LICENSE-AGPL-3.0-only"
+      },
+      "src/tokens/ERC721.sol": {
+        "sha256": "2da0cca384448208e25d43eeb5953a237de0e6712942a07d0f2674e895b0d3d3",
+        "status": "ERC721Permit token/storage/receiver component validated with 60000 differential fuzz cases at each O1/O2; tokenURI supplied by PositionManager descriptor remains pending"
+      },
+      "src/tokens/ERC20.sol": {
+        "sha256": "a3a7e839f42762ef24623581542a916e838f3c7c0bef647963d1fdad0f9d208a"
+      },
+      "src/utils/SafeTransferLib.sol": {
+        "sha256": "ed12cae0865a8a92adb9dadd125b2cf23920870845ef128431d811963b474103"
+      }
+    }
+  },
+  "openzeppelin": {
+    "url": "https://github.com/OpenZeppelin/openzeppelin-contracts",
+    "revision": "dbb6104ce834628e473d2173bbc9d47f81a9eec3",
+    "sources": {
+      "contracts/utils/introspection/ERC165Checker.sol": {
+        "sha256": "9da537ebf9806d9b1a9e4cb07717352ce83ed48c4b8651047be957a3988f3aec"
+      },
+      "contracts/utils/introspection/IERC165.sol": {
+        "sha256": "07ae1ac964ab74dedada999e2dfc642031a6495469cffc0bf715daa4f1e4f904"
+      },
+      "contracts/token/ERC20/IERC20.sol": {
+        "sha256": "6f2faae462e286e24e091d7718575179644dc60e79936ef0c92e2d1ab3ca3cee"
+      },
+      "contracts/token/ERC20/extensions/IERC20Metadata.sol": {
+        "sha256": "1d079c20a192a135308e99fa5515c27acfbb071e6cdb0913b13634e630865939"
+      },
+      "contracts/utils/Base64.sol": {
+        "sha256": "1503845f01cfbaca2453e4fb5203f25057e65143762127517b02c3ce912c50e1"
+      },
+      "contracts/utils/Strings.sol": {
+        "sha256": "0519199dbc635f98ce2e4537986604ee618bca665c65e9a1738702dfacf72010"
+      },
+      "contracts/utils/math/SignedMath.sol": {
+        "sha256": "768c28e3a33c3312e57ae8a1caaec2893bc89ac6e386621de018f85e9a2d6e99"
+      },
+      "contracts/utils/math/Math.sol": {
+        "sha256": "a6ee779fc42e6bf01b5e6a963065706e882b016affbedfd8be19a71ea48e6e15"
+      },
+      "contracts/utils/Create2.sol": {
+        "sha256": "36d45e7dcdc545448a569d160e2a5e0bab7dd479cf5bc0dfe57d41c590ba84b8"
+      },
+      "contracts/utils/introspection/ERC165.sol": {
+        "sha256": "99348354365cbdeb90157e2903334b861a00d69faab7720ae542d911d5c70d87"
+      },
+      "contracts/token/ERC20/ERC20.sol": {
+        "sha256": "2d874da1c1478ed22a2d30dcf1a6ec0d09a13f897ca680d55fb49fbcc0e0c5b1"
+      },
+      "contracts/interfaces/draft-IERC6093.sol": {
+        "sha256": "4aea87243e6de38804bf8737bf86f750443d3b5e63dd0fd0b7ad92f77cdbd3e3"
+      },
+      "contracts/utils/Context.sol": {
+        "sha256": "847fda5460fee70f56f4200f59b82ae622bb03c79c77e67af010e31b7e2cc5b6"
+      },
+      "contracts/access/Ownable2Step.sol": {
+        "sha256": "90f1f1cdd07ce4b90e987065e82899fdaa6ef967d1996915143c6e39818e160c"
+      },
+      "contracts/access/Ownable.sol": {
+        "sha256": "38578bd71c0a909840e67202db527cc6b4e6b437e0f39f0c909da32c1e30cb81"
+      }
+    }
+  },
+  "permit2": {
+    "url": "https://github.com/Uniswap/permit2",
+    "revision": "cc56ad0f3439c502c246fc5cfcc3db92bb8b7219",
+    "sources": {
+      "src/libraries/SignatureVerification.sol": {
+        "sha256": "1804b3d7b1183225419ec8ee45daf89174ff3668315d71d28111d5fcc179f8e4",
+        "status": "SignatureVerification component validated with 30000 fuzz cases plus unpadded calldata at each O1/O2; ERC721 and real Permit2 integration pending"
+      },
+      "src/interfaces/IERC1271.sol": {
+        "sha256": "ec69c9c80939d613cda408fd05424e0dfa7b1fd76168a1fb6593f4b26b3b3d7b",
+        "status": "SignatureVerification component validated with 30000 fuzz cases plus unpadded calldata at each O1/O2; ERC721 and real Permit2 integration pending"
+      },
+      "src/interfaces/IAllowanceTransfer.sol": {
+        "sha256": "a31c712c5cc8d171818a4225c09011f9ba86b2d5edf6045ac812bab93b6bbb87"
+      },
+      "src/interfaces/IEIP712.sol": {
+        "sha256": "e386407da496dbe874c10a81801c55744fb2922a51389a51c79001422e81e0cd"
+      },
+      "src/libraries/PermitHash.sol": {
+        "sha256": "23f89633dbd02d8b52a33de3a915af5af73ff25e31f88b6cf994358f802efa60"
+      },
+      "src/interfaces/ISignatureTransfer.sol": {
+        "sha256": "8e7f355d7751cf96e81069c17fb97a3ec973c9391fbbb58ad3fb6e75be5cb19b"
+      }
+    },
+    "runtime_sources": {
+      "src/AllowanceTransfer.sol": {
+        "sha256": "7be95b655a59352a3007147a1b79f211fc819b9a615a92017acf7257ecb88276"
+      },
+      "src/EIP712.sol": {
+        "sha256": "cbb7df63c5839a3fbec78142222886da1614a4c7fcddcd8ba5ea176f9549d859"
+      },
+      "src/Permit2.sol": {
+        "sha256": "a19dd81d4edafe3bba0178abfc9063886c2981b4711a4cbbf3fac19370defc9a"
+      },
+      "src/PermitErrors.sol": {
+        "sha256": "0919679c5bb58466d3a06d9d3297ec4946ba5d135330f10f4fb080067586afad"
+      },
+      "src/SignatureTransfer.sol": {
+        "sha256": "234effebbe1e7ad7a3c791ea2b411f8e90993b758479817eb32c8767ea62ee8d"
+      },
+      "src/interfaces/IAllowanceTransfer.sol": {
+        "sha256": "a31c712c5cc8d171818a4225c09011f9ba86b2d5edf6045ac812bab93b6bbb87"
+      },
+      "src/interfaces/IDAIPermit.sol": {
+        "sha256": "7aa52de652b3abe64da64a71b7c05ebf7f608f15840c79857e19930bc414ea8a"
+      },
+      "src/interfaces/IEIP712.sol": {
+        "sha256": "e386407da496dbe874c10a81801c55744fb2922a51389a51c79001422e81e0cd"
+      },
+      "src/interfaces/IERC1271.sol": {
+        "sha256": "ec69c9c80939d613cda408fd05424e0dfa7b1fd76168a1fb6593f4b26b3b3d7b"
+      },
+      "src/interfaces/IPermit2.sol": {
+        "sha256": "51a2a4da1246abda880b17c72f7c45ab3a8dc4bcaac5ff7ba78221b6603cd7ce"
+      },
+      "src/interfaces/ISignatureTransfer.sol": {
+        "sha256": "8e7f355d7751cf96e81069c17fb97a3ec973c9391fbbb58ad3fb6e75be5cb19b"
+      },
+      "src/libraries/Allowance.sol": {
+        "sha256": "6c7d1edc74a9dca9940fa835db09302ed1a35019d69f4188351466e9a3fff458"
+      },
+      "src/libraries/Permit2Lib.sol": {
+        "sha256": "8a54dec23cdf503ff8ceecc7480d7551d7d150481e9ba1c52e29b7187fa2c138"
+      },
+      "src/libraries/PermitHash.sol": {
+        "sha256": "23f89633dbd02d8b52a33de3a915af5af73ff25e31f88b6cf994358f802efa60"
+      },
+      "src/libraries/SafeCast160.sol": {
+        "sha256": "b106146964044fd9c89df48721011c43785982bf0dcb74a241f7a6f270fa8b2b"
+      },
+      "src/libraries/SignatureVerification.sol": {
+        "sha256": "1804b3d7b1183225419ec8ee45daf89174ff3668315d71d28111d5fcc179f8e4"
+      }
+    },
+    "runtime_compiler": {
+      "version": "0.8.17+commit.8df45f5f",
+      "sha256": "99f2070b776e9714f1f76c43c229cf99b8978a92938ee8d2364c6de11c1a03d4",
+      "optimizer_runs": 1000000,
+      "via_ir": true,
+      "evm_version": "london",
+      "bytecode_hash": "none"
+    }
+  },
+  "permit2-solmate": {
+    "url": "https://github.com/transmissions11/solmate",
+    "revision": "8d910d876f51c3b2585c9109409d601f600e68e1",
+    "sources": {
+      "src/tokens/ERC20.sol": {
+        "sha256": "a3a7e839f42762ef24623581542a916e838f3c7c0bef647963d1fdad0f9d208a"
+      },
+      "src/utils/SafeTransferLib.sol": {
+        "sha256": "cb02c2a5b1b1c66b8ba3d700a47b400684483d96d93606ed71d0e63c0b6100bf"
+      }
+    }
+  }
+}

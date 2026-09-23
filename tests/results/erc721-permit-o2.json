@@ -1,0 +1,38 @@
+{
+  "suite": "erc721_permit",
+  "build_full_ingot": false,
+  "timestamp_utc": "2026-09-23T02:28:48.785147+00:00",
+  "compiler_version": "fe 26.3.0 (8b43741b4)",
+  "compiler_sha256": "3237760c6e2bbc33ca03d02d65459523d9d8cb718a7d5903e668e9dcbd7b5ca3",
+  "compiler_worktree_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "forge_version": "forge Version: 1.5.1-stable\nCommit SHA: b0a9dd9ceda36f63e2326ce530c10e6916f4b8a2\nBuild Timestamp: 2025-12-22T11:39:01.425730780Z (1766403541)\nBuild Profile: maxperf",
+  "solc_version": "0.8.26",
+  "solc_setting": "/tmp/fe-v4-solc-0.8.26",
+  "solc_via_ir": true,
+  "evm_version": "cancun",
+  "optimization": "2",
+  "fuzz_runs_per_property": 10000,
+  "fuzz_seed": "0x554e495634",
+  "reference_revision": "46c6834698c48bc4a463a86d8420f4eb1d7f3b75",
+  "periphery_revision": "9969eec44cfdf07e24b41de47f40276a58401976",
+  "dependency_revisions": {
+    "solmate": "4b47a19038b798b4a33d9749d25e570443520647"
+  },
+  "openzeppelin_revision": null,
+  "permit2_revision": "cc56ad0f3439c502c246fc5cfcc3db92bb8b7219",
+  "manager_artifact_validation": null,
+  "reused_fe_build": null,
+  "sources": {
+    "src/eip712.fe": "0a18389dc3016345b2eff3bd082295c468ecf95e5c4ea259ea6732ad6228d190",
+    "src/erc721.fe": "46748be0c6ead7a3adff9bd5a1689bec279da70e5b4bc1e92d3610f93799d537",
+    "src/erc721_permit.fe": "25bd5a1a70b832db75be0bd1ec2ebfed161431a6cb49869a425ed03a1edd80e4",
+    "src/erc721_permit_harness.fe": "dca53a3b86a2517cdbb53d6d549e5950618c6d3ef8a549c5d76d11819f47fb23",
+    "src/erc721_permit_hash.fe": "8543a9ff07b0b7b372092bc037629b57816408d48231e62b8f407a647a97441a",
+    "src/signature_verification.fe": "8594a44dcaf3a3c1ac595ac1c46b18622abe11debd23e5bfe42a1752ed7707ad",
+    "src/storage_string.fe": "8db5e89ce8284b6f89165b2e5842a54a4cd04f5695a0fc8b0a188c2944fe1551",
+    "src/unordered_nonce.fe": "f1bd9084e56ab5b189786b769da4906d79c49ce53fee874287698573cab7d77a"
+  },
+  "test_source_sha256": "3c96ce9a4d0bb4c885c65f91bb69f8bd2448d495e863529825ebc515791fe5d9",
+  "creation_bytecode_sha256": "0afd4a5b8a185bbe8da386d3e048078fb2d340d1b99fc244d6cd5d689d298c2d",
+  "result": "passed"
+}

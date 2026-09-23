@@ -1,0 +1,43 @@
+{
+  "suite": "permissions_adapter",
+  "build_full_ingot": false,
+  "timestamp_utc": "2026-09-23T21:15:11.630786+00:00",
+  "compiler_version": "fe 26.3.0 (31e5b965e)",
+  "compiler_source_checkout": "/tmp/fe-uniswap-current2",
+  "compiler_revision": "31e5b965e2b246b5354a4a2f8174c05bf4304d8b",
+  "compiler_sha256": "e1a92b53c0a5859da469e9d8e4c9830ec1d335c5357202ae7469471ca2c320cd",
+  "compiler_worktree_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "forge_version": "forge Version: 1.5.1-stable\nCommit SHA: b0a9dd9ceda36f63e2326ce530c10e6916f4b8a2\nBuild Timestamp: 2025-12-22T11:39:01.425730780Z (1766403541)\nBuild Profile: maxperf",
+  "solc_version": "0.8.26",
+  "solc_setting": "/tmp/fe-v4-solc-0.8.26",
+  "solc_optimizer": true,
+  "solc_optimizer_runs": 200,
+  "solc_via_ir": true,
+  "evm_version": "cancun",
+  "optimization": "1",
+  "fuzz_runs_per_property": 10000,
+  "fuzz_seed": "0x554e495634",
+  "reference_revision": "46c6834698c48bc4a463a86d8420f4eb1d7f3b75",
+  "periphery_revision": "9969eec44cfdf07e24b41de47f40276a58401976",
+  "dependency_revisions": {
+    "solmate": "4b47a19038b798b4a33d9749d25e570443520647"
+  },
+  "openzeppelin_revision": "dbb6104ce834628e473d2173bbc9d47f81a9eec3",
+  "permit2_revision": null,
+  "permit2_reference_validation": null,
+  "manager_artifact_validation": null,
+  "descriptor_artifact_validation": null,
+  "reused_fe_build": null,
+  "sources": {
+    "src/allowlist_checker.fe": "87d36eecf9f00cef0394614df3d8cdde15920c01eb3e06a450085d47010636a1",
+    "src/metadata_text.fe": "9a1646537ac198d0170b8a5305c7575ca20072498538c91c39cd40c5c4776526",
+    "src/permission_flags.fe": "c8f53810785ceeaf5e0e88886aa601c7d64c1e4b434efb89e95d53d6f1d1e478",
+    "src/permissions_adapter.fe": "5be732db34dd8eec9b2bb1ee0d9f57900cf86ac5bc2b35666fc8b6bd10c64186",
+    "src/permissions_adapter_io.fe": "05ea5cf3eac9d84737d80c6d3bc2c79a09c4784f8c875527470ff062f2c641c6",
+    "src/permissions_adapter_state.fe": "18fed408bade1e8f54f4638b266bac143ad44642939e17a45dbbfcba9b05a8e7",
+    "src/storage_string.fe": "8db5e89ce8284b6f89165b2e5842a54a4cd04f5695a0fc8b0a188c2944fe1551"
+  },
+  "test_source_sha256": "455ee672d3b695073ffea4aa09f859b3100a1f0001d962c45321ba5143e03b8d",
+  "creation_bytecode_sha256": "8c1b8e826da05d50071cf57488a65df16d804331fac5c5d66475438edd7cf135",
+  "result": "passed"
+}

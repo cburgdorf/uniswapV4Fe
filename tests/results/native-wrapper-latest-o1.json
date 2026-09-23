@@ -1,0 +1,42 @@
+{
+  "suite": "native_wrapper",
+  "build_full_ingot": false,
+  "timestamp_utc": "2026-09-23T22:43:23.242234+00:00",
+  "compiler_version": "fe 26.3.0 (702686c98)",
+  "compiler_source_checkout": "/tmp/fe-uniswap-permissioned-position",
+  "compiler_revision": "702686c984ebf9737a4990d2ccb2957f0a2e59d9",
+  "compiler_sha256": "f3aaead7171e522c76b07fba14d25b70997fe3251a952686b0ad9c918aebac44",
+  "compiler_worktree_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "forge_version": "forge Version: 1.5.1-stable\nCommit SHA: b0a9dd9ceda36f63e2326ce530c10e6916f4b8a2\nBuild Timestamp: 2025-12-22T11:39:01.425730780Z (1766403541)\nBuild Profile: maxperf",
+  "solc_version": "0.8.26",
+  "solc_setting": "/tmp/fe-v4-solc-0.8.26",
+  "solc_optimizer": true,
+  "solc_optimizer_runs": 200,
+  "solc_via_ir": true,
+  "evm_version": "cancun",
+  "optimization": "1",
+  "fuzz_runs_per_property": 10000,
+  "fuzz_seed": "0x554e495634",
+  "reference_revision": "46c6834698c48bc4a463a86d8420f4eb1d7f3b75",
+  "periphery_revision": "9969eec44cfdf07e24b41de47f40276a58401976",
+  "dependency_revisions": {
+    "solmate": "4b47a19038b798b4a33d9749d25e570443520647"
+  },
+  "openzeppelin_revision": "dbb6104ce834628e473d2173bbc9d47f81a9eec3",
+  "permit2_revision": null,
+  "permit2_reference_validation": null,
+  "manager_artifact_validation": null,
+  "permissions_factory_artifact_validation": null,
+  "descriptor_artifact_validation": null,
+  "reused_fe_build": null,
+  "sources": {
+    "src/native_wrapper.fe": "f03dc291d978f89571d1af8faf7a6d3b4bdd498d7ee45b7991428a6a15434b3d",
+    "src/native_wrapper_harness.fe": "8d5d9fdceebb342f6f4b76185456528ab2b9858d9d3ef3a2451dc5c12ca7420c"
+  },
+  "test_source_sha256": "7b170893dbc3b43598b9dabab63fa36d1095fd62742b7315240138b88b227d81",
+  "creation_bytecode_sha256": "4c238a044da12eadb65f0946370b6af827ac18567717e78d0621b0593736bd25",
+  "runtime_result": "passed",
+  "result": "passed",
+  "protocol_abi_gate_sha256": "143545250be59673bad0852fa6a19aea50165f047a386b0eeb249f5c3ec4c7a0",
+  "protocol_abi_result": "not_applicable"
+}

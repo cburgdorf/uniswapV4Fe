@@ -1,0 +1,37 @@
+use core::abi::{AbiSize, AbiSpan, AbiDecoder, ByteInput, Decode, Encode}
+use std::abi::{Sol, sol}
+use std::evm::Address
+pub struct Pair { pub a: Address, pub b: Address }
+impl Copy for Pair {}
+impl AbiSize for Pair {
+    const HEAD_SIZE: u256 = 64
+    const IS_DYNAMIC: bool = false
+}
+impl AbiSpan<Sol> for Pair {
+    fn payload_end<I: ByteInput>(_: I, base: u256, pos: u256) -> u256 {
+        pos + 64
+    }
+}
+impl Decode<Sol> for Pair {
+    fn decode_payload<D: AbiDecoder<Sol>>(_ d: mut D) -> Self {
+        let a = <Address as Decode<Sol>>::decode_payload(mut d)
+        let b = <Address as Decode<Sol>>::decode_payload(mut d)
+        Self { a, b }
+    }
+}
+impl Encode<Sol> for Pair {
+    fn encode(own self, _ ptr: *u8) {
+        <(Address, Address) as Encode<Sol>>::encode((self.a, self.b), ptr)
+    }
+}
+msg PairMsg {
+    #[selector = sol("echo((address,address))")]
+    Echo { pair: Pair } -> Pair,
+}
+pub contract PairProbe {
+    recv PairMsg {
+        Echo { pair } -> Pair {
+            pair
+        }
+    }
+}

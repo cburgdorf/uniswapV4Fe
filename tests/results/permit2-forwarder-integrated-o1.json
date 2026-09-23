@@ -1,0 +1,42 @@
+{
+  "suite": "permit2_forwarder",
+  "build_full_ingot": false,
+  "timestamp_utc": "2026-09-24T07:07:58.193050+00:00",
+  "compiler_version": "fe 26.3.0 (9e2213a79)",
+  "compiler_source_checkout": "/tmp/fe-uniswap-final",
+  "compiler_revision": "9e2213a79e78d373ab8ba59f9a017509e39267a3",
+  "compiler_sha256": "62a348861753829883fa71f9ed9af4e5c94e7e0b97b6cdf71f3ba2028c03b4c0",
+  "compiler_worktree_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "forge_version": "forge Version: 1.5.1-stable\nCommit SHA: b0a9dd9ceda36f63e2326ce530c10e6916f4b8a2\nBuild Timestamp: 2025-12-22T11:39:01.425730780Z (1766403541)\nBuild Profile: maxperf",
+  "solc_version": "0.8.26",
+  "solc_setting": "/tmp/fe-v4-solc-0.8.26",
+  "solc_optimizer": true,
+  "solc_optimizer_runs": 200,
+  "solc_via_ir": true,
+  "evm_version": "cancun",
+  "optimization": "1",
+  "fuzz_runs_per_property": 10000,
+  "fuzz_seed": "0x554e495634",
+  "reference_revision": "46c6834698c48bc4a463a86d8420f4eb1d7f3b75",
+  "periphery_revision": "9969eec44cfdf07e24b41de47f40276a58401976",
+  "dependency_revisions": {
+    "solmate": "4b47a19038b798b4a33d9749d25e570443520647"
+  },
+  "openzeppelin_revision": null,
+  "permit2_revision": "cc56ad0f3439c502c246fc5cfcc3db92bb8b7219",
+  "permit2_reference_validation": null,
+  "manager_artifact_validation": null,
+  "permissions_factory_artifact_validation": null,
+  "descriptor_artifact_validation": null,
+  "reused_fe_build": null,
+  "sources": {
+    "src/permit2_forwarder.fe": "2e442ee7a38a7cfe411d13c11f4d12213a77c2223317a350128e76cce7e60a2b",
+    "src/permit2_forwarder_harness.fe": "786e8120963db21ac4dade85b7df3015ca3b3fadc939493871a525738588539e"
+  },
+  "test_source_sha256": "4bcdbde111dbcedc38fdf02e7d23e1926145fc4a69dd99f426a06b07b33cc16e",
+  "creation_bytecode_sha256": "2120252260d650d4c8dc41ea725e95d54c5c9ebec00a5587ae12a960af9b9a61",
+  "runtime_result": "passed",
+  "result": "passed",
+  "protocol_abi_gate_sha256": "72f50f75f6477ed75290537abb42b4f93022e72753979575cfddfd83d794906a",
+  "protocol_abi_result": "not_applicable"
+}

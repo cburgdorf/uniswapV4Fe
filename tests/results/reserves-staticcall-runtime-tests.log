@@ -1,0 +1,9 @@
+PASS  [0.0004s] test_raw_staticcall_copies_to_output_buffer
+PASS  [0.0004s] test_variable_precompile_wrappers_reject_invalid_chunk_lengths
+PASS  [0.0004s] test_fixed_precompile_wrappers_reject_mismatched_buffer_lengths
+PASS  [0.0004s] test_new_fixed_buffer_wrappers_do_not_bubble_failure
+PASS  [0.0004s] test_hash_and_copy_precompiles_return_results
+PASS  [0.0004s] test_math_and_ec_precompiles_return_results
+PASS  [0.0010s] test_signature_precompiles_expose_invalid_signature
+
+test result: ok. 7 passed; 0 failed

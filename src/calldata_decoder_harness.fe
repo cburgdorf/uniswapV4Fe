@@ -1,0 +1,132 @@
+// SPDX-License-Identifier: MIT
+// Test-only adapters; encoded results expose every assembly decoder's outputs.
+use core::abi::{AbiSize, Encode, ByteInput, store_word}
+use core::ptr::{self, MemBuffer}
+use std::abi::{Bytes, Sol, sol}
+use std::evm::{encode_abi_payload, CallData}
+use super::calldata_decoder::{argument_bytes, ActionsView}
+fn encoded<T: AbiSize + Encode<Sol>>(_ value: own T) -> Bytes {
+    let buffer = encode_abi_payload(value)
+    Bytes::from_payload(source: buffer.span())
+}
+msg DecoderMsg {
+    #[selector = sol("decode(bytes,uint8)")]
+    Decode { data: Bytes, mode: u8 } -> Bytes,
+    #[selector = sol("slice(bytes,uint256)")]
+    Slice { data: Bytes, arg: u256 } -> Bytes,
+    #[selector = sol("actions(bytes)")]
+    Actions { data: Bytes } -> Bytes,
+}
+pub contract CalldataDecoderHarness {
+    recv DecoderMsg {
+        Slice { data, arg } -> Bytes {
+            argument_bytes(0).to_bytes(arg).bytes()
+        }
+        Actions { data } -> Bytes {
+            let decoded = argument_bytes(0).decode_actions()
+            encode_actions(decoded)
+        }
+        Decode { data, mode } -> Bytes {
+            let view = argument_bytes(0)
+            if mode == 0 {
+                return encoded(view.currency())
+            }
+            if mode == 1 {
+                return encoded(view.currency_pair())
+            }
+            if mode == 2 {
+                return encoded(view.currency_pair_address())
+            }
+            if mode == 3 {
+                return encoded(view.currency_address())
+            }
+            if mode == 4 {
+                return encoded(view.currency_address_uint())
+            }
+            if mode == 5 {
+                return encoded(view.currency_uint())
+            }
+            if mode == 6 {
+                return encoded(view.uint256())
+            }
+            if mode == 7 {
+                return encoded(view.currency_uint_bool())
+            }
+            if mode == 8 {
+                let p = view.modify_liquidity()
+                return encoded((p.0, p.1, p.2, p.3, p.4.bytes()))
+            }
+            if mode == 9 || mode == 12 {
+                let p = view.burn_or_increase_from_deltas()
+                return encoded((p.0, p.1, p.2, p.3.bytes()))
+            }
+            if mode == 10 {
+                let p = view.mint()
+                return encoded((p.0, p.1, p.2, p.3, p.4, p.5, p.6, p.7.bytes()))
+            }
+            if mode == 11 {
+                let p = view.mint_from_deltas()
+                return encoded((p.0, p.1, p.2, p.3, p.4, p.5, p.6.bytes()))
+            }
+            // Compare the lazy struct location returned by the four swap helpers.
+            return encoded(
+                view.swap_struct(mode == 13 || mode == 15).wrapping_sub(view.offset),
+            )
+        }
+    }
+}
+
+fn encode_actions(_ decoded: ActionsView) -> Bytes {
+    let action_size = 32 + ((decoded.actions.len + 31) / 32) * 32
+    let array_start = 64 + action_size
+    let mut size = array_start + 32 + decoded.params_len * 32
+    let mut i: u256 = 0
+    while i < decoded.params_len {
+        size += 32 + ((decoded.parameter(i).len + 31) / 32) * 32
+        i += 1
+    }
+    let buffer = MemBuffer::alloc(size)
+    ptr::zero_bytes(buffer.ptr(), size)
+    store_word(ptr: buffer.ptr(), value: 64)
+    store_word(
+        ptr: ptr::offset_bytes(buffer.ptr(), 32),
+        value: array_start,
+    )
+    store_word(
+        ptr: ptr::offset_bytes(buffer.ptr(), 64),
+        value: decoded.actions.len,
+    )
+    CallData::new()
+        .copy_to_memory_unchecked_aligned(
+            dest: ptr::offset_bytes(buffer.ptr(), 96),
+            src_offset: decoded.actions.offset,
+            len: decoded.actions.len,
+        )
+    store_word(
+        ptr: ptr::offset_bytes(buffer.ptr(), array_start),
+        value: decoded.params_len,
+    )
+    let heads = array_start + 32
+    let mut tail = heads + decoded.params_len * 32
+    i = 0
+    while i < decoded.params_len {
+        let param = decoded.parameter(i)
+        store_word(
+            ptr: ptr::offset_bytes(buffer.ptr(), heads + i * 32),
+            value: tail - heads,
+        )
+        store_word(
+            ptr: ptr::offset_bytes(buffer.ptr(), tail),
+            value: param.len,
+        )
+        CallData::new()
+            .copy_to_memory_unchecked_aligned(
+                dest: ptr::offset_bytes(buffer.ptr(), tail + 32),
+                src_offset: param.offset,
+                len: param.len,
+            )
+        tail += 32 + ((param.len + 31) / 32) * 32
+        i += 1
+    }
+    Bytes::from_payload(source: buffer.span())
+}

@@ -1,0 +1,12 @@
+Compiling 50 files with Solc 0.8.26
+Solc 0.8.26 finished in 2.12s
+Compiler run successful!
+
+Ran 4 tests for test/SignatureVerificationParity.t.sol:SignatureVerificationParityTest
+[PASS] testFuzz_contract(bytes,bytes32,uint8) (runs: 10000, μ: 225814, ~: 42483)
+[PASS] testFuzz_invalid(bytes32,bytes32,bytes32,uint8,uint8) (runs: 10000, μ: 21554, ~: 21345)
+[PASS] testFuzz_signed(uint256,bytes32,bool,bool) (runs: 10000, μ: 41148, ~: 41113)
+[PASS] test_unpaddedValidSignature() (gas: 25596)
+Suite result: ok. 4 passed; 0 failed; 0 skipped; finished in 2.15s (2.58s CPU time)
+
+Ran 1 test suite in 2.15s (2.15s CPU time): 4 tests passed, 0 failed, 0 skipped (4 total tests)

@@ -1,0 +1,65 @@
+Compilation errors in file:///tmp/fe-uniswap-current2/crates/fe/tests/fixtures/fe_test/long_error_event_names.fe
+
+error[8-0089]: failed to evaluate constant `SELECTOR`
+   ┌─ long_error_event_names.fe:18:1
+   │
+18 │ ╭ #[error]
+19 │ │ struct Errrrrrrrrrrrrrrrrrrrrrrrrrrrrrr { pub account: Address }
+   │ ╰────────────────────────────────────────────────────────────────^ `SELECTOR` from generated `#[error]` implementation failed during compile-time evaluation
+
+error[8-0089]: failed to evaluate constant `TOPIC0`
+   ┌─ long_error_event_names.fe:25:1
+   │
+25 │ ╭ #[event]
+26 │ │ struct Evvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv { pub account: Address }
+   │ ╰────────────────────────────────────────────────────────────────^ `TOPIC0` from generated `#[event]` implementation failed during compile-time evaluation
+
+error[8-0089]: failed to evaluate constant `SELECTOR`
+   ┌─ long_error_event_names.fe:33:1
+   │
+33 │ ╭ #[error]
+34 │ │ struct Errrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr { pub account: Address }
+   │ ╰─────────────────────────────────────────────────────────────────^ `SELECTOR` from generated `#[error]` implementation failed during compile-time evaluation
+
+error[8-0089]: failed to evaluate constant `TOPIC0`
+   ┌─ long_error_event_names.fe:40:1
+   │
+40 │ ╭ #[event]
+41 │ │ struct Evvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv { pub account: Address }
+   │ ╰─────────────────────────────────────────────────────────────────^ `TOPIC0` from generated `#[event]` implementation failed during compile-time evaluation
+
+error[8-0089]: failed to evaluate constant `SELECTOR`
+   ┌─ long_error_event_names.fe:48:1
+   │
+48 │ ╭ #[error]
+49 │ │ struct Errrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr { pub account: Address }
+   │ ╰────────────────────────────────────────────────────────────────────────────────────────────────^ `SELECTOR` from generated `#[error]` implementation failed during compile-time evaluation
+
+error[8-0089]: failed to evaluate constant `TOPIC0`
+   ┌─ long_error_event_names.fe:55:1
+   │
+55 │ ╭ #[event]
+56 │ │ struct Evvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv { pub account: Address }
+   │ ╰────────────────────────────────────────────────────────────────────────────────────────────────^ `TOPIC0` from generated `#[event]` implementation failed during compile-time evaluation
+
+error[8-0089]: failed to evaluate constant `SELECTOR`
+   ┌─ long_error_event_names.fe:63:1
+   │
+63 │ ╭ #[error]
+64 │ │ struct Errrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr { pub account: Address }
+   │ ╰─────────────────────────────────────────────────────────────────────────────────────────────────^ `SELECTOR` from generated `#[error]` implementation failed during compile-time evaluation
+
+error[8-0089]: failed to evaluate constant `TOPIC0`
+   ┌─ long_error_event_names.fe:70:1
+   │
+70 │ ╭ #[event]
+71 │ │ struct Evvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv { pub account: Address }
+   │ ╰─────────────────────────────────────────────────────────────────────────────────────────────────^ `TOPIC0` from generated `#[event]` implementation failed during compile-time evaluation
+
+
+ERROR [0.4050s] Compilation errors in file:///tmp/fe-uniswap-current2/crates/fe/tests/fixtures/fe_test/long_error_event_names.fe
+
+test result: FAILED. 0 passed; 1 failed
+
+failures:
+    long_error_event_names::compile

@@ -1,0 +1,121 @@
+// SPDX-License-Identifier: MIT
+use std::abi::{Bytes, sol, sol::{Uint24, Uint160, Int24}}
+use std::evm::{Address, Ctx, Call, RawMem}
+use super::{
+    hooks,
+    pool_types::{PoolKey, ModifyLiquidityParams, SwapParams},
+    balance_delta::BalanceDelta,
+    before_swap_delta::BeforeSwapDelta,
+}
+msg HooksMsg {
+    #[selector = sol("permissions(address,uint24,uint256)")]
+    Permissions { target: Address, fee: Uint24, flag: u256 } -> (bool, bool),
+    #[selector = sol("validate(address,uint256)")]
+    Validate { target: Address, flags: u256 },
+    #[selector = sol("raw(address,bytes,bool,bool)")]
+    Raw { target: Address, data: Bytes, delta: bool, parse: bool } -> Bytes,
+    #[selector = sol(
+        "initializeHook((address,address,uint24,int24,address),uint160,int24,bool)",
+    )]
+    Initialize { key: PoolKey, price: Uint160, tick: Int24, after: bool },
+    #[selector = sol(
+        "beforeModify((address,address,uint24,int24,address),(int24,int24,int256,bytes32),bytes)",
+    )]
+    BeforeModify { key: PoolKey, params: ModifyLiquidityParams, data: Bytes },
+    #[selector = sol(
+        "afterModify((address,address,uint24,int24,address),(int24,int24,int256,bytes32),int256,int256,bytes)",
+    )]
+    AfterModify {
+        key: PoolKey,
+        params: ModifyLiquidityParams,
+        delta: i256,
+        fees: i256,
+        data: Bytes,
+    } -> (i256, i256),
+    #[selector = sol(
+        "beforeSwap((address,address,uint24,int24,address),(bool,int256,uint160),bytes)",
+    )]
+    BeforeSwap { key: PoolKey, params: SwapParams, data: Bytes } -> (i256, i256, Uint24),
+    #[selector = sol(
+        "afterSwap((address,address,uint24,int24,address),(bool,int256,uint160),int256,bytes,int256)",
+    )]
+    AfterSwap { key: PoolKey, params: SwapParams, delta: i256, data: Bytes, before: i256 } -> (
+        i256,
+        i256,
+    ),
+    #[selector = sol(
+        "donateHook((address,address,uint24,int24,address),uint256,uint256,bytes,bool)",
+    )]
+    Donate { key: PoolKey, amount0: u256, amount1: u256, data: Bytes, after: bool },
+}
+pub contract HooksHarness uses (ctx: Ctx, call: mut Call, mem: mut RawMem) {
+    recv HooksMsg {
+        Permissions { target, fee, flag } -> (bool, bool) {
+            (hooks::is_valid_hook_address(target, fee), hooks::has_permission(target, flag))
+        }
+        Validate { target, flags } {
+            hooks::validate_hook_permissions(target, hooks::Permissions::from_bits(flags))
+        }
+        Raw { target, data, delta, parse } -> Bytes
+        uses (ctx, mut call, mut mem)
+        {
+            if delta {
+                let value = hooks::call_hook_with_return_delta(target, data.payload_span(), parse)
+                let bits: u256 = value.downcast_truncate()
+                std::abi::bytes_from_word(bits)
+            } else {
+                let result = hooks::call_hook(target, data.payload_span())
+                Bytes::from_payload(source: result.span())
+            }
+        }
+        Initialize { key, price, tick, after } uses (ctx, mut call, mut mem) {
+            if after {
+                hooks::after_initialize(key, price, tick)
+            } else {
+                hooks::before_initialize(key, price)
+            }
+        }
+        BeforeModify { key, params, data } uses (ctx, mut call, mut mem) {
+            hooks::before_modify_liquidity(key, params, data.payload_span())
+        }
+        AfterModify { key, params, delta, fees, data } -> (i256, i256)
+        uses (ctx, mut call, mut mem)
+        {
+            let (caller, hook) = hooks::after_modify_liquidity(
+                key,
+                params,
+                BalanceDelta { bits: delta },
+                BalanceDelta { bits: fees },
+                data.payload_span(),
+            )
+            (caller.bits, hook.bits)
+        }
+        BeforeSwap { key, params, data } -> (i256, i256, Uint24)
+        uses (ctx, mut call, mut mem)
+        {
+            let (amount, delta, fee) = hooks::before_swap(key, params, data.payload_span())
+            (amount, delta.bits, fee)
+        }
+        AfterSwap { key, params, delta, data, before } -> (i256, i256)
+        uses (ctx, mut call, mut mem)
+        {
+            let (caller, hook) = hooks::after_swap(
+                key,
+                params,
+                BalanceDelta { bits: delta },
+                data.payload_span(),
+                BeforeSwapDelta { bits: before },
+            )
+            (caller.bits, hook.bits)
+        }
+        Donate { key, amount0, amount1, data, after }
+        uses (ctx, mut call, mut mem)
+        {
+            if after {
+                hooks::after_donate(key, amount0, amount1, data.payload_span())
+            } else {
+                hooks::before_donate(key, amount0, amount1, data.payload_span())
+            }
+        }
+    }
+}

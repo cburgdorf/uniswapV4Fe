@@ -1,0 +1,130 @@
+{
+  "optimization": "2",
+  "fe_abi_sha256": "9eb90b5f46b49ed69f606a3bc1ec65812403a135ba06135ccc552ddbab1e6606",
+  "fe_errors": [],
+  "reference_errors": [],
+  "function_metadata": [
+    {
+      "name": "transfer",
+      "fe_mutability": "nonpayable",
+      "reference_mutability": "nonpayable",
+      "fe_outputs": [],
+      "reference_outputs": []
+    },
+    {
+      "name": "balanceOf",
+      "fe_mutability": "nonpayable",
+      "reference_mutability": "view",
+      "fe_outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "reference_outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "balanceOfSelf",
+      "fe_mutability": "nonpayable",
+      "reference_mutability": "view",
+      "fe_outputs": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "reference_outputs": [
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ]
+    },
+    {
+      "name": "identity",
+      "fe_mutability": "pure",
+      "reference_mutability": "pure",
+      "fe_outputs": [
+        {
+          "name": "",
+          "type": "tuple",
+          "components": [
+            {
+              "name": "",
+              "type": "address"
+            },
+            {
+              "name": "",
+              "type": "uint256"
+            },
+            {
+              "name": "",
+              "type": "bool"
+            },
+            {
+              "name": "",
+              "type": "bool"
+            },
+            {
+              "name": "",
+              "type": "bool"
+            },
+            {
+              "name": "",
+              "type": "bool"
+            },
+            {
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        }
+      ],
+      "reference_outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        },
+        {
+          "name": "",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ]
+    }
+  ],
+  "result": "metadata parity incomplete; runtime parity passed"
+}

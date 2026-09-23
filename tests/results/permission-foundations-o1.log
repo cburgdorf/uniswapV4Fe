@@ -1,0 +1,13 @@
+Compiling 14 files with Solc 0.8.26
+Solc 0.8.26 finished in 273.08ms
+Compiler run successful!
+
+Ran 5 tests for test/PermissionFoundationsParity.t.sol:PermissionFoundationsParityTest
+[PASS] testFuzz_checker(address,address) (runs: 10000, μ: 11374, ~: 11374)
+[PASS] testFuzz_flags(bytes2,bytes2) (runs: 10000, μ: 11404, ~: 11400)
+[PASS] testFuzz_interfaces(bytes4) (runs: 10000, μ: 11143, ~: 11143)
+[PASS] test_constantsAndInterfaceBoundaries() (gas: 19670)
+[PASS] test_malformed() (gas: 612676)
+Suite result: ok. 5 passed; 0 failed; 0 skipped; finished in 98.03ms (272.03ms CPU time)
+
+Ran 1 test suite in 98.47ms (98.03ms CPU time): 5 tests passed, 0 failed, 0 skipped (5 total tests)

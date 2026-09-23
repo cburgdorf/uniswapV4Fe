@@ -1,0 +1,40 @@
+No files changed, compilation skipped
+
+Ran 1 test for test/QuoterParity.t.sol:QuoterParityTest
+[FAIL: quoter bytes mismatch] test_internalAuthPrecedence() (gas: 14195)
+Traces:
+  [3690572] QuoterParityTest::setUp()
+    ├─ [229076] → new QuoteManager@0x5615dEB798BB3E4dFa0139dFa1b3D433Cc23b72f
+    │   └─ ← [Return] 1144 bytes of code
+    ├─ [0] VM::readFile("fe-bytecode.txt") [staticcall]
+    │   └─ ← [Return] <file>
+    ├─ [0] VM::parseBytes("0x3460e9575b612f563881811060e95781900360405161011f8111602157506101205b601f8201601f1916810160405280928291399060a05260c0525f60e05260a060479060a6565b6040516 [long payload omitted]
+    │   └─ ← [Return] 0x3460e9575b612f563881811060e95781900360405161011f8111602157506101205b601f8201601f1916810160405280928291399060a05260c0525f60e05260a060479060a6565b60405161011f [long payload omitted]
+    ├─ [2385697] → new <unknown>@0x2e234DAe75C793f67A35089C9d99245E1C58470b
+    │   └─ ← [Return] 11913 bytes of code
+    ├─ [871978] → new V4Quoter@0xF62849F9A0B5Bf2913b396098F7c7019b51A820a
+    │   └─ ← [Return] 4354 bytes of code
+    └─ ← [Stop]
+
+  [14195] QuoterParityTest::test_internalAuthPrecedence()
+    ├─ [1887] 0x2e234DAe75C793f67A35089C9d99245E1C58470b::_quoteExactInputSingle(QuoteExactSingleParams({ poolKey: PoolKey({ currency0: 0x000000000000000000000000000000000000000A, currency1: 0x0000000000000000000000000000000000000014, fee: 3000, tickSpacing: 60, hooks: 0x0000000000000000000000000000000000000000 }), zeroForOne: true, exactAmount: 7, hookData: 0x }))
+    │   └─ ← [Revert] EvmError: Revert
+    ├─ [498] V4Quoter::_quoteExactInputSingle(QuoteExactSingleParams({ poolKey: PoolKey({ currency0: 0x000000000000000000000000000000000000000A, currency1: 0x0000000000000000000000000000000000000014, fee: 3000, tickSpacing: 60, hooks: 0x0000000000000000000000000000000000000000 }), zeroForOne: true, exactAmount: 7, hookData: 0x }))
+    │   └─ ← [Revert] NotSelf()
+    └─ ← [Revert] quoter bytes mismatch
+
+Backtrace:
+  at V4Quoter._quoteExactInputSingle
+  at QuoterParityTest.test_internalAuthPrecedence
+
+Suite result: FAILED. 0 passed; 1 failed; 0 skipped; finished in 825.35µs (79.72µs CPU time)
+
+Ran 1 test suite in 7.38ms (825.35µs CPU time): 0 tests passed, 1 failed, 0 skipped (1 total tests)
+
+Failing tests:
+Encountered 1 failing test in test/QuoterParity.t.sol:QuoterParityTest
+[FAIL: quoter bytes mismatch] test_internalAuthPrecedence() (gas: 14195)
+
+Encountered a total of 1 failing tests, 0 tests succeeded
+
+Tip: Run `forge test --rerun` to retry only the 1 failed test

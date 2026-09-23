@@ -1,0 +1,12 @@
+// SPDX-License-Identifier: MIT
+// v4-periphery BipsLibrary.sol. Multiplication intentionally remains checked.
+use std::evm::revert_error
+pub const DENOMINATOR: u256 = 10000
+#[error]
+pub struct InvalidBips {}
+pub fn calculate_portion(_ amount: u256, _ bips: u256) -> u256 {
+    if bips > DENOMINATOR {
+        revert_error(InvalidBips {})
+    }
+    amount * bips / DENOMINATOR
+}

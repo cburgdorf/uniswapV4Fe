@@ -1,0 +1,39 @@
+Parity artifacts: /tmp/uniswap-upstream/reserves-lens-final-o1
+Compiler: fe 26.3.0 (9e2213a79); sha256=62a348861753829883fa71f9ed9af4e5c94e7e0b97b6cdf71f3ba2028c03b4c0
+Wrote /tmp/uniswap-upstream/reserves-lens-final-o1/fe/ReservesLens.bin
+Wrote /tmp/uniswap-upstream/reserves-lens-final-o1/fe/ReservesLens.runtime.bin
+Wrote /tmp/uniswap-upstream/reserves-lens-final-o1/fe/ReservesLens.abi.json
+Compiling 66 files with Solc 0.8.26
+Solc 0.8.26 finished in 4.81s
+Compiler run successful with warnings:
+Warning (2519): This declaration shadows an existing declaration.
+   --> test/ReservesLensParity.t.sol:143:14:
+    |
+143 |             (bool ok,bytes memory step)=compare(abi.enc ...
+    |              ^^^^^^^
+Note: The shadowed declaration is here:
+   --> test/ReservesLensParity.t.sol:147:10:
+    |
+147 |         (bool ok,bytes memory finalPage)=compare(ab ...
+    |          ^^^^^^^
+
+Warning (2018): Function state mutability can be restricted to view
+  --> test/ReservesLensParity.t.sol:62:5:
+   |
+62 |     function compare(bytes memory data) internal returns(bool ok,bytes memory out) {
+   |     ^ (Relevant source part starts here and spans across multiple lines).
+
+
+Ran 8 tests for test/ReservesLensParity.t.sol:ReservesLensParityTest
+[PASS] testFuzz_overlappingRanges(uint64,uint64,int16,bool) (runs: 10000, μ: 1729760, ~: 1711415)
+[PASS] testFuzz_paged(uint64,int16,uint16) (runs: 10000, μ: 1225454, ~: 1229161)
+[PASS] testFuzz_tvl(uint64,int16,bool,uint8) (runs: 10000, μ: 1180220, ~: 1177898)
+[PASS] test_cursorValidation() (gas: 316213)
+[PASS] test_largeBitmapDomain() (gas: 68745294)
+[PASS] test_lowGasHookStatus() (gas: 771103)
+[PASS] test_resumeInsideWord() (gas: 2660328)
+[PASS] test_ticksBatchAndInvalidState() (gas: 2766561)
+Suite result: ok. 8 passed; 0 failed; 0 skipped; finished in 34.46s (76.39s CPU time)
+
+Ran 1 test suite in 34.46s (34.46s CPU time): 8 tests passed, 0 failed, 0 skipped (8 total tests)
+Verified protocol ABI: /tmp/uniswap-upstream/reserves-lens-final-o1/fe/ReservesLens.protocol.abi.json

@@ -1,0 +1,15 @@
+Compiling 13 files with Solc 0.8.26
+Solc 0.8.26 finished in 1.48s
+Compiler run successful!
+
+Ran 7 tests for test/DeployerCompetitionParity.t.sol:DeployerCompetitionParityTest
+[PASS] testFuzz_constructor(bytes32,uint256,address,uint256) (runs: 10000, μ: 2152666, ~: 2266978)
+[PASS] testFuzz_deploy(uint64,address,bool) (runs: 10000, μ: 416042, ~: 412287)
+[PASS] testFuzz_sequences(uint96,uint8) (runs: 10000, μ: 4723168, ~: 4210291)
+[PASS] testFuzz_updates(bytes32,address,uint16) (runs: 10000, μ: 2933767, ~: 2918516)
+[PASS] test_create2FailuresAndEmptyRuntime() (gas: 15805534)
+[PASS] test_deadlinesAuthorizationAndDeployment() (gas: 14150578)
+[PASS] test_nonpayableAndMalformedCalls() (gas: 10514429)
+Suite result: ok. 7 passed; 0 failed; 0 skipped; finished in 17.98s (36.38s CPU time)
+
+Ran 1 test suite in 17.98s (17.98s CPU time): 7 tests passed, 0 failed, 0 skipped (7 total tests)

@@ -1,0 +1,43 @@
+// SPDX-License-Identifier: MIT
+use std::abi::{Bytes, sol}
+use std::evm::{Address, Ctx, Call, RawMem}
+use super::{payments::{TokenPayer, Permit2Payment}, permissioned_router::{PermissionedPayment, PermissionedPools}, router::{self, PoolValidator}, pool_types::PoolKey, calldata_decoder::argument_bytes}
+msg PermissionedHarnessMsg {
+    #[selector = sol("handle(uint256,bytes)")]
+    Handle { action: u256, data: Bytes },
+    #[selector = sol("pay(address,address,uint256)")]
+    Pay { currency: Address, payer: Address, amount: u256 },
+    #[selector = sol("take(address,address,uint256)")]
+    Take { currency: Address, recipient: Address, amount: u256 },
+    #[selector = sol("mapSettle(uint256,address)")]
+    Map { amount: u256, currency: Address } -> u256,
+    #[selector = sol("validate((address,address,uint24,int24,address))")]
+    Validate { key: PoolKey },
+}
+pub contract PermissionedRouterHarness {
+    manager: Address,
+    permit2: Address,
+    factory: Address,
+    init(_manager: Address, _permit2: Address, _factory: Address) uses (mut manager, mut permit2, mut factory) {
+        manager = _manager
+        permit2 = _permit2
+        factory = _factory
+    }
+    recv PermissionedHarnessMsg {
+        Handle { action, data } uses (manager, permit2, factory, ctx: Ctx, call: mut Call, mem: mut RawMem) {
+            router::handle(PermissionedPayment { funding: Permit2Payment { permit2 }, factory, sender: ctx.caller() }, PermissionedPools { factory }, manager, ctx.caller(), action, argument_bytes(1))
+        }
+        Pay { currency, payer, amount } uses (manager, permit2, factory, ctx: Ctx, call: mut Call, mem: mut RawMem) {
+            PermissionedPayment { funding: Permit2Payment { permit2 }, factory, sender: ctx.caller() }.pay(manager, currency, payer, amount)
+        }
+        Take { currency, recipient, amount } uses (manager, permit2, factory, ctx: Ctx, call: mut Call, mem: mut RawMem) {
+            PermissionedPayment { funding: Permit2Payment { permit2 }, factory, sender: ctx.caller() }.take(manager, currency, recipient, amount)
+        }
+        Map { amount, currency } -> u256 uses (manager, permit2, factory, ctx: Ctx, call: mut Call, mem: mut RawMem) {
+            PermissionedPayment { funding: Permit2Payment { permit2 }, factory, sender: ctx.caller() }.map_settle(manager, amount, currency)
+        }
+        Validate { key } uses (factory, ctx: Ctx, mem: mut RawMem) {
+            PermissionedPools { factory }.validate(key)
+        }
+    }
+}

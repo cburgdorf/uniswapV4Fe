@@ -1,0 +1,170 @@
+// SPDX-License-Identifier: MIT
+use core::abi::{AbiSize, AbiSpan, AbiDecoder, ByteInput, Encode, Decode}
+use std::abi::{Sol, Bytes32, sol::{Uint24, Int24, Uint160}}
+use std::evm::{Address, RawMem}
+use std::evm::packed::keccak_packed
+
+// Solidity user-defined address/bytes32 types are erased at the ABI boundary.
+pub type PoolId = Bytes32
+
+pub struct PoolKey {
+    pub currency0: Address,
+    pub currency1: Address,
+    pub fee: Uint24,
+    pub tickSpacing: Int24,
+    pub hooks: Address,
+}
+impl Copy for PoolKey {}
+impl AbiSize for PoolKey {
+    const HEAD_SIZE: u256 = 160
+    const IS_DYNAMIC: bool = false
+}
+impl AbiSpan<Sol> for PoolKey {
+    fn payload_end<I: ByteInput>(_: I, base: u256, pos: u256) -> u256 {
+        pos + 160
+    }
+}
+impl Decode<Sol> for PoolKey {
+    fn decode_payload<D: AbiDecoder<Sol>>(_ d: mut D) -> Self {
+        let currency0_word = d.read_word()
+        if currency0_word >> 160 != 0 {
+            std::evm::revert(())
+        }
+        let currency0 = Address { inner: currency0_word }
+        let currency1_word = d.read_word()
+        if currency1_word >> 160 != 0 {
+            std::evm::revert(())
+        }
+        let currency1 = Address { inner: currency1_word }
+        let fee_word = d.read_word()
+        if fee_word >> 24 != 0 {
+            std::evm::revert(())
+        }
+        let fee = Uint24 { val: fee_word.downcast_truncate() }
+        let tickSpacing_word = d.read_word()
+        let tickSpacing_signed: i256 = tickSpacing_word.downcast_truncate()
+        if tickSpacing_signed < -8388608 || tickSpacing_signed > 8388607 {
+            std::evm::revert(())
+        }
+        let tickSpacing = Int24 { val: tickSpacing_signed.downcast_truncate() }
+        let hooks_word = d.read_word()
+        if hooks_word >> 160 != 0 {
+            std::evm::revert(())
+        }
+        let hooks = Address { inner: hooks_word }
+        Self { currency0, currency1, fee, tickSpacing, hooks }
+    }
+}
+impl Encode<Sol> for PoolKey {
+    fn encode(own self, _ ptr: *u8) {
+        <(Address, Address, Uint24, Int24, Address) as Encode<Sol>>::encode(
+            (self.currency0, self.currency1, self.fee, self.tickSpacing, self.hooks),
+            ptr,
+        )
+    }
+}
+
+pub struct ModifyLiquidityParams {
+    pub tickLower: Int24,
+    pub tickUpper: Int24,
+    pub liquidityDelta: i256,
+    pub salt: Bytes32,
+}
+impl Copy for ModifyLiquidityParams {}
+impl AbiSize for ModifyLiquidityParams {
+    const HEAD_SIZE: u256 = 128
+    const IS_DYNAMIC: bool = false
+}
+impl AbiSpan<Sol> for ModifyLiquidityParams {
+    fn payload_end<I: ByteInput>(_: I, base: u256, pos: u256) -> u256 {
+        pos + 128
+    }
+}
+impl Decode<Sol> for ModifyLiquidityParams {
+    fn decode_payload<D: AbiDecoder<Sol>>(_ d: mut D) -> Self {
+        let tickLower_word = d.read_word()
+        let tickLower_signed: i256 = tickLower_word.downcast_truncate()
+        if tickLower_signed < -8388608 || tickLower_signed > 8388607 {
+            std::evm::revert(())
+        }
+        let tickLower = Int24 { val: tickLower_signed.downcast_truncate() }
+        let tickUpper_word = d.read_word()
+        let tickUpper_signed: i256 = tickUpper_word.downcast_truncate()
+        if tickUpper_signed < -8388608 || tickUpper_signed > 8388607 {
+            std::evm::revert(())
+        }
+        let tickUpper = Int24 { val: tickUpper_signed.downcast_truncate() }
+        let liquidityDelta_word = d.read_word()
+        let liquidityDelta: i256 = liquidityDelta_word.downcast_truncate()
+        let salt_word = d.read_word()
+        let salt = Bytes32 { val: salt_word }
+        Self { tickLower, tickUpper, liquidityDelta, salt }
+    }
+}
+impl Encode<Sol> for ModifyLiquidityParams {
+    fn encode(own self, _ ptr: *u8) {
+        <(Int24, Int24, i256, Bytes32) as Encode<Sol>>::encode(
+            (self.tickLower, self.tickUpper, self.liquidityDelta, self.salt),
+            ptr,
+        )
+    }
+}
+
+pub struct SwapParams {
+    pub zeroForOne: bool,
+    pub amountSpecified: i256,
+    pub sqrtPriceLimitX96: Uint160,
+}
+impl Copy for SwapParams {}
+impl AbiSize for SwapParams {
+    const HEAD_SIZE: u256 = 96
+    const IS_DYNAMIC: bool = false
+}
+impl AbiSpan<Sol> for SwapParams {
+    fn payload_end<I: ByteInput>(_: I, base: u256, pos: u256) -> u256 {
+        pos + 96
+    }
+}
+impl Decode<Sol> for SwapParams {
+    fn decode_payload<D: AbiDecoder<Sol>>(_ d: mut D) -> Self {
+        let zeroForOne_word = d.read_word()
+        if zeroForOne_word > 1 {
+            std::evm::revert(())
+        }
+        let zeroForOne = zeroForOne_word != 0
+        let amountSpecified_word = d.read_word()
+        let amountSpecified: i256 = amountSpecified_word.downcast_truncate()
+        let sqrtPriceLimitX96_word = d.read_word()
+        if sqrtPriceLimitX96_word >> 160 != 0 {
+            std::evm::revert(())
+        }
+        let sqrtPriceLimitX96 = Uint160 { val: sqrtPriceLimitX96_word }
+        Self { zeroForOne, amountSpecified, sqrtPriceLimitX96 }
+    }
+}
+impl Encode<Sol> for SwapParams {
+    fn encode(own self, _ ptr: *u8) {
+        <(bool, i256, Uint160) as Encode<Sol>>::encode(
+            (self.zeroForOne, self.amountSpecified, self.sqrtPriceLimitX96),
+            ptr,
+        )
+    }
+}
+
+impl PoolKey {
+    pub fn to_id(self) -> PoolId uses (mem: mut RawMem) {
+        let signed: i256 = self.tickSpacing.val as i256
+        let tick_word: u256 = signed.downcast_truncate()
+        Bytes32 {
+            val: keccak_packed(
+                (
+                    self.currency0.inner,
+                    self.currency1.inner,
+                    self.fee.val as u256,
+                    tick_word,
+                    self.hooks.inner,
+                ),
+            ),
+        }
+    }
+}

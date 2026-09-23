@@ -1,0 +1,33 @@
+    ├─ [50100] SolidityWorkflowRouter::execute{value: 9}(0x0000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000 [long payload omitted]
+    │   ├─ [48926] PoolManager::unlock(0x0000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000008000000000000 [long payload omitted]
+    │   │   ├─ [47460] SolidityWorkflowRouter::unlockCallback(0x00000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000 [long payload omitted]
+    │   │   │   ├─ [39041] PoolManager::swap(PoolKey({ currency0: 0x0000000000000000000000000000000000000000, currency1: 0x5615dEB798BB3E4dFa0139dFa1b3D433Cc23b72f, fee: 3000, tickSpacing: 60, hooks: 0x0000000000000000000000000000000000000000 }), SwapParams({ zeroForOne: true, amountSpecified: -2, sqrtPriceLimitX96: 4295128740 [4.295e9] }), 0x)
+    │   │   │   │   ├─ emit Swap(id: 0x36fe90fdf166d899ccb39b1749d367cfb530cf8c27eecda4d12a6f34bb73eb75, sender: SolidityWorkflowRouter: [0x1d1499e622D69689cdf9004d05Ec547d650Ff211], amount0: -2, amount1: 0, sqrtPriceX96: 79228162514264337593543871108 [7.922e28], liquidity: 1000000000000000000000000 [1e24], tick: -1, fee: 3000)
+    │   │   │   │   └─ ← [Return] -680564733841876926926749214863536422912 [-6.805e38]
+    │   │   │   ├─ [1957] PoolManager::swap(PoolKey({ currency0: 0x5615dEB798BB3E4dFa0139dFa1b3D433Cc23b72f, currency1: 0xF62849F9A0B5Bf2913b396098F7c7019b51A820a, fee: 3000, tickSpacing: 60, hooks: 0x0000000000000000000000000000000000000000 }), SwapParams({ zeroForOne: true, amountSpecified: 0, sqrtPriceLimitX96: 4295128740 [4.295e9] }), 0x)
+    │   │   │   │   └─ ← [Revert] SwapAmountCannotBeZero()
+    │   │   │   └─ ← [Revert] SwapAmountCannotBeZero()
+    │   │   └─ ← [Revert] SwapAmountCannotBeZero()
+    │   └─ ← [Revert] SwapAmountCannotBeZero()
+    ├─ [0] VM::getRecordedLogs()
+    │   └─ ← [Return] [([0x40e9cecb9f5f1f1c5b9c97dec2917b7ee92e57ba5563708daca94dd84ad7112f, 0x36fe90fdf166d899ccb39b1749d367cfb530cf8c27eecda4d12a6f34bb73eb75, 0x0000000000000000000000001d1499e622d69689cdf9004d05ec547d650ff211], 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000fffffffffffffffffffeca8400000000000000000000000000000000000000000000d3c21bcecceda1000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000000000000000000000000000000000000000000000000000000000bb8, 0xa0Cb889707d426A7A386870A03bc70d1b0697598)]
+    └─ ← [Revert] expected workflow status
+
+Backtrace:
+  at PoolManager.swap
+  at SolidityWorkflowRouter.unlockCallback
+  at PoolManager.unlock
+  at SolidityWorkflowRouter.execute
+  at RouterWorkflowsTest.testFuzz_multiWorkflow
+
+Suite result: FAILED. 0 passed; 1 failed; 0 skipped; finished in 27.41ms (24.82ms CPU time)
+
+Ran 1 test suite in 32.23ms (27.41ms CPU time): 0 tests passed, 1 failed, 0 skipped (1 total tests)
+
+Failing tests:
+Encountered 1 failing test in test/RouterWorkflows.t.sol:RouterWorkflowsTest
+[FAIL: expected workflow status; counterexample: calldata=0x9929f56a0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000 args=[1, false, true, false]] testFuzz_multiWorkflow(uint64,bool,bool,bool) (runs: 5, μ: 25168050, ~: 25135808)
+
+Encountered a total of 1 failing tests, 0 tests succeeded
+
+Tip: Run `forge test --rerun` to retry only the 1 failed test

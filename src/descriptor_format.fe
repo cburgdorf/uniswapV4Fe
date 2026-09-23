@@ -1,0 +1,145 @@
+// SPDX-License-Identifier: MIT
+// Numeric formatting from the pinned Descriptor.sol, including its checked
+// uint8 arithmetic and five-significant-figure rounding behavior.
+use std::abi::{DynString, sol::{Uint24, Int24, Uint160}}
+use std::evm::RawMem
+use super::{metadata_text as text, full_math, tick_math, lp_fee}
+const SQRT10_X128: u256 = 1076067327063303206878105757264492625226
+pub fn pow10(_ exponent: u256) -> u256 {
+    let mut value: u256 = 1
+    let mut i: u256 = 0
+    while i < exponent { value *= 10
+ i += 1 }
+    value
+}
+struct DecimalParams {
+    sigfigs: u256,
+    length: u8,
+    sigfig_index: u8,
+    decimal_index: u8,
+    zeros_start: u8,
+    zeros_end: u8,
+    below_one: bool,
+    percent: bool,
+}
+fn render(_ initial: own DecimalParams) -> DynString uses (mem: mut RawMem) {
+    let mut params = initial
+    let data = text::allocate(params.length as u256)
+    if params.percent { text::set(data, (params.length as u256) - 1, 37) }
+    if params.below_one { text::set(data, 0, 48)
+ text::set(data, 1, 46) }
+    let mut cursor = params.zeros_start as u256
+    let end = params.zeros_end + 1
+    while cursor < end as u256 { text::set(data, cursor, 48)
+ cursor += 1 }
+    while params.sigfigs > 0 {
+        if params.decimal_index > 0 && params.sigfig_index == params.decimal_index {
+            text::set(data, params.sigfig_index as u256, 46)
+            params.sigfig_index -= 1
+        }
+        text::set(data, params.sigfig_index as u256, (48 + params.sigfigs % 10).downcast_truncate())
+        params.sigfig_index = if params.sigfig_index == 0 { 255 } else { params.sigfig_index - 1 }
+        params.sigfigs /= 10
+    }
+    text::from_span(data)
+}
+fn blank() -> DecimalParams {
+    DecimalParams { sigfigs: 0, length: 0, sigfig_index: 0, decimal_index: 0, zeros_start: 0, zeros_end: 0, below_one: false, percent: false }
+}
+fn rounded(_ input: u256, _ digits: u8) -> (u256, bool) {
+    let mut value = input
+    if digits > 5 { value /= pow10((digits - 5) as u256) }
+    let round_up = value % 10 > 4
+    value /= 10
+    if round_up { value += 1 }
+    if value == 100000 { (value / 10, true) } else { (value, false) }
+}
+fn adjust(_ sqrt: Uint160, _ base: u8, _ quote: u8) -> u256 {
+    let difference = if base >= quote { base - quote } else { quote - base }
+    let mut result = sqrt.val
+    if difference > 0 && difference <= 18 {
+        if base > quote {
+            result *= pow10((difference / 2) as u256)
+            if difference % 2 == 1 { result = full_math::mul_div(result, SQRT10_X128, 1 << 128) }
+        } else {
+            result /= pow10((difference / 2) as u256)
+            if difference % 2 == 1 { result = full_math::mul_div(result, 1 << 128, SQRT10_X128) }
+        }
+    }
+    result
+}
+pub fn fixed_price(_ sqrt: Uint160, _ base: u8, _ quote: u8) -> DynString uses (mem: mut RawMem) {
+    let adjusted = adjust(sqrt, base, quote)
+    let mut value = full_math::mul_div(adjusted, adjusted, 1 << 64)
+    let below = adjusted < 1 << 96
+    value = full_math::mul_div(value, pow10(if below { 44 } else { 5 }), 1 << 128)
+    let mut temp = value
+    let mut digits: u8 = 0
+    while temp != 0 { digits += 1
+ temp /= 10 }
+    digits -= 1
+    let (sigfigs, extra) = rounded(value, digits)
+    if extra { digits += 1 }
+    let mut params = blank()
+    if below {
+        params.length = (7 as u8) + ((43 as u8) - digits)
+        params.zeros_start = 2
+        params.zeros_end = ((43 as u256) - (digits as u256) + 1).downcast_truncate()
+        params.sigfig_index = params.length - 1
+    } else if digits >= 9 {
+        params.length = digits - 4
+        params.zeros_start = 5
+        params.zeros_end = params.length - 1
+        params.sigfig_index = 4
+    } else {
+        params.length = 6
+        params.sigfig_index = 5
+        params.decimal_index = digits - 5 + 1
+    }
+    params.sigfigs = sigfigs
+    params.below_one = below
+    render(params)
+}
+pub fn tick_price(_ tick: Int24, _ spacing: Int24, _ base: u8, _ quote: u8, _ flip: bool) -> DynString uses (mem: mut RawMem) {
+    if tick.val == (tick_math::MIN_TICK / spacing.val) * spacing.val {
+        return text::word(if flip { 0x4d41580000000000000000000000000000000000000000000000000000000000 } else { 0x4d494e0000000000000000000000000000000000000000000000000000000000 }, 3)
+    }
+    if tick.val == (tick_math::MAX_TICK / spacing.val) * spacing.val {
+        return text::word(if flip { 0x4d494e0000000000000000000000000000000000000000000000000000000000 } else { 0x4d41580000000000000000000000000000000000000000000000000000000000 }, 3)
+    }
+    let mut sqrt = tick_math::get_sqrt_price_at_tick(tick)
+    if flip { sqrt = Uint160 { val: ((1 as u256) << 192) / sqrt.val & 0xffffffffffffffffffffffffffffffffffffffff } }
+    fixed_price(sqrt, base, quote)
+}
+pub fn fee(_ fee: Uint24) -> DynString uses (mem: mut RawMem) {
+    if lp_fee::is_dynamic_fee(fee) { return text::word(0x44796e616d696300000000000000000000000000000000000000000000000000, 7) }
+    if fee.val == 0 { return text::word(0x3025000000000000000000000000000000000000000000000000000000000000, 2) }
+    let mut temp = fee.val
+    let mut digits: u256 = 0
+    let mut significant: u8 = 0
+    while temp != 0 {
+        if significant > 0 || temp % 10 != 0 { significant += 1 }
+        digits += 1
+        temp /= 10
+    }
+    let mut params = blank()
+    if digits >= 5 {
+        let place: u256 = if digits - (significant as u256) >= 4 { 0 } else { 1 }
+        let zeros: u256 = if digits - 5 < ((significant - 1) as u256) { 0 } else { digits - 5 - ((significant - 1) as u256) }
+        params.zeros_start = significant
+        params.zeros_end = ((params.zeros_start as u256) + zeros - 1).downcast_truncate()
+        params.sigfig_index = (((params.zeros_start - 1) as u256) + place).downcast_truncate()
+        params.length = (zeros + (significant as u256) + 1 + place).downcast_truncate()
+    } else {
+        let zeros = 5 - digits
+        params.zeros_start = 2
+        params.zeros_end = (zeros + (params.zeros_start as u256) - 1).downcast_truncate()
+        params.length = (zeros + (significant as u256) + 2).downcast_truncate()
+        params.sigfig_index = params.length - 2
+        params.below_one = true
+    }
+    params.sigfigs = (fee.val as u256) / pow10(digits - (significant as u256))
+    params.percent = true
+    params.decimal_index = if digits > 4 { (digits - 4).downcast_truncate() } else { 0 }
+    render(params)
+}

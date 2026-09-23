@@ -1,0 +1,45 @@
+{
+  "fe_abi_sha256": "04eb4ba2fd1f9cf4ce762c51ee91505567cf1c92706a7b21f0c2cfd9f219b710",
+  "reference_artifact_sha256": "4853db86840df76d11e8e10990525c04dd8d50d2cd874237af0fd78c9eb3bf1f",
+  "protocol_abi_sha256": "e124e41e0970e4c3d301b019876519791f1d579d195fef6249e316dbf56576cf",
+  "adapter_sha256": "ffd85641a3d37178f97aa5a389d46f40711c1195e658e97af9fb028f0812d3e5",
+  "callable_and_event_layouts": "compatible",
+  "reference_metadata_applied": [
+    "constructor:(bytes32,uint256,address,uint256)",
+    "function:bestAddress()",
+    "function:bestAddressSalt()",
+    "function:bestAddressSubmitter()",
+    "function:competitionDeadline()",
+    "function:deploy(bytes)",
+    "function:deployer()",
+    "function:exclusiveDeployDeadline()",
+    "function:initCodeHash()",
+    "function:updateBestAddress(bytes32)",
+    "event:NewAddressFound(address,address,uint256)"
+  ],
+  "explicit_fallback_receive": false,
+  "explicit_lazy_multicall": false,
+  "explicit_flat_dynamic_returns": [],
+  "fe_error_signatures": [
+    "error:CompetitionNotOver(uint256,uint256)",
+    "error:CompetitionOver(uint256,uint256)",
+    "error:Create2EmptyBytecode()",
+    "error:Create2FailedDeployment()",
+    "error:InvalidBytecode()",
+    "error:InvalidSender(bytes32,address)",
+    "error:NotAllowedToDeploy(address,address)",
+    "error:Panic(uint256)",
+    "error:WorseAddress(address,address,uint256,uint256)"
+  ],
+  "reference_error_signatures": [
+    "error:CompetitionNotOver(uint256,uint256)",
+    "error:CompetitionOver(uint256,uint256)",
+    "error:Create2EmptyBytecode()",
+    "error:Create2FailedDeployment()",
+    "error:Create2InsufficientBalance(uint256,uint256)",
+    "error:InvalidBytecode()",
+    "error:InvalidSender(bytes32,address)",
+    "error:NotAllowedToDeploy(address,address)",
+    "error:WorseAddress(address,address,uint256,uint256)"
+  ]
+}

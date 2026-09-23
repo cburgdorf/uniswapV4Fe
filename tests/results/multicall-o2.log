@@ -1,0 +1,12 @@
+Compiling 50 files with Solc 0.8.26
+Solc 0.8.26 finished in 2.05s
+Compiler run successful!
+
+Ran 4 tests for test/MulticallParity.t.sol:MulticallParityTest
+[PASS] testFuzz_returns(bytes,bytes,bool) (runs: 10000, μ: 38803, ~: 38864)
+[PASS] testFuzz_rollback(bytes,uint64) (runs: 10000, μ: 86356, ~: 86746)
+[PASS] testFuzz_stateAndContext(uint128,uint128,uint64,bool) (runs: 10000, μ: 91239, ~: 87672)
+[PASS] test_emptyAndNonpayable() (gas: 52727)
+Suite result: ok. 4 passed; 0 failed; 0 skipped; finished in 684.04ms (1.73s CPU time)
+
+Ran 1 test suite in 684.75ms (684.04ms CPU time): 4 tests passed, 0 failed, 0 skipped (4 total tests)

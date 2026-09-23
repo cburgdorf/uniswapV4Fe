@@ -1,0 +1,177 @@
+[
+  {
+    "type": "constructor",
+    "inputs": [
+      {
+        "name": "poolManager",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "POOL_MANAGER",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "createPermissionsAdapter",
+    "inputs": [
+      {
+        "name": "permissionedToken",
+        "type": "address",
+        "internalType": "contract IERC20"
+      },
+      {
+        "name": "initialOwner",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "allowListChecker",
+        "type": "address",
+        "internalType": "contract IAllowlistChecker"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "permissionsAdapter",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "permissionsAdapterOf",
+    "inputs": [
+      {
+        "name": "permissionsAdapter",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "permissionedToken",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "verifiedPermissionsAdapterOf",
+    "inputs": [
+      {
+        "name": "permissionsAdapter",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "permissionedToken",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "verifyPermissionsAdapter",
+    "inputs": [
+      {
+        "name": "permissionsAdapter",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "event",
+    "name": "PermissionsAdapterCreated",
+    "inputs": [
+      {
+        "name": "permissionsAdapter",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "permissionedToken",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "PermissionsAdapterVerified",
+    "inputs": [
+      {
+        "name": "permissionsAdapter",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "permissionedToken",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "error",
+    "name": "PermissionsAdapterAlreadyVerified",
+    "inputs": [
+      {
+        "name": "permissionsAdapter",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "PermissionsAdapterNotFound",
+    "inputs": [
+      {
+        "name": "permissionsAdapter",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "PermissionsAdapterNotVerified",
+    "inputs": [
+      {
+        "name": "permissionsAdapter",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  }
+]

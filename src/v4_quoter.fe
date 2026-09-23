@@ -1,0 +1,246 @@
+// SPDX-License-Identifier: MIT
+use core::ptr::{MemBuffer, MemSpan}
+use std::abi::{Bytes, sol}
+use std::evm::{
+    Address,
+    Ctx,
+    Call,
+    RawMem,
+    RawOps,
+    encode_msg_calldata,
+    bubble_last_revert,
+    revert_error,
+}
+use super::quoter_calldata::{Single as CalldataSingle, Multi as CalldataMulti}
+use super::quoter_memory::{Single as QuoteSingle, Multi as QuoteMulti}
+use super::quoter::{self, NotSelf, NotPoolManager, UnexpectedCallSuccess}
+const LOCKED_BY_SLOT: u256 = 0x0aedd6bde10e3aa2adec092b02a3e3e805795516cda41f27aa145b8f300af87a
+msg QuoteMsg {
+    #[selector = sol(
+        "quoteExactInputSingle(((address,address,uint24,int24,address),bool,uint128,bytes))",
+    )]
+    InputSingle { params: QuoteSingle } -> (u256, u256),
+    #[selector = sol(
+        "quoteExactInput((address,(address,uint24,int24,address,bytes)[],uint128))",
+    )]
+    Input { params: QuoteMulti } -> (u256, u256),
+    #[selector = sol(
+        "quoteExactOutputSingle(((address,address,uint24,int24,address),bool,uint128,bytes))",
+    )]
+    OutputSingle { params: QuoteSingle } -> (u256, u256),
+    #[selector = sol(
+        "quoteExactOutput((address,(address,uint24,int24,address,bytes)[],uint128))",
+    )]
+    Output { params: QuoteMulti } -> (u256, u256),
+    #[selector = sol(
+        "_quoteExactInputSingle(((address,address,uint24,int24,address),bool,uint128,bytes))",
+    )]
+    InternalInputSingle { params: CalldataSingle } -> Bytes,
+    #[selector = sol(
+        "_quoteExactInput((address,(address,uint24,int24,address,bytes)[],uint128))",
+    )]
+    InternalInput { params: CalldataMulti } -> Bytes,
+    #[selector = sol(
+        "_quoteExactOutputSingle(((address,address,uint24,int24,address),bool,uint128,bytes))",
+    )]
+    InternalOutputSingle { params: CalldataSingle } -> Bytes,
+    #[selector = sol(
+        "_quoteExactOutput((address,(address,uint24,int24,address,bytes)[],uint128))",
+    )]
+    InternalOutput { params: CalldataMulti } -> Bytes,
+    #[selector = sol("unlockCallback(bytes)")]
+    Callback { data: Bytes } -> Bytes,
+    #[selector = sol("poolManager()")]
+    Manager {} -> Address,
+    #[selector = sol("msgSender()")]
+    Sender {} -> Address,
+}
+msg UnlockMsg {
+    #[selector = sol("unlock(bytes)")]
+    Unlock { data: Bytes } -> Bytes,
+}
+fn run(_ manager: Address, _ data: own Bytes, _ gas_before: u256) -> (u256, u256)
+uses (ctx: Ctx, call: mut Call, mem: RawMem)
+{
+    let encoded_len = data.payload_span().len()
+    let result = call
+        .try_call(
+            addr: manager,
+            gas: ctx.gas(),
+            value: 0,
+            message: UnlockMsg::Unlock { data },
+        )
+    if result.success() {
+        let _: Bytes = result.decode()
+        return (0, 0)
+    }
+    let gas_estimate = gas_before - ctx.gas()
+    let quote = quoter::parse_unlock_quote(Bytes::from_payload(source: result.returndata()), encoded_len)
+    (quote, gas_estimate)
+}
+pub contract V4Quoter {
+    manager: Address,
+    init(_manager: Address) uses (mut manager) { manager = _manager }
+    recv QuoteMsg {
+        InputSingle { params } -> (u256, u256) uses (
+            manager,
+            ctx: Ctx,
+            call: mut Call,
+            mem: mut RawMem,
+            ops: mut RawOps,
+        ) {
+            // This is a sender marker, deliberately not a reentrancy lock.
+            let slot = ops.tstor_ptr<Address>(LOCKED_BY_SLOT)
+            slot.write(ctx.caller())
+            let gas_before = ctx.gas()
+            let encoded = encode_msg_calldata(
+                QuoteMsg::InternalInputSingle { params: CalldataSingle::from(params.tuple()) },
+            )
+            let result = run(
+                manager,
+                Bytes::from_payload(source: encoded.span()),
+                gas_before,
+            )
+            slot.write(Address { inner: 0 })
+            result
+        }
+        InternalInputSingle { params } -> Bytes uses (
+            manager,
+            ctx: Ctx,
+            call: mut Call,
+            mem: mut RawMem,
+        ) {
+            if ctx.caller() != ctx.address() {
+                revert_error(NotSelf {})
+            }
+            quoter::single_view(manager, quoter::argument_struct(), false)
+        }
+        Input { params } -> (u256, u256) uses (
+            manager,
+            ctx: Ctx,
+            call: mut Call,
+            mem: mut RawMem,
+            ops: mut RawOps,
+        ) {
+            let (currency, paths, amount) = params.tuple()
+            let params = (currency, quoter::canonical_paths(paths), amount)
+            // This is a sender marker, deliberately not a reentrancy lock.
+            let slot = ops.tstor_ptr<Address>(LOCKED_BY_SLOT)
+            slot.write(ctx.caller())
+            let gas_before = ctx.gas()
+            let encoded = encode_msg_calldata(
+                QuoteMsg::InternalInput { params: CalldataMulti::from(params) },
+            )
+            let result = run(
+                manager,
+                Bytes::from_payload(source: encoded.span()),
+                gas_before,
+            )
+            slot.write(Address { inner: 0 })
+            result
+        }
+        InternalInput { params } -> Bytes uses (
+            manager,
+            ctx: Ctx,
+            call: mut Call,
+            mem: mut RawMem,
+        ) {
+            if ctx.caller() != ctx.address() {
+                revert_error(NotSelf {})
+            }
+            quoter::multi_view(manager, quoter::argument_struct(), false)
+        }
+        OutputSingle { params } -> (u256, u256) uses (
+            manager,
+            ctx: Ctx,
+            call: mut Call,
+            mem: mut RawMem,
+            ops: mut RawOps,
+        ) {
+            // This is a sender marker, deliberately not a reentrancy lock.
+            let slot = ops.tstor_ptr<Address>(LOCKED_BY_SLOT)
+            slot.write(ctx.caller())
+            let gas_before = ctx.gas()
+            let encoded = encode_msg_calldata(
+                QuoteMsg::InternalOutputSingle { params: CalldataSingle::from(params.tuple()) },
+            )
+            let result = run(
+                manager,
+                Bytes::from_payload(source: encoded.span()),
+                gas_before,
+            )
+            slot.write(Address { inner: 0 })
+            result
+        }
+        InternalOutputSingle { params } -> Bytes uses (
+            manager,
+            ctx: Ctx,
+            call: mut Call,
+            mem: mut RawMem,
+        ) {
+            if ctx.caller() != ctx.address() {
+                revert_error(NotSelf {})
+            }
+            quoter::single_view(manager, quoter::argument_struct(), true)
+        }
+        Output { params } -> (u256, u256) uses (
+            manager,
+            ctx: Ctx,
+            call: mut Call,
+            mem: mut RawMem,
+            ops: mut RawOps,
+        ) {
+            let (currency, paths, amount) = params.tuple()
+            let params = (currency, quoter::canonical_paths(paths), amount)
+            // This is a sender marker, deliberately not a reentrancy lock.
+            let slot = ops.tstor_ptr<Address>(LOCKED_BY_SLOT)
+            slot.write(ctx.caller())
+            let gas_before = ctx.gas()
+            let encoded = encode_msg_calldata(
+                QuoteMsg::InternalOutput { params: CalldataMulti::from(params) },
+            )
+            let result = run(
+                manager,
+                Bytes::from_payload(source: encoded.span()),
+                gas_before,
+            )
+            slot.write(Address { inner: 0 })
+            result
+        }
+        InternalOutput { params } -> Bytes uses (
+            manager,
+            ctx: Ctx,
+            call: mut Call,
+            mem: mut RawMem,
+        ) {
+            if ctx.caller() != ctx.address() {
+                revert_error(NotSelf {})
+            }
+            quoter::multi_view(manager, quoter::argument_struct(), true)
+        }
+        Callback { data } -> Bytes uses (manager, ctx: Ctx, call: mut Call) {
+            if ctx.caller() != manager {
+                revert_error(NotPoolManager {})
+            }
+            let mut ret = MemBuffer::empty()
+            let result = call
+                .raw_call(
+                    addr: ctx.address(),
+                    gas: ctx.gas(),
+                    value: 0,
+                    args: data.payload_span(),
+                    ret: mut ret,
+                )
+            if result.success() {
+                revert_error(UnexpectedCallSuccess {})
+            }
+            bubble_last_revert()
+        }
+        Manager {} -> Address uses (manager) {
+            manager
+        }
+        Sender {} -> Address uses (ops: RawOps) {
+            ops.tstor_ptr<Address>(LOCKED_BY_SLOT).read()
+        }
+    }
+}

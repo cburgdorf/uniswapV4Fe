@@ -1,0 +1,59 @@
+{
+ "purpose": "Compiler used for the completed Uniswap v4 port validation (O1).",
+ "base": {
+  "repository": "https://github.com/argotorg/fe",
+  "branch": "master",
+  "revision": "f00132a97429f966804d70c40206ef40ebca6960"
+ },
+ "integration_branch": "uniswap-integrated-2026-09-24",
+ "integration_revision": "9e2213a79e78d373ab8ba59f9a017509e39267a3",
+ "merged": [
+  {
+   "source": "PR #1586",
+   "head": "1278db2f36a0b9129719e92dcc3ee67fa62ed639",
+   "fix": "Implicit borrows of record literals"
+  },
+  {
+   "source": "PR #1587",
+   "head": "c22b24357063592e282efd6efc16ce831413fce7",
+   "fix": "Unpadded ABI dynamic payloads"
+  },
+  {
+   "source": "PR #1575",
+   "head": "5b6fa5fdd1cd89ceb287213f77cc4a6f765d483a",
+   "fix": "Composed ABI decoder borrows"
+  },
+  {
+   "source": "PR #1567",
+   "head": "8557f3f5e56c17801743469f6d46377ecd58c572",
+   "fix": "Payable value-returning handlers",
+   "note": "Import-list conflict with master in crates/mir/src/verify/package.rs resolved by keeping both RuntimeLinkage and RuntimeReturnPlan."
+  },
+  {
+   "source": "PR #1591",
+   "head": "01ae70d036f784bd00216d8909b12933bd667ad9",
+   "fix": "Overflowing dynamic ABI offsets"
+  },
+  {
+   "source": "branch fix/uniswap-bounded-staticcall",
+   "head": "9521ce370813c0d50526579e8935c301edca9f11",
+   "note": "Same tree as the later author-amended 3a34aa76bc34.",
+   "fix": "Bounded read-only raw STATICCALL"
+  },
+  {
+   "source": "branch fix/uniswap-long-error-event-names",
+   "head": "04baed1a6b2e24e3a70fda5cfb0a9d781ae743e4",
+   "fix": "Error/event names longer than 31 bytes"
+  },
+  {
+   "source": "branch fix/ctfe-view-int-shape (new)",
+   "head": "83d80ea7a8b7d338be22fc662fe925b54d5c9526",
+   "fix": "CTFE panic folding integer operations on view-typed values",
+   "applied_as": "cherry-pick 9e2213a79"
+  }
+ ],
+ "combined_patch": "tests/results/fe-integrated-2026-09-24.patch",
+ "combined_patch_sha256": "0763ed64c88ca0849b3f17703da2569588c82270d3374c1cfcfc944fdcec685c",
+ "binary_sha256": "62a348861753829883fa71f9ed9af4e5c94e7e0b97b6cdf71f3ba2028c03b4c0",
+ "version": "fe 26.3.0 (9e2213a79)"
+}

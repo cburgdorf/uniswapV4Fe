@@ -1,0 +1,60 @@
+Compiling 1 files with Solc 0.8.26
+Solc 0.8.26 finished in 2.35s
+Compiler run successful with warnings:
+Warning (5740): Unreachable code.
+  --> test/periphery/src/base/DeltaResolver.sol:46:13:
+   |
+46 |             poolManager.settle();
+   |             ^^^^^^^^^^^^^^^^^^^^
+
+
+Ran 1 test for test/RouterRegression.t.sol:RouterRegression
+[FAIL: router status mismatch] test_negativeHookOffsetRegression() (gas: 117600)
+Traces:
+  [3104870] RouterRegression::setUp()
+    ├─ [174627] → new RouterManager@0x5615dEB798BB3E4dFa0139dFa1b3D433Cc23b72f
+    │   └─ ← [Return] 872 bytes of code
+    ├─ [0] VM::readFile("fe-bytecode.txt") [staticcall]
+    │   └─ ← [Return] <file>
+    ├─ [0] VM::parseBytes("0x34610113575b6122a0388181106101135781900360405161011f8111602357506101205b601f8201601f1916810160405280928291399060a05260c0525f60e05260a060499060b1565b604 [long calldata/bytecode omitted]
+    │   └─ ← [Return] 0x34610113575b6122a0388181106101135781900360405161011f8111602357506101205b601f8201601f1916810160405280928291399060a05260c0525f60e05260a060499060b1565b60405161 [long calldata/bytecode omitted]
+    ├─ [1732271] → new <unknown>@0x2e234DAe75C793f67A35089C9d99245E1C58470b
+    │   └─ ← [Return] 8649 bytes of code
+    ├─ [1005755] → new RouterReference@0xF62849F9A0B5Bf2913b396098F7c7019b51A820a
+    │   └─ ← [Return] 5022 bytes of code
+    └─ ← [Stop]
+
+  [117600] RouterRegression::test_negativeHookOffsetRegression()
+    ├─ [51160] RouterManager::configure(-7, 11, 17)
+    │   └─ ← [Return]
+    ├─ [450] RouterManager::reset()
+    │   └─ ← [Stop]
+    ├─ [1210] 0x2e234DAe75C793f67A35089C9d99245E1C58470b::handle(6, 0x00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000 [long calldata/bytecode omitted]
+    │   └─ ← [Revert] EvmError: Revert
+    ├─ [343] RouterManager::trace() [staticcall]
+    │   └─ ← [Return] 0x0000000000000000000000000000000000000000000000000000000000000000
+    ├─ [270] RouterManager::calls() [staticcall]
+    │   └─ ← [Return] 0
+    ├─ [450] RouterManager::reset()
+    │   └─ ← [Stop]
+    ├─ [44318] RouterReference::handle(6, 0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000a00000000 [long calldata/bytecode omitted]
+    │   ├─ [41597] RouterManager::swap(PoolKey({ currency0: 0x000000000000000000000000000000000000000A, currency1: 0x0000000000000000000000000000000000000014, fee: 3000, tickSpacing: 60, hooks: 0x0000000000000000000000000000000000000000 }), SwapParams({ zeroForOne: true, amountSpecified: -7, sqrtPriceLimitX96: 4295128740 [4.295e9] }), 0x)
+    │   │   └─ ← [Return] -2381976568446569244243622252022377480181 [-2.381e39]
+    │   └─ ← [Stop]
+    └─ ← [Revert] router status mismatch
+
+Backtrace:
+  at 0x2e234DAe75C793f67A35089C9d99245E1C58470b.handle
+  at RouterRegression.test_negativeHookOffsetRegression
+
+Suite result: FAILED. 0 passed; 1 failed; 0 skipped; finished in 908.66µs (131.40µs CPU time)
+
+Ran 1 test suite in 3.98ms (908.66µs CPU time): 0 tests passed, 1 failed, 0 skipped (1 total tests)
+
+Failing tests:
+Encountered 1 failing test in test/RouterRegression.t.sol:RouterRegression
+[FAIL: router status mismatch] test_negativeHookOffsetRegression() (gas: 117600)
+
+Encountered a total of 1 failing tests, 0 tests succeeded
+
+Tip: Run `forge test --rerun` to retry only the 1 failed test

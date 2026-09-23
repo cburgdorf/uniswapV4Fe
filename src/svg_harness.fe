@@ -1,0 +1,30 @@
+// SPDX-License-Identifier: MIT
+use std::abi::{DynString, sol::{self, Int24}}
+use std::evm::{Address, RawMem}
+use super::{svg::{self, SVGParams}, svg_math, metadata_text as text}
+msg SvgMsg {
+    #[selector = sol("generate(uint256,address,int24,int24,int24,int8,string)")]
+    Generate { id: u256, hooks: Address, lower: Int24, upper: Int24, spacing: Int24, range: i8, value: DynString } -> DynString,
+    #[selector = sol("curve(int24,int24,int24)")]
+    Curve { lower: Int24, upper: Int24, spacing: Int24 } -> DynString,
+    #[selector = sol("rare(uint256,address)")]
+    Rare { id: u256, hooks: Address } -> bool,
+    #[selector = sol("substring(string,uint256,uint256)")]
+    Substring { value: DynString, start: u256, end: u256 } -> DynString,
+}
+pub contract SvgHarness {
+    recv SvgMsg {
+        Generate { id, hooks, lower, upper, spacing, range, value } -> DynString uses (mem: mut RawMem) {
+            svg::generateSVG(SVGParams {
+                quoteCurrency: text::from_span(value.payload_span()), baseCurrency: text::from_span(value.payload_span()),
+                hooks, quoteCurrencySymbol: text::from_span(value.payload_span()), baseCurrencySymbol: text::from_span(value.payload_span()),
+                feeTier: text::from_span(value.payload_span()), tickLower: lower, tickUpper: upper, tickSpacing: spacing, overRange: range, tokenId: id,
+                color0: text::from_span(value.payload_span()), color1: text::from_span(value.payload_span()), color2: text::from_span(value.payload_span()), color3: text::from_span(value.payload_span()),
+                x1: text::from_span(value.payload_span()), y1: text::from_span(value.payload_span()), x2: text::from_span(value.payload_span()), y2: text::from_span(value.payload_span()), x3: text::from_span(value.payload_span()), y3: text::from_span(value.payload_span()),
+            })
+        }
+        Curve { lower, upper, spacing } -> DynString uses (mem: mut RawMem) { svg_math::getCurve(lower, upper, spacing) }
+        Rare { id, hooks } -> bool uses (mem: mut RawMem) { svg_math::isRare(id, hooks) }
+        Substring { value, start, end } -> DynString { svg_math::substring(value, start, end) }
+    }
+}

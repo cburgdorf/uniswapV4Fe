@@ -1,0 +1,12 @@
+Compiling 26 files with Solc 0.8.30
+Solc 0.8.30 finished in 140.36ms
+Compiler run successful!
+
+Ran 4 tests for test/PaymentsParity.t.sol:PaymentsParityTest
+[PASS] testFuzz_settle(uint256,bool,bool,uint8,uint8) (runs: 10000, μ: 159626, ~: 168391)
+[PASS] testFuzz_take(uint256,address,uint8) (runs: 10000, μ: 163065, ~: 185076)
+[PASS] test_nativeInsufficientAndPermitTruncation() (gas: 243787)
+[PASS] test_zeroAndCodeChecks() (gas: 1806158)
+Suite result: ok. 4 passed; 0 failed; 0 skipped; finished in 639.22ms (1.17s CPU time)
+
+Ran 1 test suite in 639.78ms (639.22ms CPU time): 4 tests passed, 0 failed, 0 skipped (4 total tests)

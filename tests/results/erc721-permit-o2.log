@@ -1,0 +1,15 @@
+Compiling 58 files with Solc 0.8.26
+Solc 0.8.26 finished in 3.76s
+Compiler run successful!
+
+Ran 7 tests for test/ERC721PermitParity.t.sol:ERC721PermitParityTest
+[PASS] testFuzz_contractPermit(bytes,uint256,bool,uint8) (runs: 10000, μ: 304722, ~: 272262)
+[PASS] testFuzz_failures(uint256,uint8) (runs: 10000, μ: 221107, ~: 221067)
+[PASS] testFuzz_lifecycle(uint256,uint8,bool) (runs: 10000, μ: 255574, ~: 263757)
+[PASS] testFuzz_metadata(bytes,bytes) (runs: 10000, μ: 3353806, ~: 3323828)
+[PASS] testFuzz_permit(uint256,uint256,bool,bool) (runs: 10000, μ: 277869, ~: 214448)
+[PASS] testFuzz_safeTransfer(uint256,bytes,uint8) (runs: 10000, μ: 843870, ~: 886846)
+[PASS] test_revokedAndWrongSignatures() (gas: 336035)
+Suite result: ok. 7 passed; 0 failed; 0 skipped; finished in 4.29s (15.23s CPU time)
+
+Ran 1 test suite in 4.29s (4.29s CPU time): 7 tests passed, 0 failed, 0 skipped (7 total tests)

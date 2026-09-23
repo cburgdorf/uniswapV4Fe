@@ -1,0 +1,1048 @@
+{
+  "reference_revision": "9969eec44cfdf07e24b41de47f40276a58401976",
+  "completion_policy": "Completed 2026-09-24: the unmodified upstream Foundry suite of this repository passes against the Fe contracts with outcomes identical to the Solidity originals (tests/run_upstream_suites.py; tests/results/upstream-conformance-o1.json). Per-source evidence below remains the detailed record; contract size (EIP-170) is outside the completion scope.",
+  "sources": [
+    {
+      "reference_source": "src/PositionDescriptor.sol",
+      "status": "workflows_validated",
+      "fe_sources": [
+        "src/position_descriptor.fe",
+        "src/currency_ratio_sort_order.fe"
+      ],
+      "evidence": [
+        "tests/results/position-descriptor-o1.json",
+        "tests/results/position-descriptor-workflows-o1.json",
+        "tests/results/position-descriptor-latest-o1.json",
+        "tests/results/position-metadata-latest-o1.json"
+      ],
+      "notes": "All six endpoints, constructor configuration and error boundaries pass 30000 O1 fuzz cases plus five scenarios. Real Permit2 mint/increase/decrease/burn metadata passes 1000 fuzz cases across Solidity/Solidity, Fe/Solidity and Fe/Fe PositionManager/PoolManager combinations; complete URI bytes match the unmodified Solidity Descriptor. Protocol ABI verified. Final protocol-wide audit remains open. Compiler 702686c98 revalidation passes 30000 descriptor cases and 1000 complete metadata lifecycles with a rebuilt pinned Solidity oracle."
+    },
+    {
+      "reference_source": "src/PositionManager.sol",
+      "status": "workflows_validated",
+      "fe_sources": [
+        "src/position_manager.fe",
+        "src/position_manager_actions.fe",
+        "src/position_manager_state.fe"
+      ],
+      "evidence": [
+        "tests/results/position-manager-lazy-multicall-o1.json",
+        "tests/results/position-manager-lazy-multicall-o2.json",
+        "tests/results/position-descriptor-workflows-o1.json",
+        "tests/results/position-policy-regression-o1.json",
+        "tests/results/position-policy-latest-o1.json",
+        "tests/results/position-metadata-latest-o1.json"
+      ],
+      "notes": "Current-master O1 passes lifecycle, credit/native actions, guards and real Permit2 plus Descriptor workflows across three implementation combinations. Lazy Multicall error precedence remains fixed; explicit fallback-receive and lazy-multicall ABI export adapters remain required. Final protocol-wide invariants remain open. Shared PositionPolicy extension passes 20000 O1 fuzz cases plus three fixed scenarios and ABI audit on compiler 31e5b965e; optional descriptor case skipped in this regression. Latest compiler 702686c98 passes shared-policy regression and real Descriptor lifecycle integration without skipped tests."
+    },
+    {
+      "reference_source": "src/UniswapV4DeployerCompetition.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/deployer_competition.fe",
+        "src/vanity_address.fe"
+      ],
+      "evidence": [
+        "tests/results/deployer-competition-o1.json",
+        "tests/results/UniswapV4DeployerCompetition.protocol.abi.audit.json"
+      ],
+      "notes": "Latest-master O1: all nine methods, constructor overflow, salt authorization and packed storage, strict score updates and events, deadline/error precedence, real CREATE2 deployment/collision, prefunded addresses, failed constructors and empty runtime. 40000 fuzz cases plus three boundary scenarios. Public ABI verified."
+    },
+    {
+      "reference_source": "src/V4Router.sol",
+      "status": "workflows_validated",
+      "fe_sources": [
+        "src/router.fe",
+        "src/router_params.fe",
+        "src/v4_router.fe"
+      ],
+      "evidence": [
+        "tests/results/router-o1.json",
+        "tests/results/router-o2.json",
+        "tests/results/router-workflows-o1.json",
+        "tests/results/router-workflows-o2.json",
+        "tests/results/router-current-o1.json",
+        "tests/results/router-workflows-current-o1.json",
+        "tests/results/router-interface-latest-o1.json",
+        "tests/results/router-real-permit2-latest-o1.json"
+      ],
+      "notes": "Latest O1 workflow uses original pinned Permit2, real pools, and three router/manager combinations. 40000 fuzz cases plus four fixed tests cover single/multihop, settlement, insufficient/expired allowances, exact allowance debit, rollback, callback authentication and token-driven reentrancy. Concrete wrapper protocol ABI verified."
+    },
+    {
+      "reference_source": "src/base/BaseActionsRouter.sol",
+      "status": "workflows_validated",
+      "fe_sources": [
+        "src/router.fe",
+        "src/v4_router.fe"
+      ],
+      "evidence": [
+        "tests/results/router-workflows-o1.json",
+        "tests/results/router-workflows-o2.json",
+        "tests/results/router-workflows-current-o1.json",
+        "tests/results/router-interface-latest-o1.json",
+        "tests/results/permissioned-router-workflows-o1.json",
+        "tests/results/router-real-permit2-latest-o1.json"
+      ],
+      "notes": "Latest O1 workflow uses original pinned Permit2, real pools, and three router/manager combinations. 40000 fuzz cases plus four fixed tests cover single/multihop, settlement, insufficient/expired allowances, exact allowance debit, rollback, callback authentication and token-driven reentrancy. Concrete wrapper protocol ABI verified."
+    },
+    {
+      "reference_source": "src/base/BaseV4Quoter.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/quoter.fe",
+        "src/quoter_calldata.fe",
+        "src/quoter_memory.fe",
+        "src/v4_quoter.fe"
+      ],
+      "evidence": [
+        "tests/results/quoter-o1.json",
+        "tests/results/quoter-o2.json",
+        "tests/results/quoter-workflows-o1.json",
+        "tests/results/quoter-workflows-o2.json",
+        "tests/results/quoter-interface-latest-o1.json",
+        "tests/results/quoter-workflows-latest-o1.json"
+      ],
+      "notes": "All four quote methods, callback/self authorization, pinned ABI edge cases and real-pool rollback workflows pass O1/O2. Gas estimates measure Fe execution rather than matching Solidity gas costs. Final protocol-wide validation remains open."
+    },
+    {
+      "reference_source": "src/base/DeltaResolver.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/delta_resolver.fe",
+        "src/payments.fe"
+      ],
+      "evidence": [
+        "tests/results/delta-resolver-o1.json",
+        "tests/results/delta-resolver-o2.json",
+        "tests/results/payments-o1.json",
+        "tests/results/payments-o2.json",
+        "tests/results/position-policy-latest-o1.json",
+        "tests/results/permissioned-router-workflows-o1.json",
+        "tests/results/permissioned-router-workflows-latest-o1.json",
+        "tests/results/router-real-permit2-latest-o1.json"
+      ]
+    },
+    {
+      "reference_source": "src/base/EIP712_v4.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/eip712.fe",
+        "src/unordered_nonce.fe",
+        "src/erc721_permit_hash.fe"
+      ],
+      "evidence": [
+        "tests/results/permit-foundations-o1.json",
+        "tests/results/permit-foundations-o2.json",
+        "tests/results/position-policy-latest-o1.json",
+        "tests/results/permissioned-position-workflows-o1.json"
+      ],
+      "notes": "Domain/digest/hash and nonce helpers pass O1/O2 via an adapter harness, including chain forks, documented delegatecall cache behavior, nonce replay rollback and payable revocation. Current PositionManager workflows additionally verify versionless domains, ERC1271 permits, nonce replay rollback, operator approvals and revocation."
+    },
+    {
+      "reference_source": "src/base/ERC721Permit_v4.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/erc721.fe",
+        "src/erc721_permit.fe",
+        "src/storage_string.fe",
+        "src/signature_verification.fe"
+      ],
+      "evidence": [
+        "tests/results/erc721-permit-o1.json",
+        "tests/results/erc721-permit-o2.json",
+        "tests/results/position-policy-latest-o1.json",
+        "tests/results/position-metadata-latest-o1.json"
+      ],
+      "notes": "Component signature/authorization coverage is supplemented by current PositionManager permit/replay/operator integration and full Descriptor/tokenURI workflows. Concrete PositionManager protocol ABI is verified; protocol-wide audit remains separate."
+    },
+    {
+      "reference_source": "src/base/ImmutableState.sol",
+      "status": "workflows_validated",
+      "fe_sources": [
+        "src/state_view.fe",
+        "src/v4_router.fe",
+        "src/permissioned_v4_router.fe",
+        "src/v4_quoter.fe",
+        "src/position_manager.fe",
+        "src/permissioned_position_manager.fe"
+      ],
+      "evidence": [
+        "tests/results/permissioned-position-workflows-o1.json",
+        "tests/results/position-metadata-latest-o1.json",
+        "tests/results/permissioned-router-workflows-o1.json",
+        "tests/results/state-view-latest-o1.json",
+        "tests/results/quoter-interface-latest-o1.json",
+        "tests/results/router-workflows-current-o1.json",
+        "tests/results/permissioned-router-workflows-latest-o1.json",
+        "tests/results/router-real-permit2-latest-o1.json"
+      ],
+      "notes": "Shared base behavior is represented by immutable manager fields/getters and callback caller guards in concrete Fe consumers. NFT workflows validate configured getters and unauthorized callbacks, including Multicall precedence; real router workflows verify callback identity and rollback. The earlier partial status predated these implementations."
+    },
+    {
+      "reference_source": "src/base/Multicall_v4.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/multicall.fe"
+      ],
+      "evidence": [
+        "tests/results/multicall-local-fix-o1.json",
+        "tests/results/multicall-local-fix-o2.json",
+        "tests/results/position-policy-latest-o1.json",
+        "tests/results/permissioned-position-workflows-o1.json"
+      ],
+      "notes": "Lazy item decoding preserves malformed later-element error precedence. Current ordinary and permissioned PositionManager integration checks multicall results and earlier callback rejection before a malformed later item. Explicit lazy-multicall ABI adapter remains required."
+    },
+    {
+      "reference_source": "src/base/NativeWrapper.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/native_wrapper.fe"
+      ],
+      "evidence": [
+        "tests/results/native-wrapper-o1.json",
+        "tests/results/native-wrapper-o2.json",
+        "tests/results/native-wrapper-latest-o1.json",
+        "tests/results/position-policy-latest-o1.json"
+      ],
+      "notes": "20000 latest O1 component cases plus current PositionManager wrap/unwrap/sweep action integration and native balance invariants."
+    },
+    {
+      "reference_source": "src/base/Notifier.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/notifier.fe"
+      ],
+      "evidence": [
+        "tests/results/notifier-o1.json",
+        "tests/results/notifier-o2.json",
+        "tests/results/position-policy-latest-o1.json",
+        "tests/results/permissioned-position-workflows-o1.json"
+      ],
+      "notes": "Component callback/error boundaries are supplemented by current PositionManager lifecycle/guard integration and PermissionedPositionManager malicious subscriber reattachment cleanup. Latest workflows check subscriber callbacks, cleared state and lock invariants."
+    },
+    {
+      "reference_source": "src/base/Permit2Forwarder.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/permit2_forwarder.fe"
+      ],
+      "evidence": [
+        "tests/results/permit2-forwarder-o1.json",
+        "tests/results/permit2-forwarder-o2.json",
+        "tests/results/permit2-workflows-o1.json",
+        "tests/results/permit2-workflows-o2.json",
+        "tests/results/permissioned-position-workflows-o1.json",
+        "tests/results/router-real-permit2-latest-o1.json",
+        "tests/results/permit2-forwarder-integrated-o1.json",
+        "tests/results/upstream-conformance-o1.json"
+      ],
+      "notes": "Real pinned Permit2 single/batch forwarding is exercised through the permissioned PositionManager with exact allowance/nonce checks; real router and NFT settlement workflows are validated. Upstream PositionManager suites (including multicall/permit forwarding) pass against the Fe PositionManager and PoolManager."
+    },
+    {
+      "reference_source": "src/base/PoolInitializer_v4.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/pool_initializer.fe"
+      ],
+      "evidence": [
+        "tests/results/pool-initializer-o1.json",
+        "tests/results/pool-initializer-o2.json",
+        "tests/results/upstream-conformance-o1.json"
+      ],
+      "notes": "Upstream PositionManager suites (including multicall/permit forwarding) pass against the Fe PositionManager and PoolManager."
+    },
+    {
+      "reference_source": "src/base/ReentrancyLock.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/v4_router.fe"
+      ],
+      "evidence": [
+        "tests/results/router-workflows-o1.json",
+        "tests/results/router-workflows-o2.json"
+      ],
+      "notes": "Router component and real-pool workflows pass O1/O2. Permit2 is a transport test double; full Permit2 integration and final protocol gates remain open."
+    },
+    {
+      "reference_source": "src/base/SafeCallback.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/v4_router.fe"
+      ],
+      "evidence": [
+        "tests/results/router-workflows-o1.json",
+        "tests/results/router-workflows-o2.json"
+      ],
+      "notes": "Router component and real-pool workflows pass O1/O2. Permit2 is a transport test double; full Permit2 integration and final protocol gates remain open."
+    },
+    {
+      "reference_source": "src/base/UnorderedNonce.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/eip712.fe",
+        "src/unordered_nonce.fe",
+        "src/erc721_permit_hash.fe"
+      ],
+      "evidence": [
+        "tests/results/permit-foundations-o1.json",
+        "tests/results/permit-foundations-o2.json",
+        "tests/results/position-policy-latest-o1.json",
+        "tests/results/permissioned-position-workflows-o1.json"
+      ],
+      "notes": "Domain/digest/hash and nonce helpers pass O1/O2 via an adapter harness, including chain forks, documented delegatecall cache behavior, nonce replay rollback and payable revocation. Current PositionManager workflows additionally verify versionless domains, ERC1271 permits, nonce replay rollback, operator approvals and revocation."
+    },
+    {
+      "reference_source": "src/hooks/permissionedPools/BaseAllowListChecker.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/permission_flags.fe",
+        "src/allowlist_checker.fe"
+      ],
+      "evidence": [
+        "tests/results/permission-foundations-o1.json"
+      ],
+      "notes": "Typed 16-bit flags preserve unknown bits and implement AND/OR/equality; shared ERC165 behavior and external checkAllowlist ABI pass 30000 O1 fuzz cases and boundary/malformed ABI tests against the pinned original. Base checker is abstract: the concrete policy in the differential harness is a test fixture. Integration with PermissionsAdapter/router/position manager remains open."
+    },
+    {
+      "reference_source": "src/hooks/permissionedPools/PermissionedPositionManager.sol",
+      "status": "workflows_validated",
+      "fe_sources": [
+        "src/permissioned_position_manager.fe",
+        "src/permissioned_position_policy.fe",
+        "src/permissioned_position_unwind.fe"
+      ],
+      "evidence": [
+        "tests/results/permissioned-position-workflows-o1.json",
+        "tests/results/PermissionedPositionManager.protocol.abi.audit.json",
+        "tests/results/permissioned-position-reference-audit.json"
+      ],
+      "notes": "Latest-master O1: 40000 fuzz cases, including 10000 16-step sequences per implementation, plus ten fixed tests and complete ABI pass across Solidity-only, Fe NFT manager and full Fe manager/factory/NFT systems using real Permit2. Covers separated owner/funder permissions, one-sided liquidity, revocation and exit, stray claims, malicious bounded delivery, subscriber reattachment, literal/sentinel recipients, malformed permission reads, inherited permits/Multicall/guards and zero factory. Constructor-name and transferFrom-mutability bugs are fixed and archived. Final protocol-wide audit remains open."
+    },
+    {
+      "reference_source": "src/hooks/permissionedPools/PermissionedV4Router.sol",
+      "status": "workflows_validated",
+      "fe_sources": [
+        "src/permissioned_router.fe",
+        "src/permissioned_v4_router.fe",
+        "src/router.fe",
+        "src/payments.fe"
+      ],
+      "evidence": [
+        "tests/results/permissioned-router-o1.json",
+        "tests/results/permissioned-router-workflows-o1.json",
+        "tests/results/PermissionedV4Router.protocol.abi.audit.json",
+        "tests/results/permissioned-router-workflows-latest-o1.json",
+        "tests/results/router-real-permit2-latest-o1.json"
+      ],
+      "notes": "All abstract hooks ported through generic funding and default payment policies. O1: 70000 component fuzz cases; 40000 real-pool workflow cases plus replay and five fixed scenarios, each across Solidity-only, Fe router, Fe router/factory, and full Fe router/factory/manager systems using real pinned Permit2. Covers both currencies, single/multihop swaps, native/ERC20/self funding, CONTRACT_BALANCE refunds, hook/permission revocation, token restrictions, zero payouts, reentrancy, locks/deltas and backing/sole-holder invariants. The concrete execute wrapper policy and public ABI are compared with an equivalent Solidity subclass. Final protocol-wide audit remains open."
+    },
+    {
+      "reference_source": "src/hooks/permissionedPools/PermissionsAdapter.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/permissions_adapter.fe",
+        "src/permissions_adapter_state.fe",
+        "src/permissions_adapter_io.fe",
+        "src/permission_flags.fe",
+        "src/allowlist_checker.fe",
+        "src/storage_string.fe",
+        "src/metadata_text.fe"
+      ],
+      "evidence": [
+        "tests/results/permissions-adapter-o1.json",
+        "tests/results/PermissionsAdapter.protocol.abi.audit.json",
+        "tests/results/permissions-factory-o1.json"
+      ],
+      "notes": "Latest-master patched compiler O1: all 27 endpoints, exact ERC20/ownership/admin events, constructor/storage/metadata, bounded ERC165 validation, strict allowlist decoding, token-return failures, reentrant callback and rollback. 70000 fuzz cases include 10000 20-action sequences checking sole-holder/backing invariants; four fixed boundary scenarios. Public ABI verified. Factory-created Fe adapters also execute real deposit/wrap/payout workflows. Permissioned router/position-manager integration remains open."
+    },
+    {
+      "reference_source": "src/hooks/permissionedPools/PermissionsAdapterFactory.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/permissions_adapter_factory.fe",
+        "src/permissions_adapter.fe",
+        "src/permissions_adapter_state.fe",
+        "src/permissions_adapter_io.fe",
+        "src/permission_flags.fe",
+        "src/allowlist_checker.fe",
+        "src/storage_string.fe",
+        "src/metadata_text.fe"
+      ],
+      "evidence": [
+        "tests/results/permissions-factory-o1.json",
+        "tests/results/PermissionsAdapterFactory.protocol.abi.audit.json"
+      ],
+      "notes": "Latest-master patched compiler O1: all five endpoints, real Fe adapter creation via CREATE, constructor rollback, arbitrary pool addresses, unknown/zero-token/no-code cases and repeated verification. 40000 fuzz cases plus boundaries. Created Fe children execute deposit/wrap/transfer workflows; public ABI verified. Integration with permissioned router/position manager remains open."
+    },
+    {
+      "reference_source": "src/hooks/permissionedPools/interfaces/IAllowlistChecker.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/permission_flags.fe",
+        "src/allowlist_checker.fe"
+      ],
+      "evidence": [
+        "tests/results/permission-foundations-o1.json"
+      ],
+      "notes": "Typed 16-bit flags preserve unknown bits and implement AND/OR/equality; shared ERC165 behavior and external checkAllowlist ABI pass 30000 O1 fuzz cases and boundary/malformed ABI tests against the pinned original. Base checker is abstract: the concrete policy in the differential harness is a test fixture. Integration with PermissionsAdapter/router/position manager remains open."
+    },
+    {
+      "reference_source": "src/hooks/permissionedPools/interfaces/IPermissionsAdapter.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/permissions_adapter.fe",
+        "src/permissions_adapter_state.fe",
+        "src/permissions_adapter_io.fe",
+        "src/permission_flags.fe",
+        "src/allowlist_checker.fe",
+        "src/storage_string.fe",
+        "src/metadata_text.fe"
+      ],
+      "evidence": [
+        "tests/results/permissions-adapter-o1.json",
+        "tests/results/PermissionsAdapter.protocol.abi.audit.json",
+        "tests/results/permissions-factory-o1.json"
+      ],
+      "notes": "Latest-master patched compiler O1: all 27 endpoints, exact ERC20/ownership/admin events, constructor/storage/metadata, bounded ERC165 validation, strict allowlist decoding, token-return failures, reentrant callback and rollback. 70000 fuzz cases include 10000 20-action sequences checking sole-holder/backing invariants; four fixed boundary scenarios. Public ABI verified. Factory-created Fe adapters also execute real deposit/wrap/payout workflows. Permissioned router/position-manager integration remains open."
+    },
+    {
+      "reference_source": "src/hooks/permissionedPools/interfaces/IPermissionsAdapterFactory.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/permissions_adapter_factory.fe",
+        "src/permissions_adapter.fe",
+        "src/permissions_adapter_state.fe",
+        "src/permissions_adapter_io.fe",
+        "src/permission_flags.fe",
+        "src/allowlist_checker.fe",
+        "src/storage_string.fe",
+        "src/metadata_text.fe"
+      ],
+      "evidence": [
+        "tests/results/permissions-factory-o1.json",
+        "tests/results/PermissionsAdapterFactory.protocol.abi.audit.json"
+      ],
+      "notes": "Latest-master patched compiler O1: all five endpoints, real Fe adapter creation via CREATE, constructor rollback, arbitrary pool addresses, unknown/zero-token/no-code cases and repeated verification. 40000 fuzz cases plus boundaries. Created Fe children execute deposit/wrap/transfer workflows; public ABI verified. Integration with permissioned router/position manager remains open."
+    },
+    {
+      "reference_source": "src/hooks/permissionedPools/libraries/PermissionFlags.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/permission_flags.fe",
+        "src/allowlist_checker.fe"
+      ],
+      "evidence": [
+        "tests/results/permission-foundations-o1.json"
+      ],
+      "notes": "Typed 16-bit flags preserve unknown bits and implement AND/OR/equality; shared ERC165 behavior and external checkAllowlist ABI pass 30000 O1 fuzz cases and boundary/malformed ABI tests against the pinned original. Base checker is abstract: the concrete policy in the differential harness is a test fixture. Integration with PermissionsAdapter/router/position manager remains open."
+    },
+    {
+      "reference_source": "src/interfaces/IEIP712_v4.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/eip712.fe",
+        "src/unordered_nonce.fe",
+        "src/erc721_permit_hash.fe"
+      ],
+      "evidence": [
+        "tests/results/permit-foundations-o1.json",
+        "tests/results/permit-foundations-o2.json",
+        "tests/results/position-policy-latest-o1.json",
+        "tests/results/permissioned-position-workflows-o1.json"
+      ],
+      "notes": "Domain/digest/hash and nonce helpers pass O1/O2 via an adapter harness, including chain forks, documented delegatecall cache behavior, nonce replay rollback and payable revocation. Current PositionManager workflows additionally verify versionless domains, ERC1271 permits, nonce replay rollback, operator approvals and revocation."
+    },
+    {
+      "reference_source": "src/interfaces/IERC721Permit_v4.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/erc721.fe",
+        "src/erc721_permit.fe",
+        "src/storage_string.fe",
+        "src/signature_verification.fe"
+      ],
+      "evidence": [
+        "tests/results/erc721-permit-o1.json",
+        "tests/results/erc721-permit-o2.json",
+        "tests/results/position-policy-latest-o1.json",
+        "tests/results/position-metadata-latest-o1.json"
+      ],
+      "notes": "Component signature/authorization coverage is supplemented by current PositionManager permit/replay/operator integration and full Descriptor/tokenURI workflows. Concrete PositionManager protocol ABI is verified; protocol-wide audit remains separate."
+    },
+    {
+      "reference_source": "src/interfaces/IImmutableState.sol",
+      "status": "interface_validated",
+      "fe_sources": [
+        "src/state_view.fe",
+        "src/v4_router.fe",
+        "src/permissioned_v4_router.fe",
+        "src/v4_quoter.fe",
+        "src/position_manager.fe",
+        "src/permissioned_position_manager.fe"
+      ],
+      "evidence": [
+        "tests/results/permissioned-position-workflows-o1.json",
+        "tests/results/PermissionedPositionManager.protocol.abi.audit.json",
+        "tests/results/state-view-latest-o1.json",
+        "tests/results/quoter-interface-latest-o1.json",
+        "tests/results/router-workflows-current-o1.json",
+        "tests/results/permissioned-router-workflows-o1.json",
+        "tests/results/permissioned-router-workflows-latest-o1.json",
+        "tests/results/router-real-permit2-latest-o1.json"
+      ],
+      "notes": "The sole poolManager() -> address member is implemented in concrete consumers; exact ABI and configured getter values are validated. This interface has no standalone reference runtime."
+    },
+    {
+      "reference_source": "src/interfaces/IMsgSender.sol",
+      "status": "interface_validated",
+      "fe_sources": [
+        "src/v4_router.fe",
+        "src/permissioned_v4_router.fe",
+        "src/v4_quoter.fe",
+        "src/position_manager.fe",
+        "src/permissioned_position_manager.fe"
+      ],
+      "evidence": [
+        "tests/results/permissioned-position-workflows-o1.json",
+        "tests/results/permissioned-router-workflows-o1.json",
+        "tests/results/PermissionedPositionManager.protocol.abi.audit.json",
+        "tests/results/state-view-latest-o1.json",
+        "tests/results/quoter-interface-latest-o1.json",
+        "tests/results/router-workflows-current-o1.json",
+        "tests/results/permissioned-router-workflows-latest-o1.json",
+        "tests/results/router-real-permit2-latest-o1.json"
+      ],
+      "notes": "Concrete consumers expose msgSender() with authenticated caller context. NFT role-separated funding and cleared-lock checks pass; permissioned-router hooks read msgSender() during swaps and verify the user. Callable ABI verified. This is a shared interface, not another deployable contract."
+    },
+    {
+      "reference_source": "src/interfaces/IMulticall_v4.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/multicall.fe"
+      ],
+      "evidence": [
+        "tests/results/multicall-local-fix-o1.json",
+        "tests/results/multicall-local-fix-o2.json",
+        "tests/results/position-policy-latest-o1.json",
+        "tests/results/permissioned-position-workflows-o1.json"
+      ],
+      "notes": "Lazy item decoding preserves malformed later-element error precedence. Current ordinary and permissioned PositionManager integration checks multicall results and earlier callback rejection before a malformed later item. Explicit lazy-multicall ABI adapter remains required."
+    },
+    {
+      "reference_source": "src/interfaces/INotifier.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/notifier.fe"
+      ],
+      "evidence": [
+        "tests/results/notifier-o1.json",
+        "tests/results/notifier-o2.json",
+        "tests/results/position-policy-latest-o1.json",
+        "tests/results/permissioned-position-workflows-o1.json"
+      ],
+      "notes": "Component callback/error boundaries are supplemented by current PositionManager lifecycle/guard integration and PermissionedPositionManager malicious subscriber reattachment cleanup. Latest workflows check subscriber callbacks, cleared state and lock invariants."
+    },
+    {
+      "reference_source": "src/interfaces/IPermit2Forwarder.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/permit2_forwarder.fe"
+      ],
+      "evidence": [
+        "tests/results/permit2-forwarder-o1.json",
+        "tests/results/permit2-forwarder-o2.json",
+        "tests/results/permit2-workflows-o1.json",
+        "tests/results/permit2-workflows-o2.json",
+        "tests/results/permissioned-position-workflows-o1.json",
+        "tests/results/router-real-permit2-latest-o1.json",
+        "tests/results/permit2-forwarder-integrated-o1.json",
+        "tests/results/upstream-conformance-o1.json"
+      ],
+      "notes": "Real pinned Permit2 single/batch forwarding is exercised through the permissioned PositionManager with exact allowance/nonce checks; real router and NFT settlement workflows are validated. Upstream PositionManager suites (including multicall/permit forwarding) pass against the Fe PositionManager and PoolManager."
+    },
+    {
+      "reference_source": "src/interfaces/IPoolInitializer_v4.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/pool_initializer.fe"
+      ],
+      "evidence": [
+        "tests/results/pool-initializer-o1.json",
+        "tests/results/pool-initializer-o2.json",
+        "tests/results/upstream-conformance-o1.json"
+      ],
+      "notes": "Upstream PositionManager suites (including multicall/permit forwarding) pass against the Fe PositionManager and PoolManager."
+    },
+    {
+      "reference_source": "src/interfaces/IPositionDescriptor.sol",
+      "status": "workflows_validated",
+      "fe_sources": [
+        "src/position_descriptor.fe",
+        "src/currency_ratio_sort_order.fe"
+      ],
+      "evidence": [
+        "tests/results/position-descriptor-o1.json",
+        "tests/results/position-descriptor-workflows-o1.json"
+      ],
+      "notes": "All six endpoints, constructor configuration and error boundaries pass 30000 O1 fuzz cases plus five scenarios. Real Permit2 mint/increase/decrease/burn metadata passes 1000 fuzz cases across Solidity/Solidity, Fe/Solidity and Fe/Fe PositionManager/PoolManager combinations; complete URI bytes match the unmodified Solidity Descriptor. Protocol ABI verified. Final protocol-wide audit remains open."
+    },
+    {
+      "reference_source": "src/interfaces/IPositionManager.sol",
+      "status": "workflows_validated",
+      "fe_sources": [
+        "src/position_manager.fe",
+        "src/position_manager_actions.fe",
+        "src/position_manager_state.fe"
+      ],
+      "evidence": [
+        "tests/results/position-manager-lazy-multicall-o1.json",
+        "tests/results/position-manager-lazy-multicall-o2.json",
+        "tests/results/position-descriptor-workflows-o1.json",
+        "tests/results/position-policy-latest-o1.json",
+        "tests/results/position-metadata-latest-o1.json"
+      ],
+      "notes": "Current-master O1 passes lifecycle, credit/native actions, guards and real Permit2 plus Descriptor workflows across three implementation combinations. Lazy Multicall error precedence remains fixed; explicit fallback-receive and lazy-multicall ABI export adapters remain required. Final protocol-wide invariants remain open."
+    },
+    {
+      "reference_source": "src/interfaces/IReservesLens.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/reserves_lens.fe",
+        "src/reserves_scan.fe",
+        "src/reserves_hooks.fe",
+        "src/reserves_types.fe",
+        "src/reserves_errors.fe"
+      ],
+      "evidence": [
+        "tests/results/reserves-lens-o1.json",
+        "tests/results/reserves-lens-o2.json",
+        "tests/results/reserves-lens-latest-o1.json"
+      ],
+      "notes": "All seven public methods have O1/O2 component coverage, including paged/full bitmap scans, cursor checks and bounded hook calls. Manager storage and hook providers are controlled test fixtures; real-pool workflows and broader malformed ABI/returndata checks remain final protocol gates. Runtime exceeds EIP-170; deployment size remains deprioritized."
+    },
+    {
+      "reference_source": "src/interfaces/IStateView.sol",
+      "status": "interface_validated",
+      "fe_sources": [
+        "src/state_view.fe"
+      ],
+      "evidence": [
+        "tests/results/StateView.protocol.abi.json",
+        "tests/results/StateView.protocol.abi.audit.json",
+        "tests/results/state-view-latest-o1.json"
+      ]
+    },
+    {
+      "reference_source": "src/interfaces/ISubscriber.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/notifier.fe"
+      ],
+      "evidence": [
+        "tests/results/notifier-o1.json",
+        "tests/results/notifier-o2.json",
+        "tests/results/position-policy-latest-o1.json",
+        "tests/results/permissioned-position-workflows-o1.json"
+      ],
+      "notes": "Component callback/error boundaries are supplemented by current PositionManager lifecycle/guard integration and PermissionedPositionManager malicious subscriber reattachment cleanup. Latest workflows check subscriber callbacks, cleared state and lock invariants."
+    },
+    {
+      "reference_source": "src/interfaces/IUniswapV4DeployerCompetition.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/deployer_competition.fe",
+        "src/vanity_address.fe"
+      ],
+      "evidence": [
+        "tests/results/deployer-competition-o1.json",
+        "tests/results/UniswapV4DeployerCompetition.protocol.abi.audit.json"
+      ],
+      "notes": "Latest-master O1: all nine methods, constructor overflow, salt authorization and packed storage, strict score updates and events, deadline/error precedence, real CREATE2 deployment/collision, prefunded addresses, failed constructors and empty runtime. 40000 fuzz cases plus three boundary scenarios. Public ABI verified."
+    },
+    {
+      "reference_source": "src/interfaces/IUnorderedNonce.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/eip712.fe",
+        "src/unordered_nonce.fe",
+        "src/erc721_permit_hash.fe"
+      ],
+      "evidence": [
+        "tests/results/permit-foundations-o1.json",
+        "tests/results/permit-foundations-o2.json",
+        "tests/results/position-policy-latest-o1.json",
+        "tests/results/permissioned-position-workflows-o1.json"
+      ],
+      "notes": "Domain/digest/hash and nonce helpers pass O1/O2 via an adapter harness, including chain forks, documented delegatecall cache behavior, nonce replay rollback and payable revocation. Current PositionManager workflows additionally verify versionless domains, ERC1271 permits, nonce replay rollback, operator approvals and revocation."
+    },
+    {
+      "reference_source": "src/interfaces/IV4Quoter.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/quoter.fe",
+        "src/quoter_calldata.fe",
+        "src/quoter_memory.fe",
+        "src/v4_quoter.fe"
+      ],
+      "evidence": [
+        "tests/results/quoter-o1.json",
+        "tests/results/quoter-o2.json",
+        "tests/results/quoter-workflows-o1.json",
+        "tests/results/quoter-workflows-o2.json",
+        "tests/results/quoter-interface-latest-o1.json",
+        "tests/results/quoter-workflows-latest-o1.json"
+      ],
+      "notes": "All four quote methods, callback/self authorization, pinned ABI edge cases and real-pool rollback workflows pass O1/O2. Gas estimates measure Fe execution rather than matching Solidity gas costs. Final protocol-wide validation remains open."
+    },
+    {
+      "reference_source": "src/interfaces/IV4Router.sol",
+      "status": "interface_validated",
+      "fe_sources": [
+        "src/router.fe",
+        "src/router_params.fe",
+        "src/path_key.fe"
+      ],
+      "evidence": [
+        "tests/results/periphery-interface-audit.json",
+        "tests/results/router-interface-latest-o1.json"
+      ],
+      "notes": "Four pinned swap schemas and all eight error signatures audited. Runtime parity checks all eight complete error payloads, malformed calldata and swaps: 50000 O1 fuzz cases plus five fixed tests."
+    },
+    {
+      "reference_source": "src/interfaces/external/IHookStats.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/reserves_lens.fe",
+        "src/reserves_scan.fe",
+        "src/reserves_hooks.fe",
+        "src/reserves_types.fe",
+        "src/reserves_errors.fe"
+      ],
+      "evidence": [
+        "tests/results/reserves-lens-o1.json",
+        "tests/results/reserves-lens-o2.json"
+      ],
+      "notes": "All seven public methods have O1/O2 component coverage, including paged/full bitmap scans, cursor checks and bounded hook calls. Manager storage and hook providers are controlled test fixtures; real-pool workflows and broader malformed ABI/returndata checks remain final protocol gates. Runtime exceeds EIP-170; deployment size remains deprioritized."
+    },
+    {
+      "reference_source": "src/interfaces/external/IWETH9.sol",
+      "status": "interface_validated",
+      "fe_sources": [
+        "src/native_wrapper.fe",
+        "src/currency.fe",
+        "src/payments.fe"
+      ],
+      "evidence": [
+        "tests/results/periphery-interface-audit.json",
+        "tests/results/native-wrapper-latest-o1.json",
+        "tests/results/position-policy-latest-o1.json"
+      ],
+      "notes": "External dependency interface, not a WETH9 implementation in the pinned periphery. Deposit/withdraw selectors and IERC20 inheritance audited; consumer parity passes 20000 O1 cases and receive/zero/no-code boundaries."
+    },
+    {
+      "reference_source": "src/lens/ReservesLens.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/reserves_lens.fe",
+        "src/reserves_scan.fe",
+        "src/reserves_hooks.fe",
+        "src/reserves_types.fe",
+        "src/reserves_errors.fe"
+      ],
+      "evidence": [
+        "tests/results/reserves-lens-o1.json",
+        "tests/results/reserves-lens-o2.json",
+        "tests/results/reserves-lens-latest-o1.json"
+      ],
+      "notes": "All seven public methods have O1/O2 component coverage, including paged/full bitmap scans, cursor checks and bounded hook calls. Manager storage and hook providers are controlled test fixtures; real-pool workflows and broader malformed ABI/returndata checks remain final protocol gates. Runtime exceeds EIP-170; deployment size remains deprioritized."
+    },
+    {
+      "reference_source": "src/lens/StateView.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/state_view.fe",
+        "src/state_library.fe"
+      ],
+      "evidence": [
+        "tests/results/state-view-o1.json",
+        "tests/results/state-view-o2.json",
+        "tests/results/state-view-latest-o1.json"
+      ]
+    },
+    {
+      "reference_source": "src/lens/V4Quoter.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/quoter.fe",
+        "src/quoter_calldata.fe",
+        "src/quoter_memory.fe",
+        "src/v4_quoter.fe"
+      ],
+      "evidence": [
+        "tests/results/quoter-o1.json",
+        "tests/results/quoter-o2.json",
+        "tests/results/quoter-workflows-o1.json",
+        "tests/results/quoter-workflows-o2.json",
+        "tests/results/quoter-interface-latest-o1.json",
+        "tests/results/quoter-workflows-latest-o1.json"
+      ],
+      "notes": "All four quote methods, callback/self authorization, pinned ABI edge cases and real-pool rollback workflows pass O1/O2. Gas estimates measure Fe execution rather than matching Solidity gas costs. Final protocol-wide validation remains open."
+    },
+    {
+      "reference_source": "src/libraries/ActionConstants.sol",
+      "status": "constants_validated",
+      "fe_sources": [
+        "src/actions.fe"
+      ],
+      "evidence": [
+        "tests/results/periphery-interface-audit.json"
+      ],
+      "notes": "All 26 action codes and four sentinel values and widths match pinned sources. Reserved codes retain reference dispatcher restrictions."
+    },
+    {
+      "reference_source": "src/libraries/Actions.sol",
+      "status": "constants_validated",
+      "fe_sources": [
+        "src/actions.fe"
+      ],
+      "evidence": [
+        "tests/results/periphery-interface-audit.json"
+      ],
+      "notes": "All 26 action codes and four sentinel values and widths match pinned sources. Reserved codes retain reference dispatcher restrictions."
+    },
+    {
+      "reference_source": "src/libraries/AddressStringUtil.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/address_string.fe"
+      ],
+      "evidence": [
+        "tests/results/periphery-aux-o1.json",
+        "tests/results/periphery-aux-o2.json"
+      ],
+      "notes": "Uppercase address prefix formatting and invalid length errors pass O1/O2 differential tests."
+    },
+    {
+      "reference_source": "src/libraries/BipsLibrary.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/bips.fe"
+      ],
+      "evidence": [
+        "tests/results/periphery-math-o1.json",
+        "tests/results/periphery-math-o2.json"
+      ]
+    },
+    {
+      "reference_source": "src/libraries/CalldataDecoder.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/calldata_decoder.fe"
+      ],
+      "evidence": [
+        "tests/results/calldata-decoder-o1.json",
+        "tests/results/calldata-decoder-o2.json"
+      ],
+      "notes": "Swap helper locations validated; typed consumer field access remains part of router validation."
+    },
+    {
+      "reference_source": "src/libraries/CurrencyRatioSortOrder.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/position_descriptor.fe",
+        "src/currency_ratio_sort_order.fe"
+      ],
+      "evidence": [
+        "tests/results/position-descriptor-o1.json"
+      ],
+      "notes": "All six sorting priorities, mainnet/non-mainnet branches and wrapped-native precedence are checked in the O1 PositionDescriptor suite."
+    },
+    {
+      "reference_source": "src/libraries/Descriptor.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/descriptor.fe",
+        "src/descriptor_image.fe",
+        "src/descriptor_format.fe",
+        "src/metadata_text.fe"
+      ],
+      "evidence": [
+        "tests/results/descriptor-current-o1.json",
+        "tests/results/descriptor-format-current-o1.json"
+      ],
+      "notes": "Current master O1: full token URI and SVG output bytes, valid and arbitrary parameter tuples, tick prices, zero/native addresses, escaping and arithmetic failures. 40000 full-descriptor fuzz cases plus replay/boundaries; 40000 formatting fuzz cases plus boundaries. Public PositionDescriptor integration is separately validated by position-descriptor-workflows-o1. Further validation uses O1 only."
+    },
+    {
+      "reference_source": "src/libraries/ERC721PermitHash.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/eip712.fe",
+        "src/unordered_nonce.fe",
+        "src/erc721_permit_hash.fe"
+      ],
+      "evidence": [
+        "tests/results/permit-foundations-o1.json",
+        "tests/results/permit-foundations-o2.json",
+        "tests/results/position-policy-latest-o1.json",
+        "tests/results/permissioned-position-workflows-o1.json"
+      ],
+      "notes": "Domain/digest/hash and nonce helpers pass O1/O2 via an adapter harness, including chain forks, documented delegatecall cache behavior, nonce replay rollback and payable revocation. Current PositionManager workflows additionally verify versionless domains, ERC1271 permits, nonce replay rollback, operator approvals and revocation."
+    },
+    {
+      "reference_source": "src/libraries/HexStrings.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/metadata_text.fe"
+      ],
+      "evidence": [
+        "tests/results/descriptor-format-current-o1.json",
+        "tests/results/descriptor-format-current-o2.json"
+      ],
+      "notes": "Variable-length hexadecimal output checked in the formatting differential suite against the unchanged pinned HexStrings reference."
+    },
+    {
+      "reference_source": "src/libraries/LiquidityAmounts.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/liquidity_amounts.fe"
+      ],
+      "evidence": [
+        "tests/results/periphery-math-o1.json",
+        "tests/results/periphery-math-o2.json"
+      ]
+    },
+    {
+      "reference_source": "src/libraries/Locker.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/v4_router.fe"
+      ],
+      "evidence": [
+        "tests/results/router-workflows-o1.json",
+        "tests/results/router-workflows-o2.json"
+      ],
+      "notes": "Router component and real-pool workflows pass O1/O2. Permit2 is a transport test double; full Permit2 integration and final protocol gates remain open."
+    },
+    {
+      "reference_source": "src/libraries/PathKey.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/path_key.fe"
+      ],
+      "evidence": [
+        "tests/results/periphery-types-o1.json",
+        "tests/results/periphery-types-o2.json",
+        "tests/results/router-interface-latest-o1.json",
+        "tests/results/quoter-workflows-latest-o1.json"
+      ]
+    },
+    {
+      "reference_source": "src/libraries/PositionConfig.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/position_config.fe"
+      ],
+      "evidence": [
+        "tests/results/periphery-aux-o1.json",
+        "tests/results/periphery-aux-o2.json"
+      ],
+      "notes": "Canonical PositionConfig packed hashes, raw config/subscriber storage bits and vanity helpers pass O1/O2; deployment competition is separately validated by deployer-competition-o1."
+    },
+    {
+      "reference_source": "src/libraries/PositionConfigId.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/position_config.fe"
+      ],
+      "evidence": [
+        "tests/results/periphery-aux-o1.json",
+        "tests/results/periphery-aux-o2.json"
+      ],
+      "notes": "Canonical PositionConfig packed hashes, raw config/subscriber storage bits and vanity helpers pass O1/O2; deployment competition is separately validated by deployer-competition-o1."
+    },
+    {
+      "reference_source": "src/libraries/PositionInfoLibrary.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/position_info.fe"
+      ],
+      "evidence": [
+        "tests/results/periphery-types-o1.json",
+        "tests/results/periphery-types-o2.json"
+      ]
+    },
+    {
+      "reference_source": "src/libraries/QuoterRevert.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/quoter.fe",
+        "src/quoter_calldata.fe",
+        "src/quoter_memory.fe",
+        "src/v4_quoter.fe"
+      ],
+      "evidence": [
+        "tests/results/quoter-o1.json",
+        "tests/results/quoter-o2.json",
+        "tests/results/quoter-workflows-o1.json",
+        "tests/results/quoter-workflows-o2.json"
+      ],
+      "notes": "All four quote methods, callback/self authorization, pinned ABI edge cases and real-pool rollback workflows pass O1/O2. Gas estimates measure Fe execution rather than matching Solidity gas costs. Final protocol-wide validation remains open."
+    },
+    {
+      "reference_source": "src/libraries/SVG.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/svg.fe",
+        "src/svg_math.fe",
+        "src/metadata_text.fe"
+      ],
+      "evidence": [
+        "tests/results/svg-local-fix-o1.json",
+        "tests/results/svg-local-fix-o2.json"
+      ],
+      "notes": "Current Fe source hashes match both archived O1/O2 runs: 20000 fuzz cases plus boundaries each. Complete PositionDescriptor integration is separately validated by position-descriptor-workflows-o1."
+    },
+    {
+      "reference_source": "src/libraries/SafeCurrencyMetadata.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/safe_currency_metadata.fe"
+      ],
+      "evidence": [
+        "tests/results/currency-metadata-o1.json",
+        "tests/results/currency-metadata-o2.json"
+      ],
+      "notes": "O1/O2 each pass 20000 raw/canonical return fuzz cases plus length/offset boundaries. Native labels, zero-stripped bytes32 symbols, truncation, decimals, failed calls and malformed dynamic-return errors match."
+    },
+    {
+      "reference_source": "src/libraries/SlippageCheck.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/slippage_check.fe"
+      ],
+      "evidence": [
+        "tests/results/periphery-math-o1.json",
+        "tests/results/periphery-math-o2.json"
+      ]
+    },
+    {
+      "reference_source": "src/libraries/VanityAddressLib.sol",
+      "status": "component_validated",
+      "fe_sources": [
+        "src/vanity_address.fe"
+      ],
+      "evidence": [
+        "tests/results/periphery-aux-o1.json",
+        "tests/results/periphery-aux-o2.json"
+      ],
+      "notes": "Canonical PositionConfig packed hashes, raw config/subscriber storage bits and vanity helpers pass O1/O2; deployment competition is separately validated by deployer-competition-o1."
+    }
+  ],
+  "upstream_conformance": {
+    "evidence": [
+      "tests/results/upstream-conformance-o1.json",
+      "tests/results/upstream-conformance-o1-tests.json"
+    ],
+    "native_evidence": "tests/results/native-integrated-o1.json"
+  }
+}

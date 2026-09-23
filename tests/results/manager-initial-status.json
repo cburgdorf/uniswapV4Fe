@@ -1,0 +1,27 @@
+{
+  "status": "initial_integration_incomplete",
+  "compiler_version": "fe 26.3.0 (5d3da6ade)",
+  "compiler_sha256": "45506d927210450172e72d6b5d95a206811fdf97ca3e6d684003af644e77f8dc",
+  "optimization": "1",
+  "runtime_bytes": 33069,
+  "tests_passed": 10,
+  "tests_failed": 1,
+  "fuzz_runs_requested": 100,
+  "failed_test": "testFuzz_callbackReturn(uint8,uint256,uint256,bool)",
+  "counterexample": {
+    "size": 65,
+    "offset": 11,
+    "length": 500,
+    "failure": false
+  },
+  "test_sha256": "f42e06ce255d2fb85e5d390b3238928e6bac25cd20c5b7bb2922b0027827d364",
+  "source_hashes": {
+    "src/manager.fe": "a9dc679c0bcb89c696d9ca715719fec109d96fdb72f69b4cf3046dbc01e7f5e5",
+    "src/pool_manager.fe": "1aa9815e2e85d70ff520ef39343b50c13ee5fc3bc87f889a4c635ddfca5a271c"
+  },
+  "limitations": [
+    "Callback malformed-return mismatch unresolved",
+    "Runtime exceeds Cancun EIP-170 24576 byte deployment limit; Forge test deployment does not prove deployability",
+    "Hook lifecycle integration and full invariant coverage pending"
+  ]
+}

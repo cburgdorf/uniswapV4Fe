@@ -1,0 +1,56 @@
+// SPDX-License-Identifier: MIT
+// Public consume/hash methods are adapters for the reference base contracts.
+use std::abi::{Bytes, Bytes32, sol}
+use std::evm::{Address, Ctx, RawMem, RawStorage}
+use super::{eip712::Domain, erc721_permit_hash as hashes, unordered_nonce::Nonces}
+msg PermitFoundationMsg {
+    #[selector = sol("DOMAIN_SEPARATOR()")]
+    Separator {} -> Bytes32,
+    #[selector = sol("digest(bytes32)")]
+    Digest { value: Bytes32 } -> Bytes32,
+    #[selector = sol("hashPermit(address,uint256,uint256,uint256)")]
+    Permit { spender: Address, tokenId: u256, nonce: u256, deadline: u256 } -> Bytes32,
+    #[selector = sol("hashPermitForAll(address,bool,uint256,uint256)")]
+    PermitAll { operator: Address, approved: bool, nonce: u256, deadline: u256 } -> Bytes32,
+    #[selector = sol("nonces(address,uint256)")]
+    Bitmap { owner: Address, word: u256 } -> u256,
+    #[selector = sol("consume(address,uint256)")]
+    Consume { owner: Address, nonce: u256 },
+    #[selector = sol("revokeNonce(uint256)")]
+    Revoke { nonce: u256 },
+}
+pub contract PermitFoundationsHarness {
+    name_hash: u256,
+    cached_chain: u256,
+    cached_separator: u256,
+    init(name: Bytes) uses (mut name_hash, mut cached_chain, mut cached_separator, ctx: Ctx, mem: mut RawMem) {
+        let config = Domain::initialize(name)
+        name_hash = config.name_hash
+        cached_chain = config.cached_chain
+        cached_separator = config.cached_separator
+    }
+    recv PermitFoundationMsg {
+        Separator {} -> Bytes32 uses (name_hash, cached_chain, cached_separator, ctx: Ctx, mem: mut RawMem) {
+            Domain { name_hash, cached_chain, cached_separator }.separator()
+        }
+        Digest { value } -> Bytes32 uses (name_hash, cached_chain, cached_separator, ctx: Ctx, mem: mut RawMem) {
+            Domain { name_hash, cached_chain, cached_separator }.digest(value)
+        }
+        Permit { spender, tokenId, nonce, deadline } -> Bytes32 uses (mem: mut RawMem) {
+            hashes::permit(spender, tokenId, nonce, deadline)
+        }
+        PermitAll { operator, approved, nonce, deadline } -> Bytes32 uses (mem: mut RawMem) {
+            hashes::permit_for_all(operator, approved, nonce, deadline)
+        }
+        Bitmap { owner, word } -> u256 uses (storage: RawStorage, mem: mut RawMem) {
+            Nonces { slot: 0 }.bitmap(owner, word)
+        }
+        Consume { owner, nonce } uses (storage: mut RawStorage, mem: mut RawMem) {
+            Nonces { slot: 0 }.consume(owner, nonce)
+        }
+        #[payable]
+        Revoke { nonce } uses (ctx: Ctx, storage: mut RawStorage, mem: mut RawMem) {
+            Nonces { slot: 0 }.consume(ctx.caller(), nonce)
+        }
+    }
+}

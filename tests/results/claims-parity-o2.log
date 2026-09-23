@@ -1,0 +1,18 @@
+Compiling 4 files with Solc 0.8.30
+Solc 0.8.30 finished in 1.55s
+Compiler run successful!
+
+Ran 10 tests for test/ClaimsParity.t.sol:ClaimsParityTest
+[PASS] testFuzz_approvalOperatorGetters(address,address,uint256,uint256,uint256,bool) (runs: 10000, μ: 252713, ~: 258261)
+[PASS] testFuzz_burnFrom(address,address,uint256,uint256,uint256,uint256,bool) (runs: 10000, μ: 65390, ~: 56263)
+[PASS] testFuzz_interfaces(bytes4) (runs: 10000, μ: 37425, ~: 37425)
+[PASS] testFuzz_lifecycle(uint128) (runs: 10000, μ: 656977, ~: 662884)
+[PASS] testFuzz_mintBurn(address,address,uint256,uint256,uint256) (runs: 10000, μ: 93316, ~: 81996)
+[PASS] testFuzz_transfer(address,address,uint256,uint256,uint256,uint256) (runs: 10000, μ: 58577, ~: 49199)
+[PASS] testFuzz_transferFrom(address,address,address,uint256,uint256,uint256,uint256,bool) (runs: 10000, μ: 105903, ~: 66842)
+[PASS] test_allowanceRollbackOnRecipientOverflow() (gas: 76899)
+[PASS] test_boundariesAndIdentity() (gas: 546116)
+[PASS] test_staticGetters() (gas: 46883)
+Suite result: ok. 10 passed; 0 failed; 0 skipped; finished in 7.39s (17.02s CPU time)
+
+Ran 1 test suite in 7.39s (7.39s CPU time): 10 tests passed, 0 failed, 0 skipped (10 total tests)

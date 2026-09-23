@@ -1,0 +1,7 @@
+Failed to emit test Sonatina: invalid runtime package: InvalidReturnClass
+ERROR [2.0154s] Failed to emit test Sonatina: invalid runtime package: InvalidReturnClass
+
+test result: FAILED. 0 passed; 1 failed
+
+failures:
+    fe_v4_payable_return_before::codegen

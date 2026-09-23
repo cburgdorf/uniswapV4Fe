@@ -1,0 +1,127 @@
+// SPDX-License-Identifier: MIT
+// Test adapter exposing internal mint/burn and authorization methods.
+use std::abi::{Bytes, Bytes4, Bytes32, DynString, sol}
+use std::evm::{Address, Ctx, Call, RawMem, RawStorage, Log}
+use super::{erc721::{self, Tokens}, erc721_permit, storage_string, eip712::Domain, unordered_nonce::Nonces}
+msg ERC721PermitMsg {
+    #[selector = sol("name()")]
+    Name {  } -> DynString,
+    #[selector = sol("symbol()")]
+    Symbol {  } -> DynString,
+    #[selector = sol("ownerOf(uint256)")]
+    Owner { id: u256 } -> Address,
+    #[selector = sol("balanceOf(address)")]
+    Balance { owner: Address } -> u256,
+    #[selector = sol("getApproved(uint256)")]
+    Approved { id: u256 } -> Address,
+    #[selector = sol("isApprovedForAll(address,address)")]
+    Operator { owner: Address, operator: Address } -> bool,
+    #[selector = sol("supportsInterface(bytes4)")]
+    Supports { id: Bytes4 } -> bool,
+    #[selector = sol("approve(address,uint256)")]
+    Approve { spender: Address, id: u256 },
+    #[selector = sol("setApprovalForAll(address,bool)")]
+    ApproveAll { operator: Address, approved: bool },
+    #[selector = sol("transferFrom(address,address,uint256)")]
+    Transfer { from: Address, to: Address, id: u256 },
+    #[selector = sol("safeTransferFrom(address,address,uint256)")]
+    SafeTransfer { from: Address, to: Address, id: u256 },
+    #[selector = sol("safeTransferFrom(address,address,uint256,bytes)")]
+    SafeTransferData { from: Address, to: Address, id: u256, data: Bytes },
+    #[selector = sol("mint(address,uint256)")]
+    Mint { to: Address, id: u256 },
+    #[selector = sol("burn(uint256)")]
+    Burn { id: u256 },
+    #[selector = sol("allowed(address,uint256)")]
+    Allowed { spender: Address, id: u256 } -> bool,
+    #[selector = sol("DOMAIN_SEPARATOR()")]
+    Separator {  } -> Bytes32,
+    #[selector = sol("nonces(address,uint256)")]
+    Bitmap { owner: Address, word: u256 } -> u256,
+    #[selector = sol("revokeNonce(uint256)")]
+    Revoke { nonce: u256 },
+    #[selector = sol("permit(address,uint256,uint256,uint256,bytes)")]
+    Permit { spender: Address, id: u256, deadline: u256, nonce: u256, signature: Bytes },
+    #[selector = sol("permitForAll(address,address,bool,uint256,uint256,bytes)")]
+    PermitAll { owner: Address, operator: Address, approved: bool, deadline: u256, nonce: u256, signature: Bytes },
+}
+pub contract ERC721PermitHarness {
+    name_hash: u256,
+    cached_chain: u256,
+    cached_separator: u256,
+    init(name: Bytes, symbol: Bytes) uses (mut name_hash, mut cached_chain, mut cached_separator, ctx: Ctx, storage: mut RawStorage, mem: mut RawMem) {
+        storage_string::initialize(0, name)
+        storage_string::initialize(1, symbol)
+        let domain = Domain::initialize(name)
+        name_hash = domain.name_hash
+        cached_chain = domain.cached_chain
+        cached_separator = domain.cached_separator
+    }
+    recv ERC721PermitMsg {
+        Name {  } -> DynString uses (storage: RawStorage, mem: mut RawMem) {
+            storage_string::load(0)
+        }
+        Symbol {  } -> DynString uses (storage: RawStorage, mem: mut RawMem) {
+            storage_string::load(1)
+        }
+        Owner { id } -> Address uses (storage: RawStorage, mem: mut RawMem) {
+            Tokens { slot: 0 }.owner_of(id)
+        }
+        Balance { owner } -> u256 uses (storage: RawStorage, mem: mut RawMem) {
+            Tokens { slot: 0 }.balance_of(owner)
+        }
+        Approved { id } -> Address uses (storage: RawStorage, mem: mut RawMem) {
+            Tokens { slot: 0 }.approved(id)
+        }
+        Operator { owner, operator } -> bool uses (storage: RawStorage, mem: mut RawMem) {
+            Tokens { slot: 0 }.operator(owner, operator)
+        }
+        Supports { id } -> bool uses (ctx: Ctx) {
+            erc721::supports_interface(id)
+        }
+        Approve { spender, id } uses (ctx: Ctx, storage: mut RawStorage, mem: mut RawMem, log: mut Log) {
+            Tokens { slot: 0 }.approve(spender, id)
+        }
+        ApproveAll { operator, approved } uses (ctx: Ctx, storage: mut RawStorage, mem: mut RawMem, log: mut Log) {
+            Tokens { slot: 0 }.approve_for_all(ctx.caller(), operator, approved)
+        }
+        Transfer { from, to, id } uses (ctx: Ctx, storage: mut RawStorage, mem: mut RawMem, log: mut Log) {
+            Tokens { slot: 0 }.transfer_from(from, to, id)
+        }
+        SafeTransfer { from, to, id } uses (ctx: Ctx, call: mut Call, storage: mut RawStorage, mem: mut RawMem, log: mut Log) {
+            Tokens { slot: 0 }.transfer_from(from, to, id)
+            erc721::check_receiver(from, to, id, Bytes::empty())
+        }
+        SafeTransferData { from, to, id, data } uses (ctx: Ctx, call: mut Call, storage: mut RawStorage, mem: mut RawMem, log: mut Log) {
+            Tokens { slot: 0 }.transfer_from(from, to, id)
+            erc721::check_receiver(from, to, id, data)
+        }
+        Mint { to, id } uses (storage: mut RawStorage, mem: mut RawMem, log: mut Log) {
+            Tokens { slot: 0 }.mint(to, id)
+        }
+        Burn { id } uses (storage: mut RawStorage, mem: mut RawMem, log: mut Log) {
+            Tokens { slot: 0 }.burn(id)
+        }
+        Allowed { spender, id } -> bool uses (storage: RawStorage, mem: mut RawMem) {
+            Tokens { slot: 0 }.is_approved_or_owner(spender, id)
+        }
+        Separator {  } -> Bytes32 uses (name_hash, cached_chain, cached_separator, ctx: Ctx, mem: mut RawMem) {
+            Domain { name_hash, cached_chain, cached_separator }.separator()
+        }
+        Bitmap { owner, word } -> u256 uses (storage: RawStorage, mem: mut RawMem) {
+            Nonces { slot: 6 }.bitmap(owner, word)
+        }
+        #[payable]
+        Revoke { nonce } uses (ctx: Ctx, storage: mut RawStorage, mem: mut RawMem) {
+            Nonces { slot: 6 }.consume(ctx.caller(), nonce)
+        }
+        #[payable]
+        Permit { spender, id, deadline, nonce, signature } uses (name_hash, cached_chain, cached_separator, ctx: Ctx, call: Call, storage: mut RawStorage, mem: mut RawMem, log: mut Log) {
+            erc721_permit::permit(Tokens { slot: 0 }, Nonces { slot: 6 }, Domain { name_hash, cached_chain, cached_separator }, spender, id, deadline, nonce, signature)
+        }
+        #[payable]
+        PermitAll { owner, operator, approved, deadline, nonce, signature } uses (name_hash, cached_chain, cached_separator, ctx: Ctx, call: Call, storage: mut RawStorage, mem: mut RawMem, log: mut Log) {
+            erc721_permit::permit_for_all(Tokens { slot: 0 }, Nonces { slot: 6 }, Domain { name_hash, cached_chain, cached_separator }, owner, operator, approved, deadline, nonce, signature)
+        }
+    }
+}

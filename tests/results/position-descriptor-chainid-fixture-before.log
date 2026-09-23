@@ -1,0 +1,32 @@
+Compiling 59 files with Solc 0.8.26
+Solc 0.8.26 finished in 2.08s
+Compiler run successful!
+
+Ran 8 tests for test/PositionDescriptorParity.t.sol:PositionDescriptorParityTest
+[FAIL: vm.chainId: chain ID must be less than 2^64; counterexample: calldata=0xb5304672000000000000000000000000a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48000000000000000000000000000000000000000000000000000000000000013d000000000000000000000000a0b86991c6218b36c1d19d4a2e9eb0ce3606eb480000000000000000000000008daebade922df735c38c80c7ebd708af50815faa00000000000000000000000000000000db2df09e81959a81455e260799a0632f args=[0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48, 0x000000000000000000000000000000000000000000000000000000000000013d, 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48, 0x8dAEBADE922dF735c38C80C7eBD708Af50815fAa, 291339464771989622907027621153398088495 [2.913e38]]] testFuzz_configuration(address,bytes32,address,address,uint256) (runs: 0, μ: 0, ~: 0)
+[PASS] testFuzz_externalReturns(bytes,bool,uint8) (runs: 100, μ: 5751422, ~: 172679)
+[PASS] testFuzz_tokenURI(uint64,int24,bool,bool,uint24) (runs: 100, μ: 11707573, ~: 12315869)
+[PASS] test_delegatecallUsesConstructorConfiguration() (gas: 13430118)
+[PASS] test_dispatchAndValueGuards() (gas: 36961)
+[PASS] test_invalidIdAndReturnBoundaries() (gas: 16900341)
+[PASS] test_metadataAndTickBoundaries() (gas: 105727602)
+[PASS] test_priorityMatrixAndLabels() (gas: 620777612)
+Suite result: FAILED. 7 passed; 1 failed; 0 skipped; finished in 1.62s (2.69s CPU time)
+
+Ran 1 test suite in 1.62s (1.62s CPU time): 7 tests passed, 1 failed, 0 skipped (8 total tests)
+
+Failing tests:
+Encountered 1 failing test in test/PositionDescriptorParity.t.sol:PositionDescriptorParityTest
+[FAIL: vm.chainId: chain ID must be less than 2^64; counterexample: calldata=0xb5304672000000000000000000000000a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48000000000000000000000000000000000000000000000000000000000000013d000000000000000000000000a0b86991c6218b36c1d19d4a2e9eb0ce3606eb480000000000000000000000008daebade922df735c38c80c7ebd708af50815faa00000000000000000000000000000000db2df09e81959a81455e260799a0632f args=[0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48, 0x000000000000000000000000000000000000000000000000000000000000013d, 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48, 0x8dAEBADE922dF735c38C80C7eBD708Af50815fAa, 291339464771989622907027621153398088495 [2.913e38]]] testFuzz_configuration(address,bytes32,address,address,uint256) (runs: 0, μ: 0, ~: 0)
+
+Encountered a total of 1 failing tests, 7 tests succeeded
+
+Tip: Run `forge test --rerun` to retry only the 1 failed test
+Traceback (most recent call last):
+  File "/home/cburgdorf/Documents/hacking/fe/uniswap_v4_demo/tests/retest_parity.py", line 54, in <module>
+    result.check_returncode()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/home/linuxbrew/.linuxbrew/Cellar/python@3.14/3.14.4/lib/python3.14/subprocess.py", line 509, in check_returncode
+    raise CalledProcessError(self.returncode, self.args, self.stdout,
+                             self.stderr)
+subprocess.CalledProcessError: Command '['forge', 'test', '--root', '/tmp/fe-position-descriptor-first-o1', '--fuzz-runs', '100', '-vv']' returned non-zero exit status 1.

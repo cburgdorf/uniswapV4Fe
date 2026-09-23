@@ -1,0 +1,19 @@
+Compiling 95 files with Solc 0.8.26
+Solc 0.8.26 finished in 12.53s
+Compiler run successful with warnings:
+Warning (2018): Function state mutability can be restricted to view
+  --> test/PositionManagerWorkflows.t.sol:48:5:
+   |
+48 |     function notifySubscribe(uint256 id,bytes calldata) external {require(address(PositionManager(payable(msg.sender)).subscriber(id))==address(this));}
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+Ran 5 tests for test/PositionManagerWorkflows.t.sol:PositionManagerWorkflowsTest
+[PASS] testFuzz_creditAndNativeActions(uint128) (runs: 10000, μ: 51122306, ~: 51122306)
+[PASS] testFuzz_lifecycle(uint128,bool,bool,bool,uint64) (runs: 10000, μ: 50978758, ~: 51108236)
+[PASS] test_externalUnlock() (gas: 50588776)
+[PASS] test_guardsAndPublicEntrypoints() (gas: 51063643)
+[PASS] test_referenceLifecycle() (gas: 64944140)
+Suite result: ok. 5 passed; 0 failed; 0 skipped; finished in 38.31s (75.77s CPU time)
+
+Ran 1 test suite in 38.31s (38.31s CPU time): 5 tests passed, 0 failed, 0 skipped (5 total tests)

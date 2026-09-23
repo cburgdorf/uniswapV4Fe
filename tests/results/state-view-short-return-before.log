@@ -1,0 +1,55 @@
+# Trace excerpt; omitted bytecode dumps and long calldata lines.
+Compiling 1 files with Solc 0.8.26
+Solc 0.8.26 finished in 7.01s
+Compiler run successful!
+
+Ran 1 test for test/Probe.t.sol:Probe
+[FAIL: return/revert mismatch] test_probeRaw32() (gas: 2059585)
+Traces:
+  [5377122] Probe::setUp()
+    ├─ [3457919] → new PoolManager@0x5615dEB798BB3E4dFa0139dFa1b3D433Cc23b72f
+    │   ├─ emit OwnershipTransferred(user: 0x0000000000000000000000000000000000000000, newOwner: Probe: [0x7FA9385bE102ac3EAc297483Dd6233D62b3e1496])
+    │   └─ ← [Return] 17151 bytes of code
+    ├─ [0] VM::readFile("fe-bytecode.txt") [staticcall]
+    │   └─ ← [Return] <file>
+    ├─ [1176149] → new <unknown>@0x2e234DAe75C793f67A35089C9d99245E1C58470b
+    │   └─ ← [Return] 5872 bytes of code
+    ├─ [557775] → new StateView@0xF62849F9A0B5Bf2913b396098F7c7019b51A820a
+    │   └─ ← [Return] 2784 bytes of code
+    └─ ← [Stop]
+
+  [2059585] Probe::test_probeRaw32()
+    ├─ [164814] → new RawReader@0x5991A2dF15A8F6A256D3Ec51E99254Cd3fb576A9
+    │   └─ ← [Return] 823 bytes of code
+    ├─ [25186] RawReader::configure(0x0000000000000000000000000000000000000000000000000000000000000000)
+    │   └─ ← [Stop]
+    ├─ [0] VM::readFile("fe-bytecode.txt") [staticcall]
+    │   └─ ← [Return] <file>
+    ├─ [1176149] → new <unknown>@0xc7183455a4C133Ae270771860664b6B7ec320bB1
+    │   └─ ← [Return] 5872 bytes of code
+    ├─ [557775] → new StateView@0xa0Cb889707d426A7A386870A03bc70d1b0697598
+    │   └─ ← [Return] 2784 bytes of code
+    ├─ [4450] 0xc7183455a4C133Ae270771860664b6B7ec320bB1::getTickInfo(0x0000000000000000000000000000000000000000000000000000000000000000, 0) [staticcall]
+    │   ├─ [777] RawReader::fallback(0x7561c2928b1aa0983cff7f05dfedeef5998cab1c32456fc669dfe1aae57808fa, 3) [staticcall]
+    │   │   └─ ← [Return] []
+    │   └─ ← [Return] 0, 0, 0, 0
+    ├─ [2408] StateView::getTickInfo(0x0000000000000000000000000000000000000000000000000000000000000000, 0) [staticcall]
+    │   ├─ [777] RawReader::fallback(0x7561c2928b1aa0983cff7f05dfedeef5998cab1c32456fc669dfe1aae57808fa, 3) [staticcall]
+    │   │   └─ ← [Return] []
+    │   └─ ← [Return] 0, 237684487542793012780631851008 [2.376e29], 0, 0
+    └─ ← [Revert] return/revert mismatch
+
+Backtrace:
+  at Probe.test_probeRaw32
+
+Suite result: FAILED. 0 passed; 1 failed; 0 skipped; finished in 1.29ms (316.13µs CPU time)
+
+Ran 1 test suite in 8.09ms (1.29ms CPU time): 0 tests passed, 1 failed, 0 skipped (1 total tests)
+
+Failing tests:
+Encountered 1 failing test in test/Probe.t.sol:Probe
+[FAIL: return/revert mismatch] test_probeRaw32() (gas: 2059585)
+
+Encountered a total of 1 failing tests, 0 tests succeeded
+
+Tip: Run `forge test --rerun` to retry only the 1 failed test

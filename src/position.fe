@@ -1,0 +1,111 @@
+// SPDX-License-Identifier: BUSL-1.1
+// Port of Uniswap v4-core Position.sol. See LICENSE-BUSL-1.1.
+use core::ptr
+use std::abi::sol::Int24
+use std::evm::{Address, RawMem, RawStorage, revert_error}
+use std::evm::crypto::keccak256
+use std::evm::packed::keccak_packed
+use super::full_math::mul_div
+use super::liquidity_math::add_delta
+use super::fixed_point::Q128
+
+#[error]
+pub struct CannotUpdateEmptyPosition {}
+
+pub struct State {
+    pub liquidity: u128,
+    pub fee_growth_inside0_last_x128: u256,
+    pub fee_growth_inside1_last_x128: u256,
+}
+impl Copy for State {}
+
+/// Storage view of the exact three-slot Solidity Position.State layout.
+pub struct Position { pub slot: u256 }
+impl Copy for Position {}
+
+pub fn calculate_position_key(
+    _ owner: Address,
+    _ lower: Int24,
+    _ upper: Int24,
+    _ salt: u256,
+) -> u256
+uses (mem: mut RawMem)
+{
+    // abi.encodePacked(address,int24,int24,bytes32), exactly 58 bytes.
+    let buffer = ptr::alloc_bytes(64)
+    let low_word: u256 = (lower.val as i256).downcast_truncate()
+    let high_word: u256 = (upper.val as i256).downcast_truncate()
+    mem.mstore(addr: buffer, value: owner.inner << 96)
+    mem.mstore(
+        addr: ptr::offset_bytes(buffer, 20),
+        value: low_word << 232,
+    )
+    mem.mstore(
+        addr: ptr::offset_bytes(buffer, 23),
+        value: high_word << 232,
+    )
+    mem.mstore(addr: ptr::offset_bytes(buffer, 26), value: salt)
+    keccak256(ptr::MemSpan::from_raw_parts(ptr: buffer, len: 58))
+}
+
+pub fn get(
+    _ mapping_slot: u256,
+    _ owner: Address,
+    _ lower: Int24,
+    _ upper: Int24,
+    _ salt: u256,
+) -> Position
+uses (mem: mut RawMem)
+{
+    let key = calculate_position_key(owner, lower, upper, salt)
+    Position { slot: keccak_packed((key, mapping_slot)) }
+}
+
+impl Position {
+    #[arithmetic(unchecked)]
+    pub fn read(self) -> State uses (storage: RawStorage) {
+        let liquidity_word = storage.stor_ptr<u256>(self.slot).read()
+        State {
+            liquidity: liquidity_word.downcast_truncate(),
+            fee_growth_inside0_last_x128: storage.stor_ptr<u256>(self.slot + 1).read(),
+            fee_growth_inside1_last_x128: storage.stor_ptr<u256>(self.slot + 2).read(),
+        }
+    }
+
+    #[arithmetic(unchecked)]
+    pub fn update(self, _ liquidity_delta: i128, _ fee_growth0: u256, _ fee_growth1: u256) -> (
+        u256,
+        u256,
+    )
+    uses (storage: mut RawStorage)
+    {
+        let state = self.read()
+        let mut liquidity_next = state.liquidity
+        if liquidity_delta == 0 {
+            if state.liquidity == 0 {
+                revert_error(CannotUpdateEmptyPosition {})
+            }
+        } else {
+            liquidity_next = add_delta(state.liquidity, liquidity_delta)
+        }
+        // Fees accrue against liquidity BEFORE applying the delta. Growth wraps.
+        let fees0 = mul_div(
+            fee_growth0 - state.fee_growth_inside0_last_x128,
+            state.liquidity as u256,
+            Q128,
+        )
+        let fees1 = mul_div(
+            fee_growth1 - state.fee_growth_inside1_last_x128,
+            state.liquidity as u256,
+            Q128,
+        )
+        if liquidity_delta != 0 {
+            let pointer = storage.stor_ptr<u256>(self.slot)
+            let reserved = pointer.read() & !(0xffffffffffffffffffffffffffffffff as u256)
+            pointer.write(reserved | (liquidity_next as u256))
+        }
+        storage.stor_ptr<u256>(self.slot + 1).write(fee_growth0)
+        storage.stor_ptr<u256>(self.slot + 2).write(fee_growth1)
+        (fees0, fees1)
+    }
+}

@@ -1,0 +1,809 @@
+Compiling 59 files with Solc 0.8.26
+Solc 0.8.26 finished in 2.07s
+Compiler run successful!
+note[unused-import]: unused imports should be removed
+ --> test/reference/src/types/PoolOperation.sol:4:9
+  |
+4 | import {PoolKey} from "../types/PoolKey.sol";
+  |         ^^^^^^^
+  |
+  = help: https://book.getfoundry.sh/reference/forge/forge-lint#unused-import
+
+note[mixed-case-function]: function names should use mixedCase
+  --> test/reference/src/libraries/LPFeeLibrary.sol:51:14
+   |
+51 |     function getInitialLPFee(uint24 self) internal pure returns (uint24) {
+   |              ^^^^^^^^^^^^^^^ help: consider using: `getInitialLpFee`
+   |
+   = help: https://book.getfoundry.sh/reference/forge/forge-lint#mixed-case-function
+
+note[screaming-snake-case-const]: constants should use SCREAMING_SNAKE_CASE
+  --> test/PositionDescriptorParity.t.sol:64:17
+   |
+64 |     Vm constant vm = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
+   |                 ^^ help: consider using: `VM`
+   |
+   = help: https://book.getfoundry.sh/reference/forge/forge-lint#screaming-snake-case-const
+
+warning[divide-before-multiply]: multiplication should occur before division to avoid loss of precision
+  --> test/reference/src/libraries/TickMath.sol:41:20
+   |
+41 |             return (MAX_TICK / tickSpacing) * tickSpacing;
+   |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: https://book.getfoundry.sh/reference/forge/forge-lint#divide-before-multiply
+
+warning[divide-before-multiply]: multiplication should occur before division to avoid loss of precision
+  --> test/reference/src/libraries/TickMath.sol:48:20
+   |
+48 |             return (MIN_TICK / tickSpacing) * tickSpacing;
+   |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: https://book.getfoundry.sh/reference/forge/forge-lint#divide-before-multiply
+
+warning[unsafe-typecast]: typecasts that can truncate values should be checked
+  --> test/periphery/src/libraries/SafeCurrencyMetadata.sol:46:24
+   |
+46 |                 return uint8(decimals);
+   |                        ^^^^^^^^^^^^^^^
+   |
+   = note: consider disabling this lint if you're certain the cast is safe
+           
+           // casting to 'uint8' is safe because [explain why]
+           // forge-lint: disable-next-line(unsafe-typecast)
+           
+           
+   = help: https://book.getfoundry.sh/reference/forge/forge-lint#unsafe-typecast
+
+note[unsafe-cheatcode]: usage of unsafe cheatcodes that can perform dangerous operations
+  --> test/PositionDescriptorParity.t.sol:79:33
+   |
+79 |         code = vm.parseBytes(vm.readFile("fe-bytecode.txt"));
+   |                                 ^^^^^^^^
+   |
+   = help: https://book.getfoundry.sh/reference/forge/forge-lint#unsafe-cheatcode
+
+warning[unsafe-typecast]: typecasts that can truncate values should be checked
+  --> test/reference/src/libraries/SafeCast.sol:17:13
+   |
+17 |         y = uint160(x);
+   |             ^^^^^^^^^^
+   |
+   = note: consider disabling this lint if you're certain the cast is safe
+           
+           // casting to 'uint160' is safe because [explain why]
+           // forge-lint: disable-next-line(unsafe-typecast)
+           
+           
+   = help: https://book.getfoundry.sh/reference/forge/forge-lint#unsafe-typecast
+
+warning[unsafe-typecast]: typecasts that can truncate values should be checked
+  --> test/reference/src/libraries/SafeCast.sol:25:13
+   |
+25 |         y = uint128(x);
+   |             ^^^^^^^^^^
+   |
+   = note: consider disabling this lint if you're certain the cast is safe
+           
+           // casting to 'uint128' is safe because [explain why]
+           // forge-lint: disable-next-line(unsafe-typecast)
+           
+           
+   = help: https://book.getfoundry.sh/reference/forge/forge-lint#unsafe-typecast
+
+note[unused-import]: unused imports should be removed
+ --> test/reference/src/types/PoolOperation.sol:5:9
+  |
+5 | import {BalanceDelta} from "../types/BalanceDelta.sol";
+  |         ^^^^^^^^^^^^
+  |
+  = help: https://book.getfoundry.sh/reference/forge/forge-lint#unused-import
+
+warning[unsafe-typecast]: typecasts that can truncate values should be checked
+  --> test/PositionDescriptorParity.t.sol:23:17
+   |
+23 |         require(bytes4(input) == IPositionManager.getPoolAndPositionInfo.selector, "position selector");
+   |                 ^^^^^^^^^^^^^
+   |
+   = note: consider disabling this lint if you're certain the cast is safe
+           
+           // casting to 'bytes4' is safe because [explain why]
+           // forge-lint: disable-next-line(unsafe-typecast)
+           
+           
+   = help: https://book.getfoundry.sh/reference/forge/forge-lint#unsafe-typecast
+
+warning[unsafe-typecast]: typecasts that can truncate values should be checked
+  --> test/PositionDescriptorParity.t.sol:51:31
+   |
+51 |         bytes memory result = bytes4(input) == bytes4(keccak256("symbol()")) ? symbolData : decimalsData;
+   |                               ^^^^^^^^^^^^^
+   |
+   = note: consider disabling this lint if you're certain the cast is safe
+           
+           // casting to 'bytes4' is safe because [explain why]
+           // forge-lint: disable-next-line(unsafe-typecast)
+           
+           
+   = help: https://book.getfoundry.sh/reference/forge/forge-lint#unsafe-typecast
+
+warning[unsafe-typecast]: typecasts that can truncate values should be checked
+  --> test/reference/openzeppelin/contracts/utils/math/SignedMath.sol:31:28
+   |
+31 |         return x + (int256(uint256(x) >> 255) & (a ^ b));
+   |                            ^^^^^^^^^^
+   |
+   = note: consider disabling this lint if you're certain the cast is safe
+           
+           // casting to 'uint256' is safe because [explain why]
+           // forge-lint: disable-next-line(unsafe-typecast)
+           
+           
+   = help: https://book.getfoundry.sh/reference/forge/forge-lint#unsafe-typecast
+
+note[unaliased-plain-import]: use named imports '{A, B}' or alias 'import ".." as X'
+ --> test/periphery/src/interfaces/IPositionDescriptor.sol:4:8
+  |
+4 | import "./IPositionManager.sol";
+  |        ^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = help: https://book.getfoundry.sh/reference/forge/forge-lint#unaliased-plain-import
+
+note[mixed-case-variable]: mutable variables should use mixedCase
+   --> test/reference/src/libraries/TickMath.sol:139:20
+    |
+139 |             int256 log_2 = (int256(msb) - 128) << 64;
+    |                    ^^^^^ help: consider using: `log2`
+    |
+    = help: https://book.getfoundry.sh/reference/forge/forge-lint#mixed-case-variable
+
+warning[unsafe-typecast]: typecasts that can truncate values should be checked
+  --> test/reference/src/libraries/SafeCast.sol:34:13
+   |
+34 |         y = uint128(x);
+   |             ^^^^^^^^^^
+   |
+   = note: consider disabling this lint if you're certain the cast is safe
+           
+           // casting to 'uint128' is safe because [explain why]
+           // forge-lint: disable-next-line(unsafe-typecast)
+           
+           
+   = help: https://book.getfoundry.sh/reference/forge/forge-lint#unsafe-typecast
+
+warning[unsafe-typecast]: typecasts that can truncate values should be checked
+  --> test/reference/src/libraries/SafeCast.sol:41:13
+   |
+41 |         y = int128(x);
+   |             ^^^^^^^^^
+   |
+   = note: consider disabling this lint if you're certain the cast is safe
+           
+           // casting to 'int128' is safe because [explain why]
+           // forge-lint: disable-next-line(unsafe-typecast)
+           
+           
+   = help: https://book.getfoundry.sh/reference/forge/forge-lint#unsafe-typecast
+
+note[screaming-snake-case-const]: constants should use SCREAMING_SNAKE_CASE
+  --> test/periphery/src/libraries/SVG.sol:18:21
+   |
+18 |     string constant curve1 = "M1 1C41 41 105 105 145 145";
+   |                     ^^^^^^ help: consider using: `CURVE1`
+   |
+   = help: https://book.getfoundry.sh/reference/forge/forge-lint#screaming-snake-case-const
+
+note[screaming-snake-case-const]: constants should use SCREAMING_SNAKE_CASE
+  --> test/periphery/src/libraries/SVG.sol:19:21
+   |
+19 |     string constant curve2 = "M1 1C33 49 97 113 145 145";
+   |                     ^^^^^^ help: consider using: `CURVE2`
+   |
+   = help: https://book.getfoundry.sh/reference/forge/forge-lint#screaming-snake-case-const
+
+note[screaming-snake-case-const]: constants should use SCREAMING_SNAKE_CASE
+  --> test/periphery/src/libraries/SVG.sol:20:21
+   |
+20 |     string constant curve3 = "M1 1C33 57 89 113 145 145";
+   |                     ^^^^^^ help: consider using: `CURVE3`
+   |
+   = help: https://book.getfoundry.sh/reference/forge/forge-lint#screaming-snake-case-const
+
+note[screaming-snake-case-const]: constants should use SCREAMING_SNAKE_CASE
+  --> test/periphery/src/libraries/SVG.sol:21:21
+   |
+21 |     string constant curve4 = "M1 1C25 65 81 121 145 145";
+   |                     ^^^^^^ help: consider using: `CURVE4`
+   |
+   = help: https://book.getfoundry.sh/reference/forge/forge-lint#screaming-snake-case-const
+
+note[screaming-snake-case-const]: constants should use SCREAMING_SNAKE_CASE
+  --> test/periphery/src/libraries/SVG.sol:22:21
+   |
+22 |     string constant curve5 = "M1 1C17 73 73 129 145 145";
+   |                     ^^^^^^ help: consider using: `CURVE5`
+   |
+   = help: https://book.getfoundry.sh/reference/forge/forge-lint#screaming-snake-case-const
+
+note[screaming-snake-case-const]: constants should use SCREAMING_SNAKE_CASE
+  --> test/periphery/src/libraries/SVG.sol:23:21
+   |
+23 |     string constant curve6 = "M1 1C9 81 65 137 145 145";
+   |                     ^^^^^^ help: consider using: `CURVE6`
+   |
+   = help: https://book.getfoundry.sh/reference/forge/forge-lint#screaming-snake-case-const
+
+note[screaming-snake-case-const]: constants should use SCREAMING_SNAKE_CASE
+  --> test/periphery/src/libraries/SVG.sol:24:21
+   |
+24 |     string constant curve7 = "M1 1C1 89 57.5 145 145 145";
+   |                     ^^^^^^ help: consider using: `CURVE7`
+   |
+   = help: https://book.getfoundry.sh/reference/forge/forge-lint#screaming-snake-case-const
+
+note[screaming-snake-case-const]: constants should use SCREAMING_SNAKE_CASE
+  --> test/periphery/src/libraries/SVG.sol:25:21
+   |
+25 |     string constant curve8 = "M1 1C1 97 49 145 145 145";
+   |                     ^^^^^^ help: consider using: `CURVE8`
+   |
+   = help: https://book.getfoundry.sh/reference/forge/forge-lint#screaming-snake-case-const
+
+note[pascal-case-struct]: structs should use PascalCase
+  --> test/periphery/src/libraries/SVG.sol:27:12
+   |
+27 |     struct SVGParams {
+   |            ^^^^^^^^^ help: consider using: `SvgParams`
+   |
+   = help: https://book.getfoundry.sh/reference/forge/forge-lint#pascal-case-struct
+
+note[screaming-snake-case-const]: constants should use SCREAMING_SNAKE_CASE
+  --> test/periphery/src/libraries/Descriptor.sol:21:22
+   |
+21 |     uint256 constant sqrt10X128 = 1076067327063303206878105757264492625226;
+   |                      ^^^^^^^^^^ help: consider using: `SQRT10_X128`
+   |
+   = help: https://book.getfoundry.sh/reference/forge/forge-lint#screaming-snake-case-const
+
+note[screaming-snake-case-immutable]: immutables should use SCREAMING_SNAKE_CASE
+  --> test/periphery/src/PositionDescriptor.sol:28:30
+   |
+28 |     address public immutable wrappedNative;
+   |                              ^^^^^^^^^^^^^ help: consider using: `WRAPPED_NATIVE`
+   |
+   = help: https://book.getfoundry.sh/reference/forge/forge-lint#screaming-snake-case-immutable
+
+note[screaming-snake-case-immutable]: immutables should use SCREAMING_SNAKE_CASE
+  --> test/periphery/src/PositionDescriptor.sol:29:31
+   |
+29 |     bytes32 private immutable nativeCurrencyLabelBytes;
+   |                               ^^^^^^^^^^^^^^^^^^^^^^^^ help: consider using: `NATIVE_CURRENCY_LABEL_BYTES`
+   |
+   = help: https://book.getfoundry.sh/reference/forge/forge-lint#screaming-snake-case-immutable
+
+note[screaming-snake-case-immutable]: immutables should use SCREAMING_SNAKE_CASE
+  --> test/periphery/src/PositionDescriptor.sol:31:35
+   |
+31 |     IPoolManager public immutable poolManager;
+   |                                   ^^^^^^^^^^^ help: consider using: `POOL_MANAGER`
+   |
+   = help: https://book.getfoundry.sh/reference/forge/forge-lint#screaming-snake-case-immutable
+
+warning[incorrect-shift]: the order of args in a shift operation is incorrect
+   --> test/reference/openzeppelin/contracts/utils/math/Math.sol:236:26
+    |
+236 |         uint256 result = 1 << (log2(a) >> 1);
+    |                          ^^^^^^^^^^^^^^^^^^^
+    |
+    = help: https://book.getfoundry.sh/reference/forge/forge-lint#incorrect-shift
+
+warning[unsafe-typecast]: typecasts that can truncate values should be checked
+   --> test/reference/src/types/Currency.sol:117:38
+    |
+117 |         return Currency.wrap(address(uint160(id)));
+    |                                      ^^^^^^^^^^^
+    |
+    = note: consider disabling this lint if you're certain the cast is safe
+            
+            // casting to 'uint160' is safe because [explain why]
+            // forge-lint: disable-next-line(unsafe-typecast)
+            
+            
+    = help: https://book.getfoundry.sh/reference/forge/forge-lint#unsafe-typecast
+
+note[named-struct-fields]: prefer initializing structs with named fields
+  --> test/PositionDescriptorParity.t.sol:84:15
+   |
+84 |         key = PoolKey(Currency.wrap(address(asset0)), Currency.wrap(address(asset1)), 3000, 60, IHooks(address(0)));
+   |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: consider using named fields: `PoolKey({ currency0: Currency.wrap(address(asset0)), currency1: Currency.wrap(address(asset1)), fee: 3000, tickSpacing: 60, hooks: IHooks(address(0)) })`
+   |
+   = help: https://book.getfoundry.sh/reference/forge/forge-lint#named-struct-fields
+
+note[pascal-case-struct]: structs should use PascalCase
+  --> test/periphery/src/libraries/Descriptor.sol:23:12
+   |
+23 |     struct ConstructTokenURIParams {
+   |            ^^^^^^^^^^^^^^^^^^^^^^^ help: consider using: `ConstructTokenUriParams`
+   |
+   = help: https://book.getfoundry.sh/reference/forge/forge-lint#pascal-case-struct
+
+note[mixed-case-function]: function names should use mixedCase
+  --> test/periphery/src/libraries/SVG.sol:54:14
+   |
+54 |     function generateSVG(SVGParams memory params) internal pure returns (string memory svg) {
+   |              ^^^^^^^^^^^ help: consider using: `generateSvg`
+   |
+   = help: https://book.getfoundry.sh/reference/forge/forge-lint#mixed-case-function
+
+note[unused-import]: unused imports should be removed
+ --> test/periphery/src/PositionDescriptor.sol:8:9
+  |
+8 | import {PoolId} from "@uniswap/v4-core/src/types/PoolId.sol";
+  |         ^^^^^^
+  |
+  = help: https://book.getfoundry.sh/reference/forge/forge-lint#unused-import
+
+warning[unsafe-typecast]: typecasts that can truncate values should be checked
+  --> test/reference/src/libraries/SafeCast.sol:49:13
+   |
+49 |         y = int256(x);
+   |             ^^^^^^^^^
+   |
+   = note: consider disabling this lint if you're certain the cast is safe
+           
+           // casting to 'int256' is safe because [explain why]
+           // forge-lint: disable-next-line(unsafe-typecast)
+           
+           
+   = help: https://book.getfoundry.sh/reference/forge/forge-lint#unsafe-typecast
+
+warning[unsafe-typecast]: typecasts that can truncate values should be checked
+  --> test/reference/src/libraries/SafeCast.sol:58:16
+   |
+58 |         return int128(int256(x));
+   |                ^^^^^^^^^^^^^^^^^
+   |
+   = note: consider disabling this lint if you're certain the cast is safe
+           
+           // casting to 'int128' is safe because [explain why]
+           // forge-lint: disable-next-line(unsafe-typecast)
+           
+           
+   = help: https://book.getfoundry.sh/reference/forge/forge-lint#unsafe-typecast
+
+warning[unsafe-typecast]: typecasts that can truncate values should be checked
+  --> test/reference/src/libraries/SafeCast.sol:58:23
+   |
+58 |         return int128(int256(x));
+   |                       ^^^^^^^^^
+   |
+   = note: consider disabling this lint if you're certain the cast is safe
+           
+           // casting to 'int256' is safe because [explain why]
+           // forge-lint: disable-next-line(unsafe-typecast)
+           
+           
+   = help: https://book.getfoundry.sh/reference/forge/forge-lint#unsafe-typecast
+
+note[mixed-case-function]: function names should use mixedCase
+  --> test/periphery/src/libraries/SVG.sol:75:14
+   |
+75 |     function generateSVGDefs(SVGParams memory params) private pure returns (string memory svg) {
+   |              ^^^^^^^^^^^^^^^ help: consider using: `generateSvgDefs`
+   |
+   = help: https://book.getfoundry.sh/reference/forge/forge-lint#mixed-case-function
+
+note[mixed-case-variable]: mutable variables should use mixedCase
+   --> test/reference/src/libraries/TickMath.sol:225:20
+    |
+225 |             int256 log_sqrt10001 = log_2 * 255738958999603826347141; // Q22.128 number
+    |                    ^^^^^^^^^^^^^ help: consider using: `logSqrt10001`
+    |
+    = help: https://book.getfoundry.sh/reference/forge/forge-lint#mixed-case-variable
+
+note[mixed-case-function]: function names should use mixedCase
+   --> test/reference/src/interfaces/IPoolManager.sol:216:14
+    |
+216 |     function updateDynamicLPFee(PoolKey memory key, uint24 newDynamicLPFee) external;
+    |              ^^^^^^^^^^^^^^^^^^ help: consider using: `updateDynamicLpFee`
+    |
+    = help: https://book.getfoundry.sh/reference/forge/forge-lint#mixed-case-function
+
+note[mixed-case-variable]: mutable variables should use mixedCase
+   --> test/reference/src/interfaces/IPoolManager.sol:216:60
+    |
+216 |     function updateDynamicLPFee(PoolKey memory key, uint24 newDynamicLPFee) external;
+    |                                                            ^^^^^^^^^^^^^^^ help: consider using: `newDynamicLpFee`
+    |
+    = help: https://book.getfoundry.sh/reference/forge/forge-lint#mixed-case-variable
+
+warning[divide-before-multiply]: multiplication should occur before division to avoid loss of precision
+   --> test/periphery/src/libraries/Descriptor.sol:275:21
+    |
+275 |         if (tick == (TickMath.MIN_TICK / tickSpacing) * tickSpacing) {
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: https://book.getfoundry.sh/reference/forge/forge-lint#divide-before-multiply
+
+warning[divide-before-multiply]: multiplication should occur before division to avoid loss of precision
+   --> test/periphery/src/libraries/Descriptor.sol:277:28
+    |
+277 |         } else if (tick == (TickMath.MAX_TICK / tickSpacing) * tickSpacing) {
+    |                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = help: https://book.getfoundry.sh/reference/forge/forge-lint#divide-before-multiply
+
+warning[unsafe-typecast]: typecasts that can truncate values should be checked
+  --> test/PositionDescriptorParity.t.sol:87:31
+   |
+87 |         pair(address(asset0), bytes32("ETH"));
+   |                               ^^^^^^^^^^^^^^
+   |
+   = note: consider disabling this lint if you're certain the cast is safe
+           
+           // casting to 'bytes32' is safe because [explain why]
+           // forge-lint: disable-next-line(unsafe-typecast)
+           
+           
+   = help: https://book.getfoundry.sh/reference/forge/forge-lint#unsafe-typecast
+
+warning[unsafe-typecast]: typecasts that can truncate values should be checked
+  --> test/PositionDescriptorParity.t.sol:97:49
+   |
+97 |         pool.configure(slot, abi.encode(bytes32(uint256(uint24(current)) << 160)), false);
+   |                                                 ^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: consider disabling this lint if you're certain the cast is safe
+           
+           // casting to 'uint256' is safe because [explain why]
+           // forge-lint: disable-next-line(unsafe-typecast)
+           
+           
+   = help: https://book.getfoundry.sh/reference/forge/forge-lint#unsafe-typecast
+
+warning[unsafe-typecast]: typecasts that can truncate values should be checked
+  --> test/PositionDescriptorParity.t.sol:97:57
+   |
+97 |         pool.configure(slot, abi.encode(bytes32(uint256(uint24(current)) << 160)), false);
+   |                                                         ^^^^^^^^^^^^^^^
+   |
+   = note: consider disabling this lint if you're certain the cast is safe
+           
+           // casting to 'uint24' is safe because [explain why]
+           // forge-lint: disable-next-line(unsafe-typecast)
+           
+           
+   = help: https://book.getfoundry.sh/reference/forge/forge-lint#unsafe-typecast
+
+note[mixed-case-variable]: mutable variables should use mixedCase
+   --> test/reference/src/libraries/StateLibrary.sol:166:17
+    |
+166 |         bytes32 slot_feeGrowthGlobal0X128 = bytes32(uint256(stateSlot) + FEE_GROWTH_GLOBAL0_OFFSET);
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^ help: consider using: `slotFeeGrowthGlobal0X128`
+    |
+    = help: https://book.getfoundry.sh/reference/forge/forge-lint#mixed-case-variable
+
+warning[incorrect-shift]: the order of args in a shift operation is incorrect
+   --> test/reference/openzeppelin/contracts/utils/math/Math.sol:313:60
+    |
+313 |             return result + (unsignedRoundsUp(rounding) && 1 << result < value ? 1 : 0);
+    |                                                            ^^^^^^^^^^^
+    |
+    = help: https://book.getfoundry.sh/reference/forge/forge-lint#incorrect-shift
+
+note[mixed-case-function]: function names should use mixedCase
+   --> test/periphery/src/libraries/Descriptor.sol:462:14
+    |
+462 |     function generateSVGImage(ConstructTokenURIParams memory params) internal pure returns (string memory svg) {
+    |              ^^^^^^^^^^^^^^^^ help: consider using: `generateSvgImage`
+    |
+    = help: https://book.getfoundry.sh/reference/forge/forge-lint#mixed-case-function
+
+note[mixed-case-function]: function names should use mixedCase
+   --> test/periphery/src/libraries/SVG.sol:166:14
+    |
+166 |     function generateSVGBorderText(
+    |              ^^^^^^^^^^^^^^^^^^^^^ help: consider using: `generateSvgBorderText`
+    |
+    = help: https://book.getfoundry.sh/reference/forge/forge-lint#mixed-case-function
+
+warning[unsafe-typecast]: typecasts that can truncate values should be checked
+  --> test/periphery/src/libraries/AddressStringUtil.sol:23:23
+   |
+23 |             uint8 b = uint8(addrNum >> (8 * (19 - i)));
+   |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: consider disabling this lint if you're certain the cast is safe
+           
+           // casting to 'uint8' is safe because [explain why]
+           // forge-lint: disable-next-line(unsafe-typecast)
+           
+           
+   = help: https://book.getfoundry.sh/reference/forge/forge-lint#unsafe-typecast
+
+warning[unsafe-typecast]: typecasts that can truncate values should be checked
+   --> test/PositionDescriptorParity.t.sol:134:21
+    |
+134 |             address(bytes20(hex"a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48")),
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: consider disabling this lint if you're certain the cast is safe
+            
+            // casting to 'bytes20' is safe because [explain why]
+            // forge-lint: disable-next-line(unsafe-typecast)
+            
+            
+    = help: https://book.getfoundry.sh/reference/forge/forge-lint#unsafe-typecast
+
+warning[unsafe-typecast]: typecasts that can truncate values should be checked
+   --> test/PositionDescriptorParity.t.sol:135:21
+    |
+135 |             address(bytes20(hex"dac17f958d2ee523a2206206994597c13d831ec7")),
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: consider disabling this lint if you're certain the cast is safe
+            
+            // casting to 'bytes20' is safe because [explain why]
+            // forge-lint: disable-next-line(unsafe-typecast)
+            
+            
+    = help: https://book.getfoundry.sh/reference/forge/forge-lint#unsafe-typecast
+
+warning[unsafe-typecast]: typecasts that can truncate values should be checked
+   --> test/PositionDescriptorParity.t.sol:136:21
+    |
+136 |             address(bytes20(hex"6b175474e89094c44da98b954eedeac495271d0f")),
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: consider disabling this lint if you're certain the cast is safe
+            
+            // casting to 'bytes20' is safe because [explain why]
+            // forge-lint: disable-next-line(unsafe-typecast)
+            
+            
+    = help: https://book.getfoundry.sh/reference/forge/forge-lint#unsafe-typecast
+
+warning[unsafe-typecast]: typecasts that can truncate values should be checked
+   --> test/PositionDescriptorParity.t.sol:137:21
+    |
+137 |             address(bytes20(hex"8daebade922df735c38c80c7ebd708af50815faa")),
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: consider disabling this lint if you're certain the cast is safe
+            
+            // casting to 'bytes20' is safe because [explain why]
+            // forge-lint: disable-next-line(unsafe-typecast)
+            
+            
+    = help: https://book.getfoundry.sh/reference/forge/forge-lint#unsafe-typecast
+
+warning[unsafe-typecast]: typecasts that can truncate values should be checked
+   --> test/PositionDescriptorParity.t.sol:138:21
+    |
+138 |             address(bytes20(hex"2260fac5e5542a773aa44fbcfedf7c193bc2c599")), address(123)];
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: consider disabling this lint if you're certain the cast is safe
+            
+            // casting to 'bytes20' is safe because [explain why]
+            // forge-lint: disable-next-line(unsafe-typecast)
+            
+            
+    = help: https://book.getfoundry.sh/reference/forge/forge-lint#unsafe-typecast
+
+warning[unsafe-typecast]: typecasts that can truncate values should be checked
+   --> test/periphery/src/libraries/Descriptor.sol:435:36
+    |
+435 |             params.zerosEndIndex = uint8(params.zerosStartIndex + nZeros - 1);
+    |                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: consider disabling this lint if you're certain the cast is safe
+            
+            // casting to 'uint8' is safe because [explain why]
+            // forge-lint: disable-next-line(unsafe-typecast)
+            
+            
+    = help: https://book.getfoundry.sh/reference/forge/forge-lint#unsafe-typecast
+
+note[mixed-case-function]: function names should use mixedCase
+   --> test/periphery/src/libraries/SVG.sol:204:14
+    |
+204 |     function generateSVGCardMantle(
+    |              ^^^^^^^^^^^^^^^^^^^^^ help: consider using: `generateSvgCardMantle`
+    |
+    = help: https://book.getfoundry.sh/reference/forge/forge-lint#mixed-case-function
+
+warning[incorrect-shift]: the order of args in a shift operation is incorrect
+   --> test/reference/openzeppelin/contracts/utils/math/Math.sol:405:60
+    |
+405 |             return result + (unsignedRoundsUp(rounding) && 1 << (result << 3) < value ? 1 : 0);
+    |                                                            ^^^^^^^^^^^^^^^^^^
+    |
+    = help: https://book.getfoundry.sh/reference/forge/forge-lint#incorrect-shift
+
+warning[unsafe-typecast]: typecasts that can truncate values should be checked
+   --> test/periphery/src/libraries/Descriptor.sol:436:34
+    |
+436 |             params.sigfigIndex = uint8(params.zerosStartIndex - 1 + decimalPlace);
+    |                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: consider disabling this lint if you're certain the cast is safe
+            
+            // casting to 'uint8' is safe because [explain why]
+            // forge-lint: disable-next-line(unsafe-typecast)
+            
+            
+    = help: https://book.getfoundry.sh/reference/forge/forge-lint#unsafe-typecast
+
+warning[unsafe-typecast]: typecasts that can truncate values should be checked
+   --> test/periphery/src/libraries/Descriptor.sol:437:35
+    |
+437 |             params.bufferLength = uint8(nZeros + numSigfigs + 1 + decimalPlace);
+    |                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: consider disabling this lint if you're certain the cast is safe
+            
+            // casting to 'uint8' is safe because [explain why]
+            // forge-lint: disable-next-line(unsafe-typecast)
+            
+            
+    = help: https://book.getfoundry.sh/reference/forge/forge-lint#unsafe-typecast
+
+warning[unsafe-typecast]: typecasts that can truncate values should be checked
+  --> test/reference/src/libraries/TickMath.sol:70:27
+   |
+70 |             if (absTick > uint256(int256(MAX_TICK))) InvalidTick.selector.revertWith(tick);
+   |                           ^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: consider disabling this lint if you're certain the cast is safe
+           
+           // casting to 'uint256' is safe because [explain why]
+           // forge-lint: disable-next-line(unsafe-typecast)
+           
+           
+   = help: https://book.getfoundry.sh/reference/forge/forge-lint#unsafe-typecast
+
+warning[unsafe-typecast]: typecasts that can truncate values should be checked
+   --> test/PositionDescriptorParity.t.sol:174:37
+    |
+174 |         asset1.configure(abi.encode(bytes32("A\x00B")), abi.encode(uint256(256)), false); uri(1, true);
+    |                                     ^^^^^^^^^^^^^^^^^
+    |
+    = note: consider disabling this lint if you're certain the cast is safe
+            
+            // casting to 'bytes32' is safe because [explain why]
+            // forge-lint: disable-next-line(unsafe-typecast)
+            
+            
+    = help: https://book.getfoundry.sh/reference/forge/forge-lint#unsafe-typecast
+
+note[mixed-case-function]: function names should use mixedCase
+   --> test/periphery/src/libraries/SVG.sol:289:14
+    |
+289 |     function generateSVGCurveCircle(int8 overRange) internal pure returns (string memory svg) {
+    |              ^^^^^^^^^^^^^^^^^^^^^^ help: consider using: `generateSvgCurveCircle`
+    |
+    = help: https://book.getfoundry.sh/reference/forge/forge-lint#mixed-case-function
+
+warning[unsafe-typecast]: typecasts that can truncate values should be checked
+   --> test/reference/src/libraries/TickMath.sol:139:29
+    |
+139 |             int256 log_2 = (int256(msb) - 128) << 64;
+    |                             ^^^^^^^^^^^
+    |
+    = note: consider disabling this lint if you're certain the cast is safe
+            
+            // casting to 'int256' is safe because [explain why]
+            // forge-lint: disable-next-line(unsafe-typecast)
+            
+            
+    = help: https://book.getfoundry.sh/reference/forge/forge-lint#unsafe-typecast
+
+warning[unsafe-typecast]: typecasts that can truncate values should be checked
+   --> test/periphery/src/libraries/Descriptor.sol:443:36
+    |
+443 |             params.zerosEndIndex = uint8(nZeros + params.zerosStartIndex - 1); // end index for leading zeros
+    |                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: consider disabling this lint if you're certain the cast is safe
+            
+            // casting to 'uint8' is safe because [explain why]
+            // forge-lint: disable-next-line(unsafe-typecast)
+            
+            
+    = help: https://book.getfoundry.sh/reference/forge/forge-lint#unsafe-typecast
+
+warning[unsafe-typecast]: typecasts that can truncate values should be checked
+   --> test/periphery/src/libraries/Descriptor.sol:444:35
+    |
+444 |             params.bufferLength = uint8(nZeros + numSigfigs + 2); // total length of string buffer, including "0." and "%"
+    |                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: consider disabling this lint if you're certain the cast is safe
+            
+            // casting to 'uint8' is safe because [explain why]
+            // forge-lint: disable-next-line(unsafe-typecast)
+            
+            
+    = help: https://book.getfoundry.sh/reference/forge/forge-lint#unsafe-typecast
+
+warning[unsafe-typecast]: typecasts that can truncate values should be checked
+   --> test/periphery/src/libraries/Descriptor.sol:450:44
+    |
+450 |         params.decimalIndex = digits > 4 ? uint8(digits - 4) : 0; // based on total number of digits in the fee
+    |                                            ^^^^^^^^^^^^^^^^^
+    |
+    = note: consider disabling this lint if you're certain the cast is safe
+            
+            // casting to 'uint8' is safe because [explain why]
+            // forge-lint: disable-next-line(unsafe-typecast)
+            
+            
+    = help: https://book.getfoundry.sh/reference/forge/forge-lint#unsafe-typecast
+
+note[mixed-case-function]: function names should use mixedCase
+   --> test/periphery/src/libraries/SVG.sol:334:14
+    |
+334 |     function generateSVGPositionDataAndLocationCurve(
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: consider using: `generateSvgPositionDataAndLocationCurve`
+    |
+    = help: https://book.getfoundry.sh/reference/forge/forge-lint#mixed-case-function
+
+warning[unsafe-typecast]: typecasts that can truncate values should be checked
+   --> test/periphery/src/libraries/Descriptor.sol:526:24
+    |
+526 |         return uint256(uint8(currency >> offset));
+    |                        ^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: consider disabling this lint if you're certain the cast is safe
+            
+            // casting to 'uint8' is safe because [explain why]
+            // forge-lint: disable-next-line(unsafe-typecast)
+            
+            
+    = help: https://book.getfoundry.sh/reference/forge/forge-lint#unsafe-typecast
+
+note[mixed-case-function]: function names should use mixedCase
+   --> test/periphery/src/libraries/SVG.sol:443:14
+    |
+443 |     function generateSVGRareSparkle(uint256 tokenId, address hooks) private pure returns (string memory svg) {
+    |              ^^^^^^^^^^^^^^^^^^^^^^ help: consider using: `generateSvgRareSparkle`
+    |
+    = help: https://book.getfoundry.sh/reference/forge/forge-lint#mixed-case-function
+
+note[unused-import]: unused imports should be removed
+ --> test/periphery/src/libraries/SVG.sol:4:9
+  |
+4 | import {IHooks} from "@uniswap/v4-core/src/interfaces/IHooks.sol";
+  |         ^^^^^^
+  |
+  = help: https://book.getfoundry.sh/reference/forge/forge-lint#unused-import
+
+warning[unsafe-typecast]: typecasts that can truncate values should be checked
+   --> test/periphery/src/libraries/SVG.sol:407:46
+    |
+407 |         return string(abi.encodePacked(sign, uint256(uint24(tick)).toString()));
+    |                                              ^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: consider disabling this lint if you're certain the cast is safe
+            
+            // casting to 'uint256' is safe because [explain why]
+            // forge-lint: disable-next-line(unsafe-typecast)
+            
+            
+    = help: https://book.getfoundry.sh/reference/forge/forge-lint#unsafe-typecast
+
+warning[unsafe-typecast]: typecasts that can truncate values should be checked
+   --> test/periphery/src/libraries/SVG.sol:407:54
+    |
+407 |         return string(abi.encodePacked(sign, uint256(uint24(tick)).toString()));
+    |                                                      ^^^^^^^^^^^^
+    |
+    = note: consider disabling this lint if you're certain the cast is safe
+            
+            // casting to 'uint24' is safe because [explain why]
+            // forge-lint: disable-next-line(unsafe-typecast)
+            
+            
+    = help: https://book.getfoundry.sh/reference/forge/forge-lint#unsafe-typecast
+

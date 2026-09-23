@@ -1,0 +1,17 @@
+Compiling 1 files with Solc 0.8.26
+Solc 0.8.26 finished in 9.75s
+Compiler run successful!
+
+Ran 9 tests for test/PermissionedRouterWorkflows.t.sol:PermissionedRouterWorkflowsTest
+[PASS] testFuzz_multihop(uint64,bool,bool,bool) (runs: 10000, μ: 61545935, ~: 61618698)
+[PASS] testFuzz_rollback(uint64,uint8,bool,bool) (runs: 10001, μ: 59862539, ~: 59838839)
+[PASS] testFuzz_swaps(uint64,bool,bool,bool,bool) (runs: 10000, μ: 60203539, ~: 60264201)
+[PASS] testFuzz_takeActions(uint64,bool,bool) (runs: 10000, μ: 60175179, ~: 60121312)
+[PASS] test_callbackAndEntryBoundaries() (gas: 25755874)
+[PASS] test_plainAndDisabledFactory() (gas: 113127124)
+[PASS] test_realPermit2Reentry() (gas: 60454963)
+[PASS] test_tinyMultihop() (gas: 169850346)
+[PASS] test_zeroOutputDoesNotCallBlockedRecipient() (gas: 113486877)
+Suite result: ok. 9 passed; 0 failed; 0 skipped; finished in 50.58s (171.78s CPU time)
+
+Ran 1 test suite in 50.58s (50.58s CPU time): 9 tests passed, 0 failed, 0 skipped (9 total tests)

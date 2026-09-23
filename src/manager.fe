@@ -1,0 +1,448 @@
+// SPDX-License-Identifier: BUSL-1.1
+// PoolManager.sol at 46c6834698c48bc4a463a86d8420f4eb1d7f3b75.
+use core::ops::{Eq, Ord}
+use core::ptr::{self, MemBuffer}
+use core::abi::store_word
+use std::abi::{Bytes, Bytes32, sol::{Int24, Uint24, Uint160}}
+use std::evm::{
+    Address,
+    Ctx,
+    RawMem,
+    RawOps,
+    RawStorage,
+    Call,
+    Log,
+    revert,
+    revert_error,
+    Panic,
+    PANIC_OUT_OF_MEMORY,
+    copy_returndata,
+    bubble_last_revert,
+}
+use super::{
+    pool,
+    pool_types::{PoolKey, ModifyLiquidityParams, SwapParams},
+    protocol_fees::ProtocolFees,
+    claims::Claims,
+    currency::Currency,
+    transient,
+    hooks,
+    lp_fee,
+    safe_cast,
+}
+#[error]
+pub struct CurrencyNotSettled {}
+#[error]
+pub struct AlreadyUnlocked {}
+#[error]
+pub struct ManagerLocked {}
+#[error]
+pub struct TickSpacingTooLarge { pub tickSpacing: Int24 }
+#[error]
+pub struct TickSpacingTooSmall { pub tickSpacing: Int24 }
+#[error]
+pub struct CurrenciesOutOfOrderOrEqual { pub currency0: Address, pub currency1: Address }
+#[error]
+pub struct UnauthorizedDynamicLPFeeUpdate {}
+#[error]
+pub struct SwapAmountCannotBeZero {}
+#[error]
+pub struct NonzeroNativeValue {}
+#[error]
+pub struct MustClearExactPositiveDelta {}
+#[error]
+pub struct DelegateCallNotAllowed {}
+#[event]
+pub struct Initialize {
+    #[indexed]
+    pub id: Bytes32,
+    #[indexed]
+    pub currency0: Address,
+    #[indexed]
+    pub currency1: Address,
+    pub fee: Uint24,
+    pub tickSpacing: Int24,
+    pub hooks: Address,
+    pub sqrtPriceX96: Uint160,
+    pub tick: Int24,
+}
+#[event]
+pub struct ModifyLiquidity {
+    #[indexed]
+    pub id: Bytes32,
+    #[indexed]
+    pub sender: Address,
+    pub tickLower: Int24,
+    pub tickUpper: Int24,
+    pub liquidityDelta: i256,
+    pub salt: Bytes32,
+}
+#[event]
+pub struct Swap {
+    #[indexed]
+    pub id: Bytes32,
+    #[indexed]
+    pub sender: Address,
+    pub amount0: i128,
+    pub amount1: i128,
+    pub sqrtPriceX96: Uint160,
+    pub liquidity: u128,
+    pub tick: Int24,
+    pub fee: Uint24,
+}
+#[event]
+pub struct Donate {
+    #[indexed]
+    pub id: Bytes32,
+    #[indexed]
+    pub sender: Address,
+    pub amount0: u256,
+    pub amount1: u256,
+}
+pub fn fees() -> ProtocolFees {
+    ProtocolFees { slot: 0, pools_slot: 6 }
+}
+pub fn claims() -> Claims {
+    Claims { slot: 3 }
+}
+pub fn check_unlocked() uses (ops: RawOps) {
+    if !transient::is_unlocked() {
+        revert_error(ManagerLocked {})
+    }
+}
+pub fn check_not_delegate(_ original: Address) uses (ctx: Ctx) {
+    if ctx.address() != original {
+        revert_error(DelegateCallNotAllowed {})
+    }
+}
+pub fn unlock(_ data: Bytes) -> Bytes
+uses (ctx: Ctx, ops: mut RawOps, call: mut Call, mem: mut RawMem)
+{
+    if transient::is_unlocked() {
+        revert_error(AlreadyUnlocked {})
+    }
+    transient::unlock()
+    let span = data.payload_span()
+    let padded = ((span.len() + 31) / 32) * 32
+    let args = MemBuffer::alloc(68 + padded)
+    ptr::zero_bytes(args.ptr(), args.len())
+    store_word(ptr: args.ptr(), value: (0x91dd7346 as u256) << 224)
+    store_word(ptr: ptr::offset_bytes(args.ptr(), 4), value: 32)
+    store_word(ptr: ptr::offset_bytes(args.ptr(), 36), value: span.len())
+    ptr::copy(dest: ptr::offset_bytes(args.ptr(), 68), source: span)
+    let mut ret = MemBuffer::empty()
+    let outcome = call
+        .raw_call(
+            addr: ctx.caller(),
+            gas: ctx.gas(),
+            value: 0,
+            args: args.span(),
+            ret: mut ret,
+        )
+    if !outcome.success() {
+        bubble_last_revert()
+    }
+    let returned = copy_returndata()
+    if returned.len() < 32 {
+        revert(())
+    }
+    let offset = mem.mload(returned.ptr())
+    if offset > 0xffffffffffffffff || offset > returned.len() - 32 {
+        revert(())
+    }
+    let length = mem.mload(ptr::offset_bytes(returned.ptr(), offset))
+    // Match the pinned solc 0.8.26 decoder: allocation checks precede bounds.
+    if length > 0xffffffffffffffff {
+        revert_error(Panic::from(PANIC_OUT_OF_MEMORY))
+    }
+    // Its allocator starts at 0xa0 and first reserves the rounded returndata.
+    let returned_words = (returned.len() + 31) & !(31 as u256)
+    let payload_words = (length + 31) & !(31 as u256)
+    if 0xa0 + returned_words + 32 + payload_words > 0xffffffffffffffff {
+        revert_error(Panic::from(PANIC_OUT_OF_MEMORY))
+    }
+    if length > returned.len() - offset - 32 {
+        revert(())
+    }
+    let result = Bytes::from_payload(
+        source: returned.span().slice(offset: offset + 32, len: length),
+    )
+    if transient::nonzero_delta_count() != 0 {
+        revert_error(CurrencyNotSettled {})
+    }
+    transient::lock()
+    result
+}
+pub fn initialize(_ original: Address, _ key: PoolKey, _ price: Uint160) -> Int24
+uses (ctx: Ctx, storage: mut RawStorage, mem: mut RawMem, call: mut Call, log: mut Log)
+{
+    check_not_delegate(original)
+    if key.tickSpacing.val > 32767 {
+        revert_error(TickSpacingTooLarge { tickSpacing: key.tickSpacing })
+    }
+    if key.tickSpacing.val < 1 {
+        revert_error(TickSpacingTooSmall { tickSpacing: key.tickSpacing })
+    }
+    if key.currency0.inner >= key.currency1.inner {
+        revert_error(
+            CurrenciesOutOfOrderOrEqual { currency0: key.currency0, currency1: key.currency1 },
+        )
+    }
+    if !hooks::is_valid_hook_address(key.hooks, key.fee) {
+        revert_error(hooks::HookAddressNotValid { hooks: key.hooks })
+    }
+    let fee = lp_fee::initial_lp_fee(key.fee)
+    hooks::before_initialize(key, price)
+    let tick = fees().pool(key).initialize(price, fee)
+    log.emit(
+        Initialize {
+            id: key.to_id(),
+            currency0: key.currency0,
+            currency1: key.currency1,
+            fee: key.fee,
+            tickSpacing: key.tickSpacing,
+            hooks: key.hooks,
+            sqrtPriceX96: price,
+            tick,
+        },
+    )
+    hooks::after_initialize(key, price, tick)
+    tick
+}
+pub fn modify_liquidity(
+    _ original: Address,
+    _ key: PoolKey,
+    _ params: ModifyLiquidityParams,
+    _ data: Bytes,
+) -> (i256, i256)
+uses (
+    ctx: Ctx,
+    storage: mut RawStorage,
+    ops: mut RawOps,
+    mem: mut RawMem,
+    call: mut Call,
+    log: mut Log,
+)
+{
+    check_unlocked()
+    check_not_delegate(original)
+    let pool = fees().pool(key)
+    pool.check_initialized()
+    hooks::before_modify_liquidity(key, params, data.payload_span())
+    let (principal, accrued) = pool
+        .modify_liquidity(
+            pool::ModifyLiquidityParams {
+                owner: ctx.caller(),
+                tick_lower: params.tickLower,
+                tick_upper: params.tickUpper,
+                liquidity_delta: safe_cast::to_int128(params.liquidityDelta),
+                tick_spacing: key.tickSpacing,
+                salt: params.salt.val,
+            },
+        )
+    let total = principal + accrued
+    log.emit(
+        ModifyLiquidity {
+            id: key.to_id(),
+            sender: ctx.caller(),
+            tickLower: params.tickLower,
+            tickUpper: params.tickUpper,
+            liquidityDelta: params.liquidityDelta,
+            salt: Bytes32 { val: params.salt.val },
+        },
+    )
+    let (delta, hook_delta) = hooks::after_modify_liquidity(
+        key,
+        params,
+        total,
+        accrued,
+        data.payload_span(),
+    )
+    if hook_delta.bits != 0 {
+        transient::account_pool_delta(key.currency0, key.currency1, key.hooks, hook_delta)
+    }
+    transient::account_pool_delta(key.currency0, key.currency1, ctx.caller(), delta)
+    (delta.bits, accrued.bits)
+}
+pub fn swap(_ original: Address, _ key: PoolKey, _ params: SwapParams, _ data: Bytes) -> i256
+uses (
+    ctx: Ctx,
+    storage: mut RawStorage,
+    ops: mut RawOps,
+    mem: mut RawMem,
+    call: mut Call,
+    log: mut Log,
+)
+{
+    check_unlocked()
+    check_not_delegate(original)
+    if params.amountSpecified == 0 {
+        revert_error(SwapAmountCannotBeZero {})
+    }
+    let pool = fees().pool(key)
+    pool.check_initialized()
+    let (amount, before_delta, override_fee) = hooks::before_swap(key, params, data.payload_span())
+    let (delta, protocol, fee, result) = pool
+        .swap(
+            pool::SwapParams {
+                amount_specified: amount,
+                tick_spacing: key.tickSpacing,
+                zero_for_one: params.zeroForOne,
+                sqrt_price_limit_x96: params.sqrtPriceLimitX96,
+                lp_fee_override: override_fee,
+            },
+        )
+    if protocol > 0 {
+        fees().accrue(
+                if params.zeroForOne {
+                    key.currency0
+                } else {
+                    key.currency1
+                },
+                protocol,
+            )
+    }
+    log.emit(
+        Swap {
+            id: key.to_id(),
+            sender: ctx.caller(),
+            amount0: delta.amount0(),
+            amount1: delta.amount1(),
+            sqrtPriceX96: result.sqrt_price_x96,
+            liquidity: result.liquidity,
+            tick: result.tick,
+            fee,
+        },
+    )
+    let (caller_delta, hook_delta) = hooks::after_swap(
+        key,
+        params,
+        delta,
+        data.payload_span(),
+        before_delta,
+    )
+    if hook_delta.bits != 0 {
+        transient::account_pool_delta(key.currency0, key.currency1, key.hooks, hook_delta)
+    }
+    transient::account_pool_delta(key.currency0, key.currency1, ctx.caller(), caller_delta)
+    caller_delta.bits
+}
+pub fn donate(
+    _ original: Address,
+    _ key: PoolKey,
+    _ amount0: u256,
+    _ amount1: u256,
+    _ data: Bytes,
+) -> i256
+uses (
+    ctx: Ctx,
+    storage: mut RawStorage,
+    ops: mut RawOps,
+    mem: mut RawMem,
+    call: mut Call,
+    log: mut Log,
+)
+{
+    check_unlocked()
+    check_not_delegate(original)
+    let pool = fees().pool(key)
+    pool.check_initialized()
+    hooks::before_donate(key, amount0, amount1, data.payload_span())
+    let delta = pool.donate(amount0, amount1)
+    transient::account_pool_delta(key.currency0, key.currency1, ctx.caller(), delta)
+    log.emit(
+        Donate { id: key.to_id(), sender: ctx.caller(), amount0, amount1 },
+    )
+    hooks::after_donate(key, amount0, amount1, data.payload_span())
+    delta.bits
+}
+pub fn sync(_ currency: Address)
+uses (ctx: Ctx, ops: mut RawOps, mem: mut RawMem, call: mut Call)
+{
+    if currency == Address::zero() {
+        transient::reset_currency()
+    } else {
+        transient::sync_currency_and_reserves(
+            currency,
+            Currency { address: currency }.balance_of_self(),
+        )
+    }
+}
+#[arithmetic(unchecked)]
+pub fn take(_ currency: Address, _ to: Address, _ amount: u256)
+uses (ctx: Ctx, ops: mut RawOps, mem: mut RawMem, call: mut Call)
+{
+    check_unlocked()
+    transient::account_delta(
+        currency,
+        ctx.caller(),
+        (0 as i128) - safe_cast::unsigned_to_int128(amount),
+    )
+    Currency { address: currency }.transfer(to, amount)
+}
+pub fn settle(_ recipient: Address) -> u256
+uses (ctx: Ctx, ops: mut RawOps, mem: mut RawMem, call: mut Call)
+{
+    check_unlocked()
+    let currency = transient::synced_currency()
+    let paid = if currency == Address::zero() {
+        ctx.value()
+    } else {
+        if ctx.value() > 0 {
+            revert_error(NonzeroNativeValue {})
+        }
+        let before = transient::synced_reserves()
+        let now = Currency { address: currency }.balance_of_self()
+        let amount = now - before
+        transient::reset_currency()
+        amount
+    }
+    transient::account_delta(currency, recipient, safe_cast::unsigned_to_int128(paid))
+    paid
+}
+#[arithmetic(unchecked)]
+pub fn clear(_ currency: Address, _ amount: u256)
+uses (ctx: Ctx, ops: mut RawOps, mem: mut RawMem)
+{
+    check_unlocked()
+    let current = transient::get_delta(currency, ctx.caller())
+    let delta = safe_cast::unsigned_to_int128(amount)
+    if (delta as i256) != current {
+        revert_error(MustClearExactPositiveDelta {})
+    }
+    transient::account_delta(currency, ctx.caller(), (0 as i128) - delta)
+}
+#[arithmetic(unchecked)]
+pub fn mint(_ to: Address, _ id: u256, _ amount: u256)
+uses (ctx: Ctx, storage: mut RawStorage, ops: mut RawOps, mem: mut RawMem, log: mut Log)
+{
+    check_unlocked()
+    let currency = Currency::from_id(id)
+    transient::account_delta(
+        currency.address,
+        ctx.caller(),
+        (0 as i128) - safe_cast::unsigned_to_int128(amount),
+    )
+    claims().mint(to, currency.to_id(), amount)
+}
+pub fn burn(_ from: Address, _ id: u256, _ amount: u256)
+uses (ctx: Ctx, storage: mut RawStorage, ops: mut RawOps, mem: mut RawMem, log: mut Log)
+{
+    check_unlocked()
+    let currency = Currency::from_id(id)
+    transient::account_delta(
+        currency.address,
+        ctx.caller(),
+        safe_cast::unsigned_to_int128(amount),
+    )
+    claims().burn_from(from, currency.to_id(), amount)
+}
+pub fn update_dynamic_fee(_ key: PoolKey, _ fee: Uint24)
+uses (ctx: Ctx, storage: mut RawStorage, mem: mut RawMem)
+{
+    if !lp_fee::is_dynamic_fee(key.fee) || ctx.caller() != key.hooks {
+        revert_error(UnauthorizedDynamicLPFeeUpdate {})
+    }
+    lp_fee::validate(fee)
+    fees().pool(key).set_lp_fee(fee)
+}

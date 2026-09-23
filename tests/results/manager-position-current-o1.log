@@ -1,0 +1,30 @@
+Parity artifacts: /tmp/fe-manager-position-current-o1
+Compiler: fe 26.3.0 (702686c98); sha256=f3aaead7171e522c76b07fba14d25b70997fe3251a952686b0ad9c918aebac44
+Wrote /tmp/fe-manager-position-current-o1/fe/PoolManager.bin
+Wrote /tmp/fe-manager-position-current-o1/fe/PoolManager.runtime.bin
+Wrote /tmp/fe-manager-position-current-o1/fe/PoolManager.abi.json
+Compiling 48 files with Solc 0.8.26
+Solc 0.8.26 finished in 6.94s
+Compiler run successful!
+
+Ran 16 tests for test/ManagerParity.t.sol:ManagerParityTest
+[PASS] testFuzz_callbackReturn(uint8,uint256,uint256,bool) (runs: 10000, μ: 118417, ~: 79528)
+[PASS] testFuzz_claims(uint64,bool,uint96) (runs: 10000, μ: 281804, ~: 279371)
+[PASS] testFuzz_hookLifecycle(uint32,uint16,bool,bool) (runs: 10000, μ: 1470362, ~: 1327535)
+[PASS] testFuzz_initialize(uint160,int24,uint24) (runs: 10000, μ: 41887, ~: 31233)
+[PASS] testFuzz_lifecycle(uint64,uint32,uint32,bool) (runs: 10000, μ: 806708, ~: 808140)
+[PASS] testFuzz_unlockEcho(bytes) (runs: 10000, μ: 135111, ~: 134987)
+[PASS] test_callbackAllocationPrecedesBounds() (gas: 219171)
+[PASS] test_dynamicLPFeeAuthorization() (gas: 134345)
+[PASS] test_hookFailureAndWrongSelectorRollBack() (gas: 1647531)
+[PASS] test_hookLifecycleSuccessAndExhaustion() (gas: 3230288)
+[PASS] test_hookReturnedDeltaAndSettlement() (gas: 1138588)
+[PASS] test_lockedMethodsAndDelegateCall() (gas: 277882)
+[PASS] test_protocolFeeAccrualAndCollection() (gas: 874013)
+[PASS] test_settleForAndClear() (gas: 164089)
+[PASS] test_shortUnpaddedCallbackReturn() (gas: 135417)
+[PASS] test_unlockRollbackAndReentry() (gas: 258801)
+Suite result: ok. 16 passed; 0 failed; 0 skipped; finished in 11.97s (26.42s CPU time)
+
+Ran 1 test suite in 11.97s (11.97s CPU time): 16 tests passed, 0 failed, 0 skipped (16 total tests)
+Verified protocol ABI: /tmp/fe-manager-position-current-o1/fe/PoolManager.protocol.abi.json

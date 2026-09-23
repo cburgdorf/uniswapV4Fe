@@ -1,0 +1,133 @@
+// SPDX-License-Identifier: MIT
+use core::abi::{Decode, Encode, AbiSize, store_word}
+use core::ptr::{self, MemBuffer}
+use std::abi::{Bytes, DynArray, Sol, sol}
+use std::evm::{Address, Ctx, Call, RawMem, RawOps, revert_error}
+use super::{pool_types::PoolKey, reserves_scan as scan, reserves_hooks as hooks, reserves_errors as error}
+use super::reserves_types::{ScanState, PoolTVL, PopulatedTick}
+
+msg ReservesMsg {
+    #[selector = sol("getPoolTVL(address,(address,address,uint24,int24,address))")]
+    TVL { manager: Address, key: PoolKey } -> PoolTVL,
+    #[selector = sol("getPoolTVL(address,(address,address,uint24,int24,address),address)")]
+    TVLProvider { manager: Address, key: PoolKey, statsProvider: Address } -> PoolTVL,
+    #[selector = sol("getPoolTVLBatch(address,(address,address,uint24,int24,address)[])")]
+    Batch { manager: Address, keys: DynArray<PoolKey> } -> DynArray<PoolTVL>,
+    #[selector = sol("getPoolTVLBatch(address,(address,address,uint24,int24,address)[],address[])")]
+    BatchProviders { manager: Address, keys: DynArray<PoolKey>, statsProviders: DynArray<Address> } -> DynArray<PoolTVL>,
+    #[selector = sol("getPopulatedTicksInWord(address,(address,address,uint24,int24,address),int16)")]
+    Ticks { manager: Address, key: PoolKey, wordPos: i16 } -> DynArray<PopulatedTick>,
+    #[selector = sol("getPoolTVLPaged(address,(address,address,uint24,int24,address),bytes)")]
+    Paged { manager: Address, key: PoolKey, cursor: Bytes } -> (PoolTVL, Bytes, bool),
+    #[selector = sol("getPoolTVLPaged(address,(address,address,uint24,int24,address),address,bytes,uint32)")]
+    PagedProvider { manager: Address, key: PoolKey, statsProvider: Address, cursor: Bytes, maxReads: u32 } -> (PoolTVL, Bytes, bool),
+}
+fn tvl(_ manager: Address, _ key: PoolKey, _ provider: Address) -> PoolTVL
+uses (ctx: Ctx, call: Call, mem: mut RawMem)
+{
+    let id = key.to_id()
+    let state = scan::initialize(manager, key.tickSpacing, id)
+    hooks::read(scan::result(scan::complete(manager, key.tickSpacing, id, state), key), key, provider)
+}
+fn batch(_ manager: Address, _ keys: DynArray<PoolKey>, _ providers: DynArray<Address>, _ explicit: bool) -> DynArray<PoolTVL>
+uses (ctx: Ctx, call: Call, mem: mut RawMem)
+{
+    if explicit && keys.len() != providers.len() { revert_error(error::InputLengthMismatch {}) }
+    let count = keys.len()
+    let size = 32 + count * PoolTVL::HEAD_SIZE
+    let out = MemBuffer::alloc(size)
+    store_word(ptr: out.ptr(), value: count)
+    let mut i: u256 = 0
+    while i < count {
+        let key = <PoolKey as Decode<Sol>>::decode_from(keys.encoded_span(), 32 + i * PoolKey::HEAD_SIZE)
+        let provider = if explicit { providers.get(i) } else { Address { inner: 0 } }
+        <PoolTVL as Encode<Sol>>::encode(tvl(manager, key, provider), ptr::offset_bytes(out.ptr(), 32 + i * PoolTVL::HEAD_SIZE))
+        i += 1
+    }
+    DynArray::from_abi_tail(data: out.ptr(), len: count, size)
+}
+fn ticks(_ manager: Address, _ key: PoolKey, _ word: i16) -> DynArray<PopulatedTick>
+uses (ctx: Ctx, mem: mut RawMem)
+{
+    let id = key.to_id()
+    let _ = scan::initialize(manager, key.tickSpacing, id)
+    let mut bitmap = super::state_library::tick_bitmap(manager, id, word)
+    let mut remaining = bitmap
+    let mut count: u256 = 0
+    while remaining != 0 { count += 1
+        remaining &= remaining - 1
+    }
+    let size = 32 + count * PopulatedTick::HEAD_SIZE
+    let out = MemBuffer::alloc(size)
+    store_word(ptr: out.ptr(), value: count)
+    let mut i: u256 = 0
+    while bitmap != 0 {
+        let bit = super::bit_math::least_significant_bit(bitmap)
+        let item = scan::populated_tick(manager, id, key.tickSpacing, word, bit)
+        <PopulatedTick as Encode<Sol>>::encode(item, ptr::offset_bytes(out.ptr(), 32 + i * PopulatedTick::HEAD_SIZE))
+        bitmap &= bitmap - 1
+        i += 1
+    }
+    DynArray::from_abi_tail(data: out.ptr(), len: count, size)
+}
+fn page(_ manager: Address, _ key: PoolKey, _ provider: Address, _ cursor: Bytes, _ budget: u32) -> (PoolTVL, Bytes, bool)
+uses (ctx: Ctx, call: Call, mem: mut RawMem)
+{
+    if budget < 2 || budget > 4096 { revert_error(error::InvalidScanBudget { maxReads: budget }) }
+    let id = key.to_id()
+    let mut state = ScanState::empty()
+    if cursor.payload_span().len() == 0 {
+        state = scan::initialize(manager, key.tickSpacing, id)
+    } else {
+        if cursor.payload_span().len() != ScanState::HEAD_SIZE { revert_error(error::InvalidCursor {}) }
+        state = <ScanState as Decode<Sol>>::decode_from(cursor.payload_span(), 0)
+        if state.version != 1 { revert_error(error::UnsupportedCursorVersion { version: state.version }) }
+        if state.contextHash.val != scan::context_hash(manager, id).val { revert_error(error::CursorContextMismatch {}) }
+        if state.blockNumber != ctx.block_number() { revert_error(error::CursorBlockMismatch { expected: state.blockNumber, actual: ctx.block_number() }) }
+        if state.bitPos > 256 { revert_error(error::InvalidCursor {}) }
+        scan::verify_snapshot(manager, id, state)
+    }
+    let (updated, done) = scan::paged(manager, key.tickSpacing, id, state, budget)
+    let result = scan::result(updated, key)
+    if done { return (hooks::read(result, key, provider), Bytes::empty(), true) }
+    let out = MemBuffer::alloc(ScanState::HEAD_SIZE)
+    <ScanState as Encode<Sol>>::encode(updated, out.ptr())
+    (result, Bytes::from_payload(source: out.span()), false)
+}
+// Solidity returns three top-level values. Fe's normal tuple return adds a
+// dynamic tuple root offset, so these two arms explicitly encode the flat head.
+fn return_page(_ value: own (PoolTVL, Bytes, bool)) -> ! uses (ops: RawOps) {
+    let (result, cursor, done) = value
+    let head = PoolTVL::HEAD_SIZE + 64
+    let out = MemBuffer::alloc(head + cursor.payload_size())
+    <PoolTVL as Encode<Sol>>::encode(result, out.ptr())
+    store_word(ptr: ptr::offset_bytes(out.ptr(), PoolTVL::HEAD_SIZE), value: head)
+    <bool as Encode<Sol>>::encode(done, ptr::offset_bytes(out.ptr(), PoolTVL::HEAD_SIZE + 32))
+    <Bytes as Encode<Sol>>::encode(cursor, ptr::offset_bytes(out.ptr(), head))
+    ops.return_data(data: out.span())
+}
+pub contract ReservesLens {
+    recv ReservesMsg {
+        TVL { manager, key } -> PoolTVL uses (ctx: Ctx, call: Call, mem: mut RawMem) {
+            tvl(manager, key, Address { inner: 0 })
+        }
+        TVLProvider { manager, key, statsProvider } -> PoolTVL uses (ctx: Ctx, call: Call, mem: mut RawMem) {
+            tvl(manager, key, statsProvider)
+        }
+        Batch { manager, keys } -> DynArray<PoolTVL> uses (ctx: Ctx, call: Call, mem: mut RawMem) {
+            batch(manager, keys, DynArray::empty(), false)
+        }
+        BatchProviders { manager, keys, statsProviders } -> DynArray<PoolTVL> uses (ctx: Ctx, call: Call, mem: mut RawMem) {
+            batch(manager, keys, statsProviders, true)
+        }
+        Ticks { manager, key, wordPos } -> DynArray<PopulatedTick> uses (ctx: Ctx, mem: mut RawMem) {
+            ticks(manager, key, wordPos)
+        }
+        Paged { manager, key, cursor } -> (PoolTVL, Bytes, bool) uses (ctx: Ctx, call: Call, mem: mut RawMem, ops: RawOps) {
+            return_page(page(manager, key, Address { inner: 0 }, cursor, 512))
+        }
+        PagedProvider { manager, key, statsProvider, cursor, maxReads } -> (PoolTVL, Bytes, bool) uses (ctx: Ctx, call: Call, mem: mut RawMem, ops: RawOps) {
+            return_page(page(manager, key, statsProvider, cursor, if maxReads == 0 { 512 } else { maxReads }))
+        }
+    }
+}

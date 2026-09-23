@@ -1,0 +1,8 @@
+// SPDX-License-Identifier: MIT
+// Pinned v4-periphery CurrencyRatioSortOrder.sol.
+pub const NUMERATOR_MOST: i256 = 300
+pub const NUMERATOR_MORE: i256 = 200
+pub const NUMERATOR: i256 = 100
+pub const DENOMINATOR_MOST: i256 = -300
+pub const DENOMINATOR_MORE: i256 = -200
+pub const DENOMINATOR: i256 = -100

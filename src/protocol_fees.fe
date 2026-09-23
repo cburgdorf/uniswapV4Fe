@@ -1,0 +1,110 @@
+// SPDX-License-Identifier: MIT
+// Port of v4-core ProtocolFees.sol at 46c6834698c48bc4a463a86d8420f4eb1d7f3b75.
+use core::ops::Eq
+use std::abi::{Bytes32}
+use std::abi::sol::Uint24
+use std::evm::{Address, Ctx, RawMem, RawStorage, RawOps, Log, Call, revert_error}
+use std::evm::packed::keccak_packed
+use super::{
+    owned::Owned,
+    currency::Currency,
+    pool::Pool,
+    pool_types::PoolKey,
+    protocol_fee,
+    transient,
+}
+
+#[error]
+pub struct InvalidCaller {}
+#[error]
+pub struct ProtocolFeeTooLarge { pub fee: Uint24 }
+#[error]
+pub struct ProtocolFeeCurrencySynced {}
+#[event]
+pub struct ProtocolFeeControllerUpdated {
+    #[indexed]
+    pub protocolFeeController: Address,
+}
+#[event]
+pub struct ProtocolFeeUpdated {
+    #[indexed]
+    pub id: Bytes32,
+    pub protocolFee: Uint24,
+}
+
+/// Owned at root, accrued fees at root+1, controller at root+2.
+/// Pools remain in the caller's mapping, as in the abstract Solidity base.
+pub struct ProtocolFees { pub slot: u256, pub pools_slot: u256 }
+impl Copy for ProtocolFees {}
+#[arithmetic(unchecked)]
+fn offset(_ root: u256, _ delta: u256) -> u256 {
+    root + delta
+}
+const ADDRESS_MASK: u256 = 0xffffffffffffffffffffffffffffffffffffffff
+impl ProtocolFees {
+    pub fn controller(self) -> Address uses (storage: RawStorage) {
+        Address { inner: storage.sload(offset(self.slot, 2)) & ADDRESS_MASK }
+    }
+    pub fn accrued_slot(self, _ currency: Address) -> u256 uses (mem: mut RawMem) {
+        keccak_packed((currency.inner, offset(self.slot, 1)))
+    }
+    pub fn accrued(self, _ currency: Address) -> u256
+    uses (mem: mut RawMem, storage: RawStorage)
+    {
+        storage.sload(self.accrued_slot(currency))
+    }
+    pub fn pool(self, _ key: PoolKey) -> Pool uses (mem: mut RawMem) {
+        Pool { slot: keccak_packed((key.to_id().val, self.pools_slot)) }
+    }
+    pub fn set_controller(self, _ controller: Address)
+    uses (ctx: Ctx, storage: mut RawStorage, log: mut Log)
+    {
+        Owned { slot: self.slot }.check_owner()
+        let slot = offset(self.slot, 2)
+        storage
+            .sstore(
+                slot: slot,
+                value: (storage.sload(slot) & !ADDRESS_MASK) | (controller.inner & ADDRESS_MASK),
+            )
+        log.emit(
+            ProtocolFeeControllerUpdated { protocolFeeController: controller },
+        )
+    }
+    fn check_controller(self) uses (ctx: Ctx, storage: RawStorage) {
+        if ctx.caller() != self.controller() {
+            revert_error(InvalidCaller {})
+        }
+    }
+    pub fn set_protocol_fee(self, _ key: PoolKey, _ fee: Uint24)
+    uses (ctx: Ctx, storage: mut RawStorage, mem: mut RawMem, log: mut Log)
+    {
+        self.check_controller()
+        if !protocol_fee::is_valid_protocol_fee(fee) {
+            revert_error(ProtocolFeeTooLarge { fee })
+        }
+        let id = key.to_id()
+        Pool { slot: keccak_packed((id.val, self.pools_slot)) }.set_protocol_fee(fee)
+        log.emit(ProtocolFeeUpdated { id, protocolFee: fee })
+    }
+    #[arithmetic(unchecked)]
+    pub fn accrue(self, _ currency: Address, _ amount: u256)
+    uses (storage: mut RawStorage, mem: mut RawMem)
+    {
+        let slot = self.accrued_slot(currency)
+        storage.sstore(slot: slot, value: storage.sload(slot) + amount)
+    }
+    pub fn collect(self, _ recipient: Address, _ currency: Address, _ amount: u256) -> u256
+    uses (ctx: Ctx, storage: mut RawStorage, ops: mut RawOps, mem: mut RawMem, call: mut Call)
+    {
+        self.check_controller()
+        if currency != Address::zero() && transient::synced_currency() == currency {
+            revert_error(ProtocolFeeCurrencySynced {})
+        }
+        let slot = self.accrued_slot(currency)
+        let accrued = storage.sload(slot)
+        let collected = if amount == 0 { accrued } else { amount }
+        storage.sstore(slot: slot, value: accrued - collected)
+        Currency { address: currency }.transfer(recipient, collected)
+        collected
+    }
+}

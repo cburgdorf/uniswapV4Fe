@@ -1,0 +1,27 @@
+// SPDX-License-Identifier: MIT
+// v4-periphery UnorderedNonce, with an explicit relocatable mapping root.
+use std::evm::{Address, RawStorage, RawMem, revert_error}
+use std::evm::packed::keccak_packed
+#[error]
+pub struct NonceAlreadyUsed {}
+pub struct Nonces { pub slot: u256 }
+impl Copy for Nonces {}
+impl Nonces {
+    fn word_slot(self, _ owner: Address, _ word: u256) -> u256 uses (mem: mut RawMem) {
+        keccak_packed((word, keccak_packed((owner.inner, self.slot))))
+    }
+    pub fn bitmap(self, _ owner: Address, _ word: u256) -> u256
+    uses (storage: RawStorage, mem: mut RawMem)
+    {
+        storage.sload(self.word_slot(owner, word))
+    }
+    pub fn consume(self, _ owner: Address, _ nonce: u256)
+    uses (storage: mut RawStorage, mem: mut RawMem)
+    {
+        let slot = self.word_slot(owner, nonce >> 8)
+        let bit = (1 as u256) << (nonce & 255)
+        let flipped = storage.sload(slot) ^ bit
+        storage.sstore(slot: slot, value: flipped)
+        if flipped & bit == 0 { revert_error(NonceAlreadyUsed {}) }
+    }
+}

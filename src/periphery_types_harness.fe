@@ -1,0 +1,51 @@
+// SPDX-License-Identifier: MIT
+use std::abi::{Bytes, Bytes32, sol::{self, Uint24, Int24}}
+use std::evm::{Address, RawMem}
+use super::{pool_types::PoolKey, position_info::{self, PositionInfo}, path_key::PathKey}
+msg PeripheryTypesMsg {
+    #[selector = sol("info(uint256)")]
+    Info { bits: u256 } -> (Bytes32, Int24, Int24, bool, u256, u256),
+    #[selector = sol(
+        "initializeInfo((address,address,uint24,int24,address),int24,int24)",
+    )]
+    InitializeInfo { key: PoolKey, lower: Int24, upper: Int24 } -> u256,
+    #[selector = sol("path(address,address,uint24,int24,address,bytes)")]
+    Path {
+        input: Address,
+        output: Address,
+        fee: Uint24,
+        spacing: Int24,
+        hooks: Address,
+        data: Bytes,
+    } -> (PoolKey, bool),
+}
+pub contract PeripheryTypesHarness {
+    recv PeripheryTypesMsg {
+        Info { bits } -> (Bytes32, Int24, Int24, bool, u256, u256) {
+            let info = PositionInfo { bits }
+            (
+                info.pool_id(),
+                info.tick_lower(),
+                info.tick_upper(),
+                info.has_subscriber(),
+                info.subscribe().bits,
+                info.unsubscribe().bits,
+            )
+        }
+        InitializeInfo { key, lower, upper } -> u256
+        uses (mem: mut RawMem)
+        {
+            position_info::initialize(key, lower, upper).bits
+        }
+        Path { input, output, fee, spacing, hooks, data } -> (PoolKey, bool) {
+            PathKey {
+                intermediate_currency: output,
+                fee,
+                tick_spacing: spacing,
+                hooks,
+                hook_data: data,
+            }
+                .pool_and_direction(input)
+        }
+    }
+}

@@ -1,0 +1,29 @@
+Parity artifacts: /tmp/fe-router-interface-latest-o1
+Compiler: fe 26.3.0 (702686c98); sha256=f3aaead7171e522c76b07fba14d25b70997fe3251a952686b0ad9c918aebac44
+Wrote /tmp/fe-router-interface-latest-o1/fe/RouterHarness.bin
+Wrote /tmp/fe-router-interface-latest-o1/fe/RouterHarness.runtime.bin
+Wrote /tmp/fe-router-interface-latest-o1/fe/RouterHarness.abi.json
+Compiling 37 files with Solc 0.8.26
+Solc 0.8.26 finished in 1.48s
+Compiler run successful with warnings:
+Warning (5740): Unreachable code.
+  --> test/periphery/src/base/DeltaResolver.sol:46:13:
+   |
+46 |             poolManager.settle();
+   |             ^^^^^^^^^^^^^^^^^^^^
+
+
+Ran 10 tests for test/RouterParity.t.sol:RouterParityTest
+[PASS] testFuzz_multi(int128,int128,uint128,uint128,uint256,bool,uint8) (runs: 10000, μ: 117536, ~: 82542)
+[PASS] testFuzz_mutatedMulti(uint256,uint8) (runs: 10000, μ: 130039, ~: 88897)
+[PASS] testFuzz_mutatedSingle(uint256,uint8) (runs: 10000, μ: 143610, ~: 91467)
+[PASS] testFuzz_raw(bytes,uint8) (runs: 10000, μ: 74868, ~: 74912)
+[PASS] testFuzz_single(int128,int128,uint128,uint128,uint256,bool,bool,bytes) (runs: 10000, μ: 160351, ~: 164836)
+[PASS] test_interfaceErrorMatrix() (gas: 780407)
+[PASS] test_secondHopMustFillAndPriceLimit() (gas: 313829)
+[PASS] test_shortParametersAndUnsupportedActions() (gas: 19559782)
+[PASS] test_signedHookOffset() (gas: 126891)
+[PASS] test_successAndUnfilled() (gas: 465364)
+Suite result: ok. 10 passed; 0 failed; 0 skipped; finished in 776.82ms (3.09s CPU time)
+
+Ran 1 test suite in 777.46ms (776.82ms CPU time): 10 tests passed, 0 failed, 0 skipped (10 total tests)

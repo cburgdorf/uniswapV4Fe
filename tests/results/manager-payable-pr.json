@@ -1,0 +1,27 @@
+{
+  "pr": 1567,
+  "url": "https://github.com/argotorg/fe/pull/1567",
+  "pr_head": "dbc73bff5678c96c3c230d810ebc8fac6155667b",
+  "local_merge": "5d3da6ade23099f3b29608bdd8880e8b0ec25492",
+  "compiler_sha256": "45506d927210450172e72d6b5d95a206811fdf97ca3e6d684003af644e77f8dc",
+  "compiler_version": "fe 26.3.0 (5d3da6ade)",
+  "regression_runs": [
+    {
+      "optimization": "0",
+      "exit_code": 0
+    },
+    {
+      "optimization": "1",
+      "exit_code": 0
+    },
+    {
+      "optimization": "2",
+      "exit_code": 0
+    },
+    {
+      "optimization": "s",
+      "exit_code": 0
+    }
+  ],
+  "retained_local_core_patch": true
+}

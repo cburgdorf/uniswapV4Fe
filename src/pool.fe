@@ -1,0 +1,360 @@
+// SPDX-License-Identifier: BUSL-1.1
+// Port of Uniswap v4-core Pool.sol. Exact seven-slot State root layout.
+use std::abi::sol::{Int24, Uint24, Uint160}
+use std::evm::{Address, RawStorage, RawMem, revert_error}
+use std::evm::packed::keccak_packed
+use super::{
+    tick_math,
+    tick_bitmap,
+    position,
+    liquidity_math,
+    safe_cast,
+    sqrt_price_math,
+    unsafe_math,
+}
+use super::slot0::Slot0
+use super::balance_delta::{BalanceDelta, to_balance_delta, ZERO_DELTA}
+use super::fixed_point::Q128
+
+#[error]
+pub struct TicksMisordered { pub tick_lower: Int24, pub tick_upper: Int24 }
+#[error]
+pub struct TickLowerOutOfBounds { pub tick_lower: Int24 }
+#[error]
+pub struct TickUpperOutOfBounds { pub tick_upper: Int24 }
+#[error]
+pub struct TickLiquidityOverflow { pub tick: Int24 }
+#[error]
+pub struct PoolAlreadyInitialized {}
+#[error]
+pub struct PoolNotInitialized {}
+#[error]
+pub struct PriceLimitAlreadyExceeded {
+    pub sqrt_price_current_x96: Uint160,
+    pub sqrt_price_limit_x96: Uint160,
+}
+#[error]
+pub struct PriceLimitOutOfBounds { pub sqrt_price_limit_x96: Uint160 }
+#[error]
+pub struct NoLiquidityToReceiveFees {}
+#[error]
+pub struct InvalidFeeForExactOut {}
+
+pub struct Pool { pub slot: u256 }
+impl Copy for Pool {}
+pub struct TickInfo {
+    pub liquidity_gross: u128,
+    pub liquidity_net: i128,
+    pub fee_growth_outside0_x128: u256,
+    pub fee_growth_outside1_x128: u256,
+}
+impl Copy for TickInfo {}
+pub struct ModifyLiquidityParams {
+    pub owner: Address,
+    pub tick_lower: Int24,
+    pub tick_upper: Int24,
+    pub liquidity_delta: i128,
+    pub tick_spacing: Int24,
+    pub salt: u256,
+}
+impl Copy for ModifyLiquidityParams {}
+pub struct SwapParams {
+    pub amount_specified: i256,
+    pub tick_spacing: Int24,
+    pub zero_for_one: bool,
+    pub sqrt_price_limit_x96: Uint160,
+    pub lp_fee_override: Uint24,
+}
+impl Copy for SwapParams {}
+pub struct SwapResult { pub sqrt_price_x96: Uint160, pub tick: Int24, pub liquidity: u128 }
+impl Copy for SwapResult {}
+
+pub fn check_ticks(_ lower: Int24, _ upper: Int24) {
+    if lower.val >= upper.val {
+        revert_error(TicksMisordered { tick_lower: lower, tick_upper: upper })
+    }
+    if lower.val < tick_math::MIN_TICK {
+        revert_error(TickLowerOutOfBounds { tick_lower: lower })
+    }
+    if upper.val > tick_math::MAX_TICK {
+        revert_error(TickUpperOutOfBounds { tick_upper: upper })
+    }
+}
+
+pub fn tick_spacing_to_max_liquidity_per_tick(_ spacing: Int24) -> u128 {
+    // Reference uses raw SDIV/SMOD/DIV rather than Solidity checked division.
+    let mut low: i256 = 0
+    let mut high: i256 = 0
+    if spacing.val != 0 {
+        let divisor = spacing.val as i256
+        low = (-887272 as i256) / divisor
+        if (-887272 as i256) % divisor < 0 {
+            low -= 1
+        }
+        high = (887272 as i256) / divisor
+    }
+    let count: u256 = (high - low + 1).downcast_truncate()
+    if count == 0 { return 0 }
+    (0xffffffffffffffffffffffffffffffff / count).downcast_truncate()
+}
+
+impl Pool {
+    #[arithmetic(unchecked)]
+    pub fn read_word(self, _ offset: u256) -> u256 uses (storage: RawStorage) {
+        storage.stor_ptr<u256>(self.slot + offset).read()
+    }
+    #[arithmetic(unchecked)]
+    pub fn write_word(self, _ offset: u256, _ value: u256)
+    uses (storage: mut RawStorage)
+    {
+        storage.stor_ptr<u256>(self.slot + offset).write(value)
+    }
+    pub fn slot0(self) -> Slot0 uses (storage: RawStorage) {
+        Slot0 { bits: self.read_word(0) }
+    }
+    pub fn liquidity(self) -> u128 uses (storage: RawStorage) {
+        self.read_word(3).downcast_truncate()
+    }
+    pub fn set_liquidity(self, _ value: u128) uses (storage: mut RawStorage) {
+        let reserved = self.read_word(3) & !(0xffffffffffffffffffffffffffffffff as u256)
+        self.write_word(3, reserved | (value as u256))
+    }
+    pub fn check_initialized(self) uses (storage: RawStorage) {
+        if self.slot0().sqrt_price_x96().val == 0 {
+            revert_error(PoolNotInitialized {})
+        }
+    }
+    pub fn initialize(self, _ price: Uint160, _ fee: Uint24) -> Int24
+    uses (storage: mut RawStorage)
+    {
+        if self.slot0().sqrt_price_x96().val != 0 {
+            revert_error(PoolAlreadyInitialized {})
+        }
+        let tick = tick_math::get_tick_at_sqrt_price(price)
+        let slot = Slot0 { bits: 0 }.set_sqrt_price_x96(price).set_tick(tick).set_lp_fee(fee)
+        self.write_word(0, slot.bits)
+        tick
+    }
+    pub fn set_protocol_fee(self, _ fee: Uint24) uses (storage: mut RawStorage) {
+        self.check_initialized()
+        self.write_word(0, self.slot0().set_protocol_fee(fee).bits)
+    }
+    pub fn set_lp_fee(self, _ fee: Uint24) uses (storage: mut RawStorage) {
+        self.check_initialized()
+        self.write_word(0, self.slot0().set_lp_fee(fee).bits)
+    }
+    #[arithmetic(unchecked)]
+    pub fn tick_slot(self, _ tick: Int24) -> u256 uses (mem: mut RawMem) {
+        let key: u256 = (tick.val as i256).downcast_truncate()
+        keccak_packed((key, self.slot + 4))
+    }
+    #[arithmetic(unchecked)]
+    pub fn read_tick(self, _ tick: Int24) -> TickInfo
+    uses (mem: mut RawMem, storage: RawStorage)
+    {
+        let slot = self.tick_slot(tick)
+        let word = storage.stor_ptr<u256>(slot).read()
+        TickInfo {
+            liquidity_gross: word.downcast_truncate(),
+            liquidity_net: (word >> 128).downcast_truncate(),
+            fee_growth_outside0_x128: storage.stor_ptr<u256>(slot + 1).read(),
+            fee_growth_outside1_x128: storage.stor_ptr<u256>(slot + 2).read(),
+        }
+    }
+    pub fn update_tick(self, _ tick: Int24, _ delta: i128, _ upper: bool) -> (bool, u128)
+    uses (mem: mut RawMem, storage: mut RawStorage)
+    {
+        let info = self.read_tick(tick)
+        let gross = liquidity_math::add_delta(info.liquidity_gross, delta)
+        let flipped = (gross == 0) != (info.liquidity_gross == 0)
+        let view = Pool { slot: self.tick_slot(tick) }
+        if info.liquidity_gross == 0 && tick.val <= self.slot0().tick().val {
+            view.write_word(1, self.read_word(1))
+            view.write_word(2, self.read_word(2))
+        }
+        // Unlike gross liquidity's SafeCast error, net overflow is Panic(0x11).
+        let net = if upper {
+            info.liquidity_net - delta
+        } else {
+            info.liquidity_net + delta
+        }
+        let net_bits: u256 = (net as i256).downcast_truncate()
+        view.write_word(0, (gross as u256) | (net_bits << 128))
+        (flipped, gross)
+    }
+    pub fn clear_tick(self, _ tick: Int24)
+    uses (mem: mut RawMem, storage: mut RawStorage)
+    {
+        let view = Pool { slot: self.tick_slot(tick) }
+        view.write_word(0, 0)
+        view.write_word(1, 0)
+        view.write_word(2, 0)
+    }
+    #[arithmetic(unchecked)]
+    pub fn cross_tick(self, _ tick: Int24, _ growth0: u256, _ growth1: u256) -> i128
+    uses (mem: mut RawMem, storage: mut RawStorage)
+    {
+        let info = self.read_tick(tick)
+        let view = Pool { slot: self.tick_slot(tick) }
+        view.write_word(1, growth0 - info.fee_growth_outside0_x128)
+        view.write_word(2, growth1 - info.fee_growth_outside1_x128)
+        info.liquidity_net
+    }
+    #[arithmetic(unchecked)]
+    pub fn fee_growth_inside(self, _ lower: Int24, _ upper: Int24) -> (u256, u256)
+    uses (mem: mut RawMem, storage: RawStorage)
+    {
+        let lo = self.read_tick(lower)
+        let hi = self.read_tick(upper)
+        let tick = self.slot0().tick().val
+        if tick < lower.val {
+            (
+                lo.fee_growth_outside0_x128 - hi.fee_growth_outside0_x128,
+                lo.fee_growth_outside1_x128 - hi.fee_growth_outside1_x128,
+            )
+        } else if tick >= upper.val {
+            (
+                hi.fee_growth_outside0_x128 - lo.fee_growth_outside0_x128,
+                hi.fee_growth_outside1_x128 - lo.fee_growth_outside1_x128,
+            )
+        } else {
+            (
+                self.read_word(1) - lo.fee_growth_outside0_x128 - hi.fee_growth_outside0_x128,
+                self.read_word(2) - lo.fee_growth_outside1_x128 - hi.fee_growth_outside1_x128,
+            )
+        }
+    }
+    #[arithmetic(unchecked)]
+    pub fn flip_tick(self, _ tick: Int24, _ spacing: Int24)
+    uses (mem: mut RawMem, storage: mut RawStorage)
+    {
+        tick_bitmap::Bitmap { slot: self.slot + 5 }.flip(tick, spacing)
+    }
+    #[arithmetic(unchecked)]
+    pub fn next_tick(self, _ tick: Int24, _ spacing: Int24, _ lte: bool) -> (Int24, bool)
+    uses (mem: mut RawMem, storage: RawStorage)
+    {
+        tick_bitmap::Bitmap { slot: self.slot + 5 }.next(tick, spacing, lte)
+    }
+    #[arithmetic(unchecked)]
+    pub fn position(
+        self,
+        _ owner: Address,
+        _ lower: Int24,
+        _ upper: Int24,
+        _ salt: u256,
+    ) -> position::Position
+    uses (mem: mut RawMem)
+    {
+        position::get(self.slot + 6, owner, lower, upper, salt)
+    }
+
+    /// As upstream, PoolManager must check initialization before this operation.
+    pub fn modify_liquidity(self, _ params: ModifyLiquidityParams) -> (BalanceDelta, BalanceDelta)
+    uses (mem: mut RawMem, storage: mut RawStorage)
+    {
+        let lower = params.tick_lower
+        let upper = params.tick_upper
+        let change = params.liquidity_delta
+        check_ticks(lower, upper)
+        let mut flipped_lower = false
+        let mut flipped_upper = false
+        if change != 0 {
+            let (flip_lo, gross_lo) = self.update_tick(lower, change, false)
+            let (flip_hi, gross_hi) = self.update_tick(upper, change, true)
+            flipped_lower = flip_lo
+            flipped_upper = flip_hi
+            if change >= 0 {
+                let maximum = tick_spacing_to_max_liquidity_per_tick(params.tick_spacing)
+                if gross_lo > maximum {
+                    revert_error(TickLiquidityOverflow { tick: lower })
+                }
+                if gross_hi > maximum {
+                    revert_error(TickLiquidityOverflow { tick: upper })
+                }
+            }
+            if flipped_lower {
+                self.flip_tick(lower, params.tick_spacing)
+            }
+            if flipped_upper {
+                self.flip_tick(upper, params.tick_spacing)
+            }
+        }
+        let (growth0, growth1) = self.fee_growth_inside(lower, upper)
+        let pos = self.position(params.owner, lower, upper, params.salt)
+        let (fees0, fees1) = pos.update(change, growth0, growth1)
+        let fee_delta = to_balance_delta(
+            safe_cast::unsigned_to_int128(fees0),
+            safe_cast::unsigned_to_int128(fees1),
+        )
+        if change < 0 {
+            if flipped_lower {
+                self.clear_tick(lower)
+            }
+            if flipped_upper {
+                self.clear_tick(upper)
+            }
+        }
+        let mut delta = ZERO_DELTA
+        if change != 0 {
+            let slot = self.slot0()
+            let tick = slot.tick().val
+            let price = slot.sqrt_price_x96()
+            if tick < lower.val {
+                let a = sqrt_price_math::signed_amount0_delta(
+                    tick_math::get_sqrt_price_at_tick(lower),
+                    tick_math::get_sqrt_price_at_tick(upper),
+                    change,
+                )
+                delta = to_balance_delta(safe_cast::to_int128(a), 0)
+            } else if tick < upper.val {
+                let a = sqrt_price_math::signed_amount0_delta(
+                    price,
+                    tick_math::get_sqrt_price_at_tick(upper),
+                    change,
+                )
+                let b = sqrt_price_math::signed_amount1_delta(
+                    tick_math::get_sqrt_price_at_tick(lower),
+                    price,
+                    change,
+                )
+                delta = to_balance_delta(safe_cast::to_int128(a), safe_cast::to_int128(b))
+                self.set_liquidity(liquidity_math::add_delta(self.liquidity(), change))
+            } else {
+                let b = sqrt_price_math::signed_amount1_delta(
+                    tick_math::get_sqrt_price_at_tick(lower),
+                    tick_math::get_sqrt_price_at_tick(upper),
+                    change,
+                )
+                delta = to_balance_delta(0, safe_cast::to_int128(b))
+            }
+        }
+        (delta, fee_delta)
+    }
+    #[arithmetic(unchecked)]
+    pub fn donate(self, _ amount0: u256, _ amount1: u256) -> BalanceDelta
+    uses (storage: mut RawStorage)
+    {
+        let liquidity = self.liquidity()
+        if liquidity == 0 {
+            revert_error(NoLiquidityToReceiveFees {})
+        }
+        let a = safe_cast::unsigned_to_int128(amount0)
+        let b = safe_cast::unsigned_to_int128(amount1)
+        // Subtraction works around the compiler's unsupported unchecked negation.
+        let delta = to_balance_delta((0 as i128) - a, (0 as i128) - b)
+        if amount0 > 0 {
+            self.write_word(
+                1,
+                self.read_word(1) + unsafe_math::simple_mul_div(amount0, Q128, liquidity as u256),
+            )
+        }
+        if amount1 > 0 {
+            self.write_word(
+                2,
+                self.read_word(2) + unsafe_math::simple_mul_div(amount1, Q128, liquidity as u256),
+            )
+        }
+        delta
+    }
+}

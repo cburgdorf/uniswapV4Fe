@@ -1,0 +1,10 @@
+// Expected compile failure: core supplies AbiSpan for tuples only up to arity 4.
+use std::abi::{Bytes, DynArray, sol::{Uint24, Int24}}
+use std::evm::Address
+msg Probe {
+    #[selector = 1]
+    Read { values: DynArray<(Address, Uint24, Int24, Address, Bytes)> } -> u256,
+}
+pub contract Tuple5ArrayProbe {
+    recv Probe { Read { values } -> u256 { values.len() } }
+}

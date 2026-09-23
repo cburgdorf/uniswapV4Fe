@@ -1,0 +1,35 @@
+// SPDX-License-Identifier: MIT
+use std::abi::sol
+use std::evm::{Address, Ctx, Call, CallData, revert}
+use core::abi::ByteInput
+use super::native_wrapper
+msg NativeWrapperMsg {
+    #[selector = sol("WETH9()")]
+    Weth {} -> Address,
+    #[selector = sol("poolManager()")]
+    Manager {} -> Address,
+    #[selector = sol("wrap(uint256)")]
+    Wrap { amount: u256 },
+    #[selector = sol("unwrap(uint256)")]
+    Unwrap { amount: u256 },
+}
+pub contract NativeWrapperHarness {
+    weth: Address,
+    manager: Address,
+    init(_weth: Address, _manager: Address) uses (mut weth, mut manager) {
+        weth = _weth
+        manager = _manager
+    }
+    recv {
+        NativeWrapperMsg::Weth {} -> Address uses (weth) { weth }
+        NativeWrapperMsg::Manager {} -> Address uses (manager) { manager }
+        #[payable]
+        NativeWrapperMsg::Wrap { amount } uses (weth, ctx: Ctx, call: mut Call) { native_wrapper::wrap(weth, amount) }
+        NativeWrapperMsg::Unwrap { amount } uses (weth, ctx: Ctx, call: mut Call) { native_wrapper::unwrap(weth, amount) }
+        #[payable]
+        _ uses (weth, manager, ctx: Ctx) {
+            if CallData::new().len() != 0 { revert(()) }
+            native_wrapper::check_sender(weth, manager)
+        }
+    }
+}

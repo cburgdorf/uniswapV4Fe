@@ -1,0 +1,33 @@
+{
+  "timestamp_utc": "2026-09-23T22:08:31.153133+00:00",
+  "upstream_repository": "https://github.com/argotorg/fe.git",
+  "upstream_master": "e2fa7e53c8bb5710c79afbf6c8450a194640dbd8",
+  "local_revision": "702686c984ebf9737a4990d2ccb2957f0a2e59d9",
+  "local_commits": [
+    "702686c984ebf9737a4990d2ccb2957f0a2e59d9 Merge commit 'e2fa7e53c8bb5710c79afbf6c8450a194640dbd8' into uniswap-latest",
+    "31e5b965e2b246b5354a4a2f8174c05bf4304d8b fix: respect the supported 31-byte inline string width",
+    "872a87a4a878dd3a08379eea03aa53b88cc6e905 fix: avoid checked mask underflow for full-width strings",
+    "06f3022c1a37a837c47b3fb35afe1cd170909d78 fix: chunk long error and event names for signature hashing",
+    "91d3e8215296130e266f6f64cf8b011729137dfd Fix verification of payable value-returning handlers",
+    "57530c86c5cc26fd4db3db7d2deb55db95503b94 Preserve ordinary mutable argument memory contracts in borrow summaries",
+    "9bfd21581910bd21a0aec5ccc31cfe184fc82da6 Accept unpadded ABI dynamic payloads with bounded copies",
+    "f800088e4a0a71fea62b0f15fcd24d48393db290 Fix implicit borrows of record literals during semantic lowering",
+    "f1c9151775a3f46d8ed35c8f89dede53ad0142a0 Apply bounded read-only staticcall compatibility fix"
+  ],
+  "compiler_version": "fe 26.3.0 (702686c98)",
+  "compiler_sha256": "f3aaead7171e522c76b07fba14d25b70997fe3251a952686b0ad9c918aebac44",
+  "patch": "tests/results/fe-position-current-local-fixes.patch",
+  "patch_sha256": "771eb976b9f754de27ade29a5be39cee4cad11094f3bed56ee9088ffba5081c5",
+  "source_worktree_clean": true,
+  "compiler_checkout": "/tmp/fe-uniswap-permissioned-position",
+  "build_command": "cargo build --release -p fe -j 2",
+  "regression_results": {
+    "O1": {
+      "passed": 47,
+      "failed": 0,
+      "log": "tests/results/fe-position-current-regressions-o1.log"
+    }
+  },
+  "notes": "Upstream native process/CPU timing PR #1566 merged without conflicts; existing EVM fixes retained. Protocol revalidation is separate.",
+  "validation_policy": "O1 only"
+}

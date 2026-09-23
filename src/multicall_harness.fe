@@ -1,0 +1,34 @@
+use super::multicall::Calls
+// SPDX-License-Identifier: MIT
+use std::abi::{Bytes, DynArray, sol}
+use std::evm::{Address, Ctx, Call, RawStorage, RawOps}
+use super::multicall
+msg MulticallMsg {
+    // Explicit selector: Calls implements the lazy bytes[] calldata codec.
+    #[selector = 0xac9650d8]
+    multicall { data: Calls } -> DynArray<Bytes>,
+    #[selector = sol("bump(uint256)")]
+    Bump { amount: u256 } -> (Address, u256, u256),
+    #[selector = sol("counter()")]
+    Counter {} -> u256,
+    #[selector = sol("echo(bytes)")]
+    Echo { data: Bytes } -> Bytes,
+    #[selector = sol("fail(bytes)")]
+    Fail { data: Bytes },
+}
+pub contract MulticallHarness {
+    recv MulticallMsg {
+        #[payable]
+        multicall { data } -> DynArray<Bytes> uses (ctx: Ctx, call: mut Call) { multicall::execute(data) }
+        #[payable]
+        Bump { amount } -> (Address, u256, u256) uses (ctx: Ctx, storage: mut RawStorage) {
+            let value = storage.sload(0) + amount
+            storage.sstore(slot: 0, value: value)
+            (ctx.caller(), ctx.value(), value)
+        }
+        Counter {} -> u256 uses (storage: RawStorage) { storage.sload(0) }
+        Echo { data } -> Bytes { data }
+        #[payable]
+        Fail { data } uses (ops: RawOps) { ops.revert(data: data.payload_span()) }
+    }
+}

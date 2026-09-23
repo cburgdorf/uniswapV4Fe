@@ -1,0 +1,16 @@
+Compiling 36 files with Solc 0.8.30
+Solc 0.8.30 finished in 2.04s
+Compiler run successful!
+
+Ran 8 tests for test/ProtocolFeesParity.t.sol:ProtocolFeesParityTest
+[PASS] testFuzz_accrual(address,uint256,uint256) (runs: 10000, μ: 76773, ~: 76807)
+[PASS] testFuzz_collectNative(uint128,uint128,uint128,bool,bool,bool) (runs: 10000, μ: 136364, ~: 126073)
+[PASS] testFuzz_collectToken(uint256,uint256,uint8,bool,bool,bool,bool) (runs: 10000, μ: 139832, ~: 127451)
+[PASS] testFuzz_controller(address,uint96,bool) (runs: 10000, μ: 26293, ~: 23021)
+[PASS] testFuzz_poolFee(uint24,int24,bytes32,bool,bool) (runs: 10000, μ: 58592, ~: 86505)
+[PASS] test_explicitBoundaries() (gas: 295445)
+[PASS] test_otherSyncedCurrencyDoesNotBlock() (gas: 131973)
+[PASS] test_unlockedCollectionAndSyncedZero() (gas: 157648)
+Suite result: ok. 8 passed; 0 failed; 0 skipped; finished in 1.30s (3.98s CPU time)
+
+Ran 1 test suite in 1.30s (1.30s CPU time): 8 tests passed, 0 failed, 0 skipped (8 total tests)

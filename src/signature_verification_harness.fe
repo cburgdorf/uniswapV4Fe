@@ -1,0 +1,15 @@
+// SPDX-License-Identifier: MIT
+use std::abi::{Bytes, Bytes32, sol}
+use std::evm::{Address, Ctx, Call, RawMem}
+msg VerifyMsg {
+    #[selector = sol("verify(bytes,bytes32,address)")]
+    Verify { signature: Bytes, hash: Bytes32, claimedSigner: Address } -> bool,
+}
+pub contract SignatureVerificationHarness {
+    recv VerifyMsg {
+        Verify { signature, hash, claimedSigner } -> bool uses (ctx: Ctx, call: Call, mem: RawMem) {
+            super::signature_verification::verify(signature, hash, claimedSigner)
+            true
+        }
+    }
+}

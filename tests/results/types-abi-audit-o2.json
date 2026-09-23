@@ -1,0 +1,14 @@
+{
+  "parameter_and_return_shapes": "passed",
+  "full_abi_parity": false,
+  "remaining_mutability_differences": [
+    {
+      "name": "poolId",
+      "fe": "nonpayable",
+      "solidity": "pure"
+    }
+  ],
+  "fe_abi_sha256": "bf78972638f2cdf3483512fba7ef8d1d7979eeda6715fa694219b6fe2bdd2c9e",
+  "solidity_artifact_sha256": "f8fa2fa08ea1b89f14bd8337b76a3dc11db3e980360b732bc265106c3bcf0bf2",
+  "checker_sha256": "228553d78ffddc3d45815e3eaf68a91dd621871a8ccdf2abee7c88bf0bea6a16"
+}

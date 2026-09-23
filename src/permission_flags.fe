@@ -1,0 +1,30 @@
+// SPDX-License-Identifier: MIT
+// Pinned permissioned-pool flags. Keep the value narrow; unknown bits are valid.
+use core::ops::{BitAnd, BitOr, Eq}
+use std::abi::Bytes2
+
+pub struct PermissionFlag { pub bits: u16 }
+impl Copy for PermissionFlag {}
+impl BitAnd for PermissionFlag {
+    fn bitand(own self, _ other: own PermissionFlag) -> PermissionFlag {
+        PermissionFlag { bits: self.bits & other.bits }
+    }
+}
+impl BitOr for PermissionFlag {
+    fn bitor(own self, _ other: own PermissionFlag) -> PermissionFlag {
+        PermissionFlag { bits: self.bits | other.bits }
+    }
+}
+impl Eq for PermissionFlag {
+    fn eq(self, _ other: PermissionFlag) -> bool { self.bits == other.bits }
+}
+impl PermissionFlag {
+    pub fn to_abi(self) -> Bytes2 { Bytes2 { val: self.bits as u256 } }
+}
+pub fn from_abi(_ value: Bytes2) -> PermissionFlag {
+    PermissionFlag { bits: value.val.downcast_truncate() }
+}
+pub const NONE: PermissionFlag = PermissionFlag { bits: 0 }
+pub const SWAP_ALLOWED: PermissionFlag = PermissionFlag { bits: 1 }
+pub const LIQUIDITY_ALLOWED: PermissionFlag = PermissionFlag { bits: 2 }
+pub const ALL_ALLOWED: PermissionFlag = PermissionFlag { bits: 0xffff }

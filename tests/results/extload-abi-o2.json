@@ -1,0 +1,7 @@
+{
+  "result": "passed",
+  "entries": 6,
+  "fe_abi_sha256": "5584e3278172ea2e6eba66c7b70f620e484837670b3d8698d67f784dc2b56bfe",
+  "solidity_artifact_sha256": "059669bad1642c1a1f006bf454cca288e043037fad31ca008ea7c49213e86507",
+  "checker_sha256": "c9cb03447d3a7e38ad977f4977202e9af7da3afa5a8f083f67b0216dc75e9aa6"
+}

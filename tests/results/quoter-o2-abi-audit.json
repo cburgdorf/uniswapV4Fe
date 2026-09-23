@@ -1,0 +1,38 @@
+{
+  "fe_abi_sha256": "acdd776d4df7c3871213ae49e8f27bb48ce63463ffb8b0e4a89ee762a9140674",
+  "reference_artifact_sha256": "5be8d551f70f3de392fc2084364cb463b44a130975c3155a81709996944200d5",
+  "protocol_abi_sha256": "df20e03cbfa8f7d4a5d3c42cfd7d46e98886457b2d2c753da6d1e789e1537023",
+  "adapter_sha256": "efc12669f26764be2286d9ab37afc829173170acd2fa4a75e660a9efc2ef0e99",
+  "callable_and_event_layouts": "compatible",
+  "reference_metadata_applied": [
+    "constructor:(address)",
+    "function:_quoteExactInput((address,(address,uint24,int24,address,bytes)[],uint128))",
+    "function:_quoteExactInputSingle(((address,address,uint24,int24,address),bool,uint128,bytes))",
+    "function:_quoteExactOutput((address,(address,uint24,int24,address,bytes)[],uint128))",
+    "function:_quoteExactOutputSingle(((address,address,uint24,int24,address),bool,uint128,bytes))",
+    "function:msgSender()",
+    "function:poolManager()",
+    "function:quoteExactInput((address,(address,uint24,int24,address,bytes)[],uint128))",
+    "function:quoteExactInputSingle(((address,address,uint24,int24,address),bool,uint128,bytes))",
+    "function:quoteExactOutput((address,(address,uint24,int24,address,bytes)[],uint128))",
+    "function:quoteExactOutputSingle(((address,address,uint24,int24,address),bool,uint128,bytes))",
+    "function:unlockCallback(bytes)"
+  ],
+  "fe_error_signatures": [
+    "error:NotEnoughLiquidity(bytes32)",
+    "error:NotPoolManager()",
+    "error:NotSelf()",
+    "error:Panic(uint256)",
+    "error:QuoteSwap(uint256)",
+    "error:UnexpectedCallSuccess()",
+    "error:UnexpectedRevertBytes(bytes)"
+  ],
+  "reference_error_signatures": [
+    "error:NotEnoughLiquidity(bytes32)",
+    "error:NotPoolManager()",
+    "error:NotSelf()",
+    "error:QuoteSwap(uint256)",
+    "error:UnexpectedCallSuccess()",
+    "error:UnexpectedRevertBytes(bytes)"
+  ]
+}

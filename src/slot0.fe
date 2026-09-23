@@ -1,0 +1,39 @@
+// SPDX-License-Identifier: MIT
+// Port of Uniswap v4-core Slot0.sol: exact 256-bit storage layout.
+use std::abi::sol::{Uint160, Int24, Uint24}
+
+const MASK160: u256 = 0xffffffffffffffffffffffffffffffffffffffff
+const MASK24: u256 = 0xffffff
+pub struct Slot0 { pub bits: u256 }
+impl Copy for Slot0 {}
+
+impl Slot0 {
+    pub fn sqrt_price_x96(self) -> Uint160 {
+        Uint160 { val: self.bits & MASK160 }
+    }
+    pub fn tick(self) -> Int24 {
+        // Align the sign bit with bit 31, then use an arithmetic right shift.
+        let shifted: i32 = ((self.bits >> 160) << 8).downcast_truncate()
+        Int24 { val: shifted >> 8 }
+    }
+    pub fn protocol_fee(self) -> Uint24 {
+        Uint24 { val: ((self.bits >> 184) & MASK24).downcast_truncate() }
+    }
+    pub fn lp_fee(self) -> Uint24 {
+        Uint24 { val: ((self.bits >> 208) & MASK24).downcast_truncate() }
+    }
+    pub fn set_sqrt_price_x96(self, _ price: Uint160) -> Self {
+        Self { bits: (self.bits & !MASK160) | (price.val & MASK160) }
+    }
+    pub fn set_tick(self, _ tick: Int24) -> Self {
+        let signed = tick.val as i256
+        let word: u256 = signed.downcast_truncate()
+        Self { bits: (self.bits & !(MASK24 << 160)) | ((word & MASK24) << 160) }
+    }
+    pub fn set_protocol_fee(self, _ fee: Uint24) -> Self {
+        Self { bits: (self.bits & !(MASK24 << 184)) | (((fee.val as u256) & MASK24) << 184) }
+    }
+    pub fn set_lp_fee(self, _ fee: Uint24) -> Self {
+        Self { bits: (self.bits & !(MASK24 << 208)) | (((fee.val as u256) & MASK24) << 208) }
+    }
+}

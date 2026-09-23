@@ -1,0 +1,13 @@
+use core::ptr::MemBuffer
+use std::evm::{Address, Call}
+msg ProbeMsg { #[selector = std::abi::sol("check(address)")]
+Check { target: Address } -> bool }
+pub contract StaticProbe {
+    recv ProbeMsg {
+        Check { target } -> bool uses (call: Call) {
+            let args = MemBuffer::alloc(0)
+            let mut ret = MemBuffer::alloc(64)
+            call.raw_staticcall(addr: target, gas: 30000, args: args.span(), ret: mut ret).success()
+        }
+    }
+}

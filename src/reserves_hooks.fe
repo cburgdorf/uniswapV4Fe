@@ -1,0 +1,89 @@
+// SPDX-License-Identifier: MIT
+// ReservesLens bounded URC-3 hook stats, including ERC165 probe semantics.
+use core::abi::store_word
+use core::ptr::{self, MemBuffer, MemSpan}
+use std::abi::sol
+use std::evm::{Address, Call, Ctx, RawMem, encode_msg_calldata}
+use super::{pool_types::PoolKey, reserves_types::PoolTVL}
+const STIPEND: u256 = 500000
+const BUDGET: u256 = ((3 * STIPEND + 90000 + 15000) * 64) / 63
+msg StatsMsg {
+    #[selector = sol("hook()")]
+    Hook {} -> Address,
+    #[selector = sol("getReserves((address,address,uint24,int24,address))")]
+    Reserves { key: PoolKey } -> (u256, u256),
+    #[selector = sol("getEffectiveLiquidity((address,address,uint24,int24,address))")]
+    Effective { key: PoolKey } -> (u256, u256),
+}
+fn probe(_ provider: Address, _ id: u32) -> bool uses (call: Call, mem: RawMem) {
+    let args = MemBuffer::alloc(36)
+    store_word(ptr: args.ptr(), value: (sol("supportsInterface(bytes4)") as u256) << 224)
+    store_word(ptr: ptr::offset_bytes(args.ptr(), 4), value: (id as u256) << 224)
+    let mut ret = MemBuffer::with_capacity(32)
+    ptr::zero_bytes(ret.ptr(), 32)
+    let outcome = call.raw_staticcall(addr: provider, gas: 30000, args: args.span(), ret: mut ret)
+    outcome.success() && outcome.returndata_len() >= 32 && mem.mload(ret.ptr()) != 0
+}
+fn supports(_ provider: Address) -> bool uses (call: Call, mem: RawMem) {
+    let id = sol("hook()") ^ sol("getReserves((address,address,uint24,int24,address))") ^ sol("getEffectiveLiquidity((address,address,uint24,int24,address))")
+    probe(provider, 0x01ffc9a7) && !probe(provider, 0xffffffff) && probe(provider, id)
+}
+fn bounded(_ target: Address, _ args: MemSpan, _ expected: u256) -> (u8, u256, u256)
+uses (ctx: Ctx, call: Call, mem: RawMem)
+{
+    if ctx.gas() < (STIPEND * 64) / 63 + 1000 { return (3, 0, 0) }
+    let mut ret = MemBuffer::with_capacity(64)
+    ptr::zero_bytes(ret.ptr(), 64)
+    let outcome = call.raw_staticcall(addr: target, gas: STIPEND, args, ret: mut ret)
+    if !outcome.success() { return (1, 0, 0) }
+    if outcome.returndata_len() != expected { return (2, 0, 0) }
+    (0, mem.mload(ret.ptr()), mem.mload(ptr::offset_bytes(ret.ptr(), 32)))
+}
+fn failure(_ status: u8) -> u8 {
+    if status == 3 { 7 } else if status == 1 { 5 } else { 6 }
+}
+pub fn read(_ result: PoolTVL, _ key: PoolKey, _ supplied: Address) -> PoolTVL
+uses (ctx: Ctx, call: Call, mem: RawMem)
+{
+    let mut out = result
+    let hook = key.hooks
+    if hook.inner == 0 { out.statsStatus = 0
+        return out
+    }
+    let provider = if supplied.inner == 0 { hook } else { supplied }
+    out.statsProvider = provider
+    if ctx.gas() < BUDGET { out.statsStatus = 7
+        return out
+    }
+    if !supports(provider) {
+        out.statsStatus = if provider == hook { 1 } else { 4 }
+        return out
+    }
+    let args = encode_msg_calldata(StatsMsg::Hook {})
+    let (status, reported, _) = bounded(provider, args.span(), 32)
+    if status != 0 { out.statsStatus = failure(status)
+        return out
+    }
+    if reported >> 160 != 0 || reported != hook.inner { out.statsStatus = 4
+        return out
+    }
+    let reserves_args = encode_msg_calldata(StatsMsg::Reserves { key })
+    let (reserves_status, reserves0, reserves1) = bounded(provider, reserves_args.span(), 64)
+    if reserves_status != 0 { out.statsStatus = failure(reserves_status)
+        return out
+    }
+    let effective_args = encode_msg_calldata(StatsMsg::Effective { key })
+    let (effective_status, effective0, effective1) = bounded(provider, effective_args.span(), 64)
+    if effective_status != 0 { out.statsStatus = failure(effective_status)
+        return out
+    }
+    if effective0 > reserves0 || effective1 > reserves1 { out.statsStatus = 6
+        return out
+    }
+    out.hookReserves0 = reserves0
+    out.hookReserves1 = reserves1
+    out.hookEffective0 = effective0
+    out.hookEffective1 = effective1
+    out.statsStatus = if provider == hook { 2 } else { 3 }
+    out
+}

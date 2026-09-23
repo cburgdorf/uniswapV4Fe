@@ -1,0 +1,102 @@
+// SPDX-License-Identifier: MIT
+// ABI surface for differential testing, not a protocol contract.
+use std::abi::sol::{self, Uint24, Int24, Uint160}
+use super::{lp_fee, protocol_fee, liquidity_math, fixed_point}
+use super::balance_delta::{BalanceDelta, to_balance_delta}
+use super::before_swap_delta::{BeforeSwapDelta, to_before_swap_delta}
+use super::slot0::Slot0
+
+msg FoundationMsg {
+    #[selector = sol("lpInfo(uint24)")]
+    LpInfo { fee: Uint24 } -> (bool, bool, bool, Uint24),
+    #[selector = sol("lpChecked(uint24,uint8)")]
+    LpChecked { fee: Uint24, mode: u8 } -> Uint24,
+    #[selector = sol("protocolInfo(uint24)")]
+    ProtocolInfo { fee: Uint24 } -> (u16, u16, bool),
+    #[selector = sol("combinedFee(uint16,uint24)")]
+    CombinedFee { protocol: u16, lp: Uint24 } -> Uint24,
+    #[selector = sol("addLiquidity(uint128,int128)")]
+    AddLiquidity { liquidity: u128, delta: i128 } -> u128,
+    #[selector = sol("packDelta(int128,int128)")]
+    PackDelta { a: i128, b: i128 } -> (i256, i256),
+    #[selector = sol("unpackDelta(int256)")]
+    UnpackDelta { value: i256 } -> (i128, i128, i128, i128),
+    #[selector = sol("deltaArithmetic(int256,int256,bool)")]
+    DeltaArithmetic { a: i256, b: i256, subtract: bool } -> (i256, bool, bool),
+    #[selector = sol("slotRead(uint256)")]
+    SlotRead { value: u256 } -> (Uint160, Int24, Uint24, Uint24),
+    #[selector = sol("slotWrite(uint256,uint160,int24,uint24,uint8)")]
+    SlotWrite { value: u256, price: Uint160, tick: Int24, fee: Uint24, mode: u8 } -> u256,
+    #[selector = sol("fixedPointConstants()")]
+    FixedPointConstants {} -> (u8, u256, u256),
+}
+
+pub contract FoundationHarness {
+    recv FoundationMsg {
+        LpInfo { fee } -> (bool, bool, bool, Uint24) {
+            (
+                lp_fee::is_dynamic_fee(fee),
+                lp_fee::is_valid(fee),
+                lp_fee::is_override(fee),
+                lp_fee::remove_override_flag(fee),
+            )
+        }
+        LpChecked { fee, mode } -> Uint24 {
+            if mode == 0 {
+                lp_fee::validate(fee)
+                return fee
+            }
+            if mode == 1 {
+                return lp_fee::initial_lp_fee(fee)
+            }
+            lp_fee::remove_override_flag_and_validate(fee)
+        }
+        ProtocolInfo { fee } -> (u16, u16, bool) {
+            (
+                protocol_fee::zero_for_one_fee(fee),
+                protocol_fee::one_for_zero_fee(fee),
+                protocol_fee::is_valid_protocol_fee(fee),
+            )
+        }
+        CombinedFee { protocol, lp } -> Uint24 {
+            protocol_fee::calculate_swap_fee(protocol, lp)
+        }
+        AddLiquidity { liquidity, delta } -> u128 {
+            liquidity_math::add_delta(liquidity, delta)
+        }
+        PackDelta { a, b } -> (i256, i256) {
+            (to_balance_delta(a, b).bits, to_before_swap_delta(a, b).bits)
+        }
+        UnpackDelta { value } -> (i128, i128, i128, i128) {
+            let delta = BalanceDelta { bits: value }
+            let before = BeforeSwapDelta { bits: value }
+            (delta.amount0(), delta.amount1(), before.specified_delta(), before.unspecified_delta())
+        }
+        DeltaArithmetic { a, b, subtract } -> (i256, bool, bool) {
+            let left = BalanceDelta { bits: a }
+            let right = BalanceDelta { bits: b }
+            let result = if subtract { left - right } else { left + right }
+            (result.bits, left == right, left != right)
+        }
+        SlotRead { value } -> (Uint160, Int24, Uint24, Uint24) {
+            let slot = Slot0 { bits: value }
+            (slot.sqrt_price_x96(), slot.tick(), slot.protocol_fee(), slot.lp_fee())
+        }
+        SlotWrite { value, price, tick, fee, mode } -> u256 {
+            let slot = Slot0 { bits: value }
+            if mode == 0 {
+                return slot.set_sqrt_price_x96(price).bits
+            }
+            if mode == 1 {
+                return slot.set_tick(tick).bits
+            }
+            if mode == 2 {
+                return slot.set_protocol_fee(fee).bits
+            }
+            slot.set_lp_fee(fee).bits
+        }
+        FixedPointConstants {} -> (u8, u256, u256) {
+            (fixed_point::RESOLUTION, fixed_point::Q96, fixed_point::Q128)
+        }
+    }
+}

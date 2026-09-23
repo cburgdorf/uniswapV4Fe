@@ -1,0 +1,22 @@
+Compiling 58 files with Solc 0.8.26
+Solc 0.8.26 finished in 3.96s
+Compiler run successful!
+
+Ran 14 tests for test/QuoterParity.t.sol:QuoterParityTest
+[PASS] testFuzz_filledRoutes(uint64,uint8,bool) (runs: 10000, μ: 140132, ~: 150962)
+[PASS] testFuzz_multi(uint128,int128,int128,bool,uint8,bytes) (runs: 10000, μ: 115496, ~: 133076)
+[PASS] testFuzz_publicMalformed(uint256,uint8,bool,bool) (runs: 10000, μ: 58507, ~: 26618)
+[PASS] testFuzz_publicSmallOffsets(uint16,uint8,bool,bool) (runs: 10000, μ: 79005, ~: 110727)
+[PASS] testFuzz_single(uint128,int128,int128,bool,bool,bytes) (runs: 10000, μ: 123585, ~: 123602)
+[PASS] test_aliasPaths() (gas: 234543)
+[PASS] test_internalAuthPrecedence() (gas: 24319)
+[PASS] test_publicAllocationBoundaries() (gas: 357143)
+[PASS] test_publicOversizedArray() (gas: 24403)
+[PASS] test_reentrantSenderMarker() (gas: 159625)
+[PASS] test_shortQuoteReasons() (gas: 4020424)
+[PASS] test_signAndWidthBoundaries() (gas: 273940)
+[PASS] test_successAndCallerGuards() (gas: 273068)
+[PASS] test_truncatedPublicCalls() (gas: 48696250)
+Suite result: ok. 14 passed; 0 failed; 0 skipped; finished in 1.77s (6.75s CPU time)
+
+Ran 1 test suite in 1.77s (1.77s CPU time): 14 tests passed, 0 failed, 0 skipped (14 total tests)

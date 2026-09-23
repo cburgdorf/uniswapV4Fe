@@ -1,0 +1,16 @@
+Parity artifacts: /tmp/fe-native-wrapper-latest-o1
+Compiler: fe 26.3.0 (702686c98); sha256=f3aaead7171e522c76b07fba14d25b70997fe3251a952686b0ad9c918aebac44
+Wrote /tmp/fe-native-wrapper-latest-o1/fe/NativeWrapperHarness.bin
+Wrote /tmp/fe-native-wrapper-latest-o1/fe/NativeWrapperHarness.runtime.bin
+Wrote /tmp/fe-native-wrapper-latest-o1/fe/NativeWrapperHarness.abi.json
+Compiling 68 files with Solc 0.8.26
+Solc 0.8.26 finished in 2.13s
+Compiler run successful!
+
+Ran 3 tests for test/NativeWrapperParity.t.sol:NativeWrapperParityTest
+[PASS] testFuzz_receive(uint64,uint8,bool) (runs: 10000, μ: 38564, ~: 39682)
+[PASS] testFuzz_wrapAndUnwrap(uint64,uint64,bool) (runs: 10000, μ: 134233, ~: 112827)
+[PASS] test_zeroAndNoCode() (gas: 528771)
+Suite result: ok. 3 passed; 0 failed; 0 skipped; finished in 432.28ms (599.61ms CPU time)
+
+Ran 1 test suite in 432.96ms (432.28ms CPU time): 3 tests passed, 0 failed, 0 skipped (3 total tests)

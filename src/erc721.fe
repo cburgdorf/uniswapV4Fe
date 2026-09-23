@@ -1,0 +1,168 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Solmate ERC721 storage and token operations at 4b47a19038b798b4a33d9749d25e570443520647.
+// ERC721Permit_v4 overrides approve's authorization error.
+use std::abi::{Bytes, Bytes4, sol}
+use std::evm::{Address, Ctx, RawMem, RawStorage, Log, Call, revert, revert_error, encode_msg_calldata, bubble_last_revert}
+use std::evm::packed::keccak_packed
+use core::ops::Eq
+use core::ptr::MemBuffer
+const MASK: u256 = 0xffffffffffffffffffffffffffffffffffffffff
+#[error]
+pub struct Error { pub reason: String<20> }
+#[error]
+pub struct Unauthorized {}
+#[event]
+pub struct Transfer {
+    #[indexed]
+    pub from: Address,
+    #[indexed]
+    pub to: Address,
+    #[indexed]
+    pub id: u256,
+}
+#[event]
+pub struct Approval {
+    #[indexed]
+    pub owner: Address,
+    #[indexed]
+    pub spender: Address,
+    #[indexed]
+    pub id: u256,
+}
+#[event]
+pub struct ApprovalForAll {
+    #[indexed]
+    pub owner: Address,
+    #[indexed]
+    pub operator: Address,
+    pub approved: bool,
+}
+msg ReceiverMsg {
+    #[selector = sol("onERC721Received(address,address,uint256,bytes)")]
+    Receive { operator: Address, from: Address, id: u256, data: Bytes } -> Bytes4,
+}
+/// Root is ERC721's name slot: symbol +1, owners +2, balances +3,
+/// token approvals +4 and operator approvals +5.
+pub struct Tokens { pub slot: u256 }
+impl Copy for Tokens {}
+impl Tokens {
+    pub fn owner_slot(self, _ id: u256) -> u256 uses (mem: mut RawMem) {
+        keccak_packed((id, self.slot + 2))
+    }
+    pub fn balance_slot(self, _ owner: Address) -> u256 uses (mem: mut RawMem) {
+        keccak_packed((owner.inner, self.slot + 3))
+    }
+    pub fn approved_slot(self, _ id: u256) -> u256 uses (mem: mut RawMem) {
+        keccak_packed((id, self.slot + 4))
+    }
+    pub fn operator_slot(self, _ owner: Address, _ operator: Address) -> u256 uses (mem: mut RawMem) {
+        keccak_packed((operator.inner, keccak_packed((owner.inner, self.slot + 5))))
+    }
+    pub fn raw_owner(self, _ id: u256) -> Address uses (mem: mut RawMem, storage: RawStorage) {
+        Address { inner: storage.sload(self.owner_slot(id)) & MASK }
+    }
+    pub fn owner_of(self, _ id: u256) -> Address uses (mem: mut RawMem, storage: RawStorage) {
+        let owner = self.raw_owner(id)
+        if owner.inner == 0 { revert_error(Error { reason: "NOT_MINTED" }) }
+        owner
+    }
+    pub fn balance_of(self, _ owner: Address) -> u256 uses (mem: mut RawMem, storage: RawStorage) {
+        if owner.inner == 0 { revert_error(Error { reason: "ZERO_ADDRESS" }) }
+        storage.sload(self.balance_slot(owner))
+    }
+    pub fn approved(self, _ id: u256) -> Address uses (mem: mut RawMem, storage: RawStorage) {
+        Address { inner: storage.sload(self.approved_slot(id)) & MASK }
+    }
+    pub fn operator(self, _ owner: Address, _ operator: Address) -> bool uses (mem: mut RawMem, storage: RawStorage) {
+        storage.sload(self.operator_slot(owner, operator)) & 0xff != 0
+    }
+    pub fn approve_for_all(self, _ owner: Address, _ operator: Address, _ approved: bool)
+    uses (mem: mut RawMem, storage: mut RawStorage, log: mut Log) {
+        let slot = self.operator_slot(owner, operator)
+        storage.sstore(slot: slot, value: (storage.sload(slot) & !(0xff as u256)) | approved as u256)
+        log.emit(ApprovalForAll { owner, operator, approved })
+    }
+    pub fn approve_unchecked(self, _ owner: Address, _ spender: Address, _ id: u256)
+    uses (mem: mut RawMem, storage: mut RawStorage, log: mut Log) {
+        let slot = self.approved_slot(id)
+        storage.sstore(slot: slot, value: (storage.sload(slot) & !MASK) | spender.inner)
+        log.emit(Approval { owner, spender, id })
+    }
+    pub fn approve(self, _ spender: Address, _ id: u256)
+    uses (ctx: Ctx, mem: mut RawMem, storage: mut RawStorage, log: mut Log) {
+        let owner = self.raw_owner(id)
+        if ctx.caller() != owner && !self.operator(owner, ctx.caller()) { revert_error(Unauthorized {}) }
+        self.approve_unchecked(owner, spender, id)
+    }
+    pub fn is_approved_or_owner(self, _ spender: Address, _ id: u256) -> bool
+    uses (mem: mut RawMem, storage: RawStorage) {
+        let owner = self.owner_of(id)
+        spender == owner || self.approved(id) == spender || self.operator(owner, spender)
+    }
+    #[arithmetic(unchecked)]
+    fn move_balance(self, _ from: Address, _ to: Address)
+    uses (mem: mut RawMem, storage: mut RawStorage) {
+        let a = self.balance_slot(from)
+        storage.sstore(slot: a, value: storage.sload(a) - 1)
+        let b = self.balance_slot(to)
+        storage.sstore(slot: b, value: storage.sload(b) + 1)
+    }
+    fn write_owner(self, _ id: u256, _ owner: Address)
+    uses (mem: mut RawMem, storage: mut RawStorage) {
+        let slot = self.owner_slot(id)
+        storage.sstore(slot: slot, value: (storage.sload(slot) & !MASK) | owner.inner)
+    }
+    fn clear_approval(self, _ id: u256) uses (mem: mut RawMem, storage: mut RawStorage) {
+        let slot = self.approved_slot(id)
+        storage.sstore(slot: slot, value: storage.sload(slot) & !MASK)
+    }
+    pub fn transfer_from(self, _ from: Address, _ to: Address, _ id: u256)
+    uses (ctx: Ctx, mem: mut RawMem, storage: mut RawStorage, log: mut Log) {
+        if from != self.raw_owner(id) { revert_error(Error { reason: "WRONG_FROM" }) }
+        if to.inner == 0 { revert_error(Error { reason: "INVALID_RECIPIENT" }) }
+        let caller = ctx.caller()
+        if caller != from && !self.operator(from, caller) && caller != self.approved(id) {
+            revert_error(Error { reason: "NOT_AUTHORIZED" })
+        }
+        self.move_balance(from, to)
+        self.write_owner(id, to)
+        self.clear_approval(id)
+        log.emit(Transfer { from, to, id })
+    }
+    #[arithmetic(unchecked)]
+    pub fn mint(self, _ to: Address, _ id: u256)
+    uses (mem: mut RawMem, storage: mut RawStorage, log: mut Log) {
+        if to.inner == 0 { revert_error(Error { reason: "INVALID_RECIPIENT" }) }
+        if self.raw_owner(id).inner != 0 { revert_error(Error { reason: "ALREADY_MINTED" }) }
+        let slot = self.balance_slot(to)
+        storage.sstore(slot: slot, value: storage.sload(slot) + 1)
+        self.write_owner(id, to)
+        log.emit(Transfer { from: Address { inner: 0 }, to, id })
+    }
+    #[arithmetic(unchecked)]
+    pub fn burn(self, _ id: u256) uses (mem: mut RawMem, storage: mut RawStorage, log: mut Log) {
+        let owner = self.owner_of(id)
+        let slot = self.balance_slot(owner)
+        storage.sstore(slot: slot, value: storage.sload(slot) - 1)
+        self.write_owner(id, Address { inner: 0 })
+        self.clear_approval(id)
+        log.emit(Transfer { from: owner, to: Address { inner: 0 }, id })
+    }
+}
+pub fn check_receiver(_ from: Address, _ to: Address, _ id: u256, _ data: own Bytes)
+uses (ctx: Ctx, call: mut Call, mem: RawMem) {
+    if ctx.extcodesize(to) == 0 { return }
+    let args = encode_msg_calldata(ReceiverMsg::Receive { operator: ctx.caller(), from, id, data })
+    let mut ret = MemBuffer::with_capacity(32)
+    let outcome = call.raw_call(addr: to, gas: ctx.gas(), value: 0, args: args.span(), ret: mut ret)
+    if !outcome.success() { bubble_last_revert() }
+    if outcome.returndata_len() < 32 { revert(()) }
+    let word = mem.mload(ret.ptr())
+    if word & 0x00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff != 0 { revert(()) }
+    if word >> 224 != sol("onERC721Received(address,address,uint256,bytes)") as u256 {
+        revert_error(Error { reason: "UNSAFE_RECIPIENT" })
+    }
+}
+pub fn supports_interface(_ id: Bytes4) -> bool {
+    id.val == 0x01ffc9a7 || id.val == 0x80ac58cd || id.val == 0x5b5e139f
+}

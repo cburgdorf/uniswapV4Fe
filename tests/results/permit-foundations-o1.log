@@ -1,0 +1,34 @@
+Compiling 1 files with Solc 0.8.26
+Solc 0.8.26 finished in 538.60ms
+Compiler run successful with warnings:
+Warning (2519): This declaration shadows an existing declaration.
+  --> test/PermitFoundationsParity.t.sol:36:57:
+   |
+36 |         (ok,out)=fe.call{value:value}(data);(bool refOk,bytes memory expected)=address(sol).call{value:value}(data);
+   |                                                         ^^^^^^^^^^^^^^^^^^^^^
+Note: The shadowed declaration is here:
+  --> test/PermitFoundationsParity.t.sol:58:5:
+   |
+58 |     function expected(bytes memory name ... PE,keccak256(name),chain,target));}
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Warning (2519): This declaration shadows an existing declaration.
+  --> test/PermitFoundationsParity.t.sol:49:9:
+   |
+49 |         uint256 expected=uint256(1)<<uint8(nonce);require(uint256(bitmap(owner,nonce>>8))==expected,"nonce bitmap model");
+   |         ^^^^^^^^^^^^^^^^
+Note: The shadowed declaration is here:
+  --> test/PermitFoundationsParity.t.sol:58:5:
+   |
+58 |     function expected(bytes memory name ... PE,keccak256(name),chain,target));}
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+Ran 4 tests for test/PermitFoundationsParity.t.sol:PermitFoundationsParityTest
+[PASS] testFuzz_domains(bytes,uint64,bytes32) (runs: 10000, μ: 932422, ~: 932361)
+[PASS] testFuzz_hashes(address,uint256,uint256,uint256,bool) (runs: 10000, μ: 19234, ~: 19244)
+[PASS] testFuzz_nonces(address,uint256,uint8) (runs: 10000, μ: 79539, ~: 79523)
+[PASS] test_delegateCacheAndPayableRevocation() (gas: 231944)
+Suite result: ok. 4 passed; 0 failed; 0 skipped; finished in 1.15s (1.97s CPU time)
+
+Ran 1 test suite in 1.15s (1.15s CPU time): 4 tests passed, 0 failed, 0 skipped (4 total tests)

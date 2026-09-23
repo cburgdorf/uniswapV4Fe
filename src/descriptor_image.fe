@@ -1,0 +1,27 @@
+// SPDX-License-Identifier: MIT
+use std::abi::DynString
+use std::evm::{Address, RawMem}
+use super::{metadata_text as text, descriptor::ConstructTokenURIParams, descriptor_format, svg::{self, SVGParams}}
+pub fn addressToString(_ address: Address) -> DynString uses (mem: mut RawMem) {
+    text::concat([text::word(0x3078000000000000000000000000000000000000000000000000000000000000, 2).payload_span(), text::hex(address.inner, 20).payload_span()])
+}
+pub fn currencyToColorHex(_ currency: u256, _ offset: u256) -> DynString uses (mem: mut RawMem) { text::hex(currency >> offset, 3) }
+pub fn sliceCurrencyHex(_ currency: u256, _ offset: u256) -> u256 { (currency >> offset) & 255 }
+pub fn getCircleCoord(_ currency: u256, _ offset: u256, _ tokenId: u256) -> u256 { (sliceCurrencyHex(currency, offset) * tokenId) % 255 }
+fn coordinate(_ currency: Address, _ offset: u256, _ token: u256, _ low: u256, _ high: u256) -> DynString uses (mem: mut RawMem) {
+    text::decimal(getCircleCoord(currency.inner, offset, token) * (high - low) / 255 + low)
+}
+pub fn generateSVGImage(_ params: ConstructTokenURIParams) -> DynString uses (mem: mut RawMem) {
+    svg::generateSVG(SVGParams {
+        quoteCurrency: addressToString(params.quoteCurrency), baseCurrency: addressToString(params.baseCurrency), hooks: params.hooks,
+        quoteCurrencySymbol: text::from_span(params.quoteCurrencySymbol.payload_span()), baseCurrencySymbol: text::from_span(params.baseCurrencySymbol.payload_span()),
+        feeTier: descriptor_format::fee(params.fee), tickLower: params.tickLower, tickUpper: params.tickUpper, tickSpacing: params.tickSpacing,
+        overRange: if params.tickCurrent.val < params.tickLower.val { -1 } else if params.tickCurrent.val > params.tickUpper.val { 1 } else { 0 },
+        tokenId: params.tokenId,
+        color0: currencyToColorHex(params.quoteCurrency.inner, 136), color1: currencyToColorHex(params.baseCurrency.inner, 136),
+        color2: currencyToColorHex(params.quoteCurrency.inner, 0), color3: currencyToColorHex(params.baseCurrency.inner, 0),
+        x1: coordinate(params.quoteCurrency, 16, params.tokenId, 16, 274), y1: coordinate(params.baseCurrency, 16, params.tokenId, 100, 484),
+        x2: coordinate(params.quoteCurrency, 32, params.tokenId, 16, 274), y2: coordinate(params.baseCurrency, 32, params.tokenId, 100, 484),
+        x3: coordinate(params.quoteCurrency, 48, params.tokenId, 16, 274), y3: coordinate(params.baseCurrency, 48, params.tokenId, 100, 484),
+    })
+}

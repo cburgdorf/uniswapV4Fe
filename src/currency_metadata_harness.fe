@@ -1,0 +1,19 @@
+// SPDX-License-Identifier: MIT
+use std::abi::{DynString, sol}
+use std::evm::{Address, Ctx, Call, RawMem}
+use super::safe_currency_metadata as metadata
+msg MetadataMsg {
+    #[selector = sol("symbol(address,string)")]
+    Symbol { token: Address, label: DynString } -> DynString,
+    #[selector = sol("decimals(address)")]
+    Decimals { token: Address } -> u8,
+    #[selector = sol("truncate(string)")]
+    Truncate { value: DynString } -> DynString,
+}
+pub contract CurrencyMetadataHarness {
+    recv MetadataMsg {
+        Symbol { token, label } -> DynString uses (ctx: Ctx, call: Call, mem: mut RawMem) { metadata::symbol(token, label) }
+        Decimals { token } -> u8 uses (ctx: Ctx, call: Call) { metadata::decimals(token) }
+        Truncate { value } -> DynString { metadata::truncate(value) }
+    }
+}

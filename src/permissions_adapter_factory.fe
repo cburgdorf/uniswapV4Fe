@@ -1,0 +1,67 @@
+// SPDX-License-Identifier: MIT
+use std::abi::sol
+use std::evm::{Address, Ctx, Call, Create, RawStorage, RawMem, Log, revert_error}
+use super::{permissions_adapter::PermissionsAdapter, permissions_adapter_io, permissions_adapter_state as state}
+#[error]
+pub struct PermissionsAdapterNotFound { pub permissionsAdapter: Address }
+#[error]
+pub struct PermissionsAdapterAlreadyVerified { pub permissionsAdapter: Address }
+#[error]
+pub struct PermissionsAdapterNotVerified { pub permissionsAdapter: Address }
+#[event]
+pub struct PermissionsAdapterCreated {
+    #[indexed]
+    pub permissionsAdapter: Address,
+    #[indexed]
+    pub permissionedToken: Address,
+}
+#[event]
+pub struct PermissionsAdapterVerified {
+    #[indexed]
+    pub permissionsAdapter: Address,
+    #[indexed]
+    pub permissionedToken: Address,
+}
+msg AdapterFactoryMsg {
+    #[selector = sol("POOL_MANAGER()")]
+    PoolManager {} -> Address,
+    #[selector = sol("permissionsAdapterOf(address)")]
+    Adapter { adapter: Address } -> Address,
+    #[selector = sol("verifiedPermissionsAdapterOf(address)")]
+    Verified { adapter: Address } -> Address,
+    #[selector = sol("createPermissionsAdapter(address,address,address)")]
+    Create { token: Address, owner: Address, checker: Address } -> Address,
+    #[selector = sol("verifyPermissionsAdapter(address)")]
+    Verify { adapter: Address },
+}
+pub contract PermissionsAdapterFactory {
+    pool: Address,
+    init(poolManager: Address) uses (mut pool) { pool = poolManager }
+    recv AdapterFactoryMsg {
+        PoolManager {} -> Address uses (pool) { pool }
+        Adapter { adapter } -> Address uses (storage: RawStorage, mem: mut RawMem) {
+            state::address_at(state::map_slot(0, adapter))
+        }
+        Verified { adapter } -> Address uses (storage: RawStorage, mem: mut RawMem) {
+            state::address_at(state::map_slot(1, adapter))
+        }
+        Create { token, owner, checker } -> Address uses (pool, create: mut Create, storage: mut RawStorage, mem: mut RawMem, log: mut Log) {
+            let adapter = create.create<PermissionsAdapter>(value: 0, args: (token, pool, owner, checker))
+            state::write_address(state::map_slot(0, adapter), token)
+            log.emit(PermissionsAdapterCreated { permissionsAdapter: adapter, permissionedToken: token })
+            adapter
+        }
+        Verify { adapter } uses (storage: mut RawStorage, mem: mut RawMem, call: Call, ctx: Ctx, log: mut Log) {
+            let token = state::address_at(state::map_slot(0, adapter))
+            if token.inner == 0 { revert_error(PermissionsAdapterNotFound { permissionsAdapter: adapter }) }
+            if state::address_at(state::map_slot(1, adapter)).inner != 0 {
+                revert_error(PermissionsAdapterAlreadyVerified { permissionsAdapter: adapter })
+            }
+            if permissions_adapter_io::balance(token, adapter) == 0 {
+                revert_error(PermissionsAdapterNotVerified { permissionsAdapter: adapter })
+            }
+            state::write_address(state::map_slot(1, adapter), token)
+            log.emit(PermissionsAdapterVerified { permissionsAdapter: adapter, permissionedToken: token })
+        }
+    }
+}

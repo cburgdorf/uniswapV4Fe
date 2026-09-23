@@ -1,0 +1,18 @@
+// SPDX-License-Identifier: MIT
+use core::ptr
+use std::abi::DynString
+use std::evm::{Address, RawMem, revert_error}
+#[error]
+pub struct InvalidAddressLength { pub len: u256 }
+pub fn to_ascii(_ address: Address, _ len: u256) -> DynString uses (mem: mut RawMem) {
+    if len == 0 || len > 40 || len % 2 != 0 { revert_error(InvalidAddressLength { len }) }
+    let data = ptr::alloc_bytes(len)
+    let mut i: u256 = 0
+    while i < len {
+        let nibble: u8 = ((address.inner >> ((39 - i) * 4)) & 15).downcast_truncate()
+        let ascii = if nibble < 10 { nibble + 0x30 } else { nibble + 0x37 }
+        mem.mstore8(addr: ptr::offset_bytes(data, i), value: ascii)
+        i += 1
+    }
+    DynString::from_payload(source: ptr::MemSpan::from_raw_parts(ptr: data, len))
+}

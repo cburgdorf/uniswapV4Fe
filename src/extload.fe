@@ -1,0 +1,65 @@
+// SPDX-License-Identifier: MIT
+// Ports of v4-core Extsload.sol and Exttload.sol.
+use core::abi::store_word
+use core::ptr::{self, MemBuffer, MemSpan}
+use std::abi::{Bytes32, DynArray, DynArrayAccess, MemVec}
+use std::evm::{RawStorage, RawOps, revert}
+
+pub fn sload(_ slot: Bytes32) -> Bytes32 uses (storage: RawStorage) {
+    Bytes32 { val: storage.sload(slot.val) }
+}
+pub fn tload(_ slot: Bytes32) -> Bytes32 uses (ops: RawOps) {
+    Bytes32 { val: ops.tstor_ptr<u256>(slot.val).read() }
+}
+pub fn sload_sparse(_ slots: DynArray<Bytes32>) -> DynArray<Bytes32>
+uses (storage: RawStorage)
+{
+    let mut values = MemVec<Bytes32>::zeroed(slots.len())
+    let mut i: u256 = 0
+    while i < slots.len() {
+        values.set(index: i, value: sload(slots.get(i)))
+        i = i + 1
+    }
+    values.to_dyn_array()
+}
+pub fn tload_sparse(_ slots: DynArray<Bytes32>) -> DynArray<Bytes32>
+uses (ops: RawOps)
+{
+    let mut values = MemVec<Bytes32>::zeroed(slots.len())
+    let mut i: u256 = 0
+    while i < slots.len() {
+        values.set(index: i, value: tload(slots.get(i)))
+        i = i + 1
+    }
+    values.to_dyn_array()
+}
+
+/// The reference shifts nSlots without overflow checks. Preserve its raw result,
+/// including wrapped lengths that do not describe a valid Solidity array.
+#[arithmetic(unchecked)]
+pub fn return_sload_range(_ start: Bytes32, _ count: u256) -> ! uses (ops: RawOps) {
+    let payload = count << 5
+    let size = 64 + payload
+    // These lengths cannot fit in EVM memory; avoid a checked allocator panic.
+    if size > (!(0 as u256) - 96) {
+        revert(())
+    }
+    let buffer = MemBuffer::alloc(size)
+    if size >= 32 {
+        store_word(ptr: buffer.ptr(), value: 32)
+    }
+    if size >= 64 {
+        store_word(ptr: ptr::offset_bytes(buffer.ptr(), 32), value: count)
+    }
+    let mut i: u256 = 0
+    while size >= 64 && i < (payload >> 5) {
+        store_word(
+            ptr: ptr::offset_bytes(buffer.ptr(), 64 + (i << 5)),
+            value: ops.sload(start.val + i),
+        )
+        i = i + 1
+    }
+    ops.return_data(
+        data: MemSpan::from_raw_parts(ptr: buffer.ptr(), len: size),
+    )
+}

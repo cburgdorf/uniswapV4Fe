@@ -1,0 +1,130 @@
+// SPDX-License-Identifier: MIT
+// PermissionedPositionManager's liquidity, funding and ERC-6909 action overrides.
+use std::abi::{Bytes2, sol}
+use std::evm::{Address, Ctx, Call, RawMem, RawStorage, Log, encode_msg_calldata, staticcall_decode, revert, revert_error}
+use super::{actions, pool_types::PoolKey, position_manager_actions::PositionPolicy, position_manager_state as state, erc721::Tokens, payments::{TokenPayer, Permit2Payment}, currency::Currency, calldata_decoder::View, delta_resolver, permissioned_router::wrap}
+#[error]
+pub struct InvalidHook {}
+#[error]
+pub struct TransferDisabled {}
+#[error]
+pub struct NoVerifiedAdapter {}
+#[error]
+pub struct NonContractCurrency {}
+#[error]
+pub struct Unauthorized {}
+msg PermissionMsg {
+    #[selector = sol("verifiedPermissionsAdapterOf(address)")]
+    Verified { adapter: Address } -> Address,
+    #[selector = sol("permissionsAdapterOf(address)")]
+    Created { adapter: Address } -> Address,
+    #[selector = sol("allowedHooks(address)")]
+    Hook { hook: Address } -> bool,
+    #[selector = sol("isAllowed(address,bytes2)")]
+    Allowed { account: Address, permission: Bytes2 } -> bool,
+    #[selector = sol("owner()")]
+    Owner {} -> Address,
+}
+msg ClaimMsg {
+    #[selector = sol("mint(address,uint256,uint256)")]
+    Mint { to: Address, id: u256, amount: u256 },
+    #[selector = sol("burn(address,uint256,uint256)")]
+    Burn { from: Address, id: u256, amount: u256 },
+    #[selector = sol("take(address,address,uint256)")]
+    Take { currency: Address, to: Address, amount: u256 },
+}
+pub struct PermissionedPositionPolicy { pub factory: Address, pub permit2: Address, pub actor: Address }
+impl Copy for PermissionedPositionPolicy {}
+impl PermissionedPositionPolicy {
+    pub fn verified_token(self, _ currency: Address) -> Address uses (ctx: Ctx) {
+        // Unlike PermissionedV4Router, this reference always calls the factory,
+        // including address zero, and requires a decodable address response.
+        staticcall_decode(addr: self.factory, gas: ctx.gas(), args: encode_msg_calldata(PermissionMsg::Verified { adapter: currency }).span())
+    }
+    pub fn owner(self, _ currency: Address) -> Address uses (ctx: Ctx) {
+        if self.verified_token(currency).inner == 0 { return Address::zero() }
+        staticcall_decode(addr: currency, gas: ctx.gas(), args: encode_msg_calldata(PermissionMsg::Owner {}).span())
+    }
+    fn require_liquidity(self, _ currency: Address, _ account: Address) uses (ctx: Ctx) {
+        let allowed: bool = staticcall_decode(addr: currency, gas: ctx.gas(), args: encode_msg_calldata(PermissionMsg::Allowed { account, permission: Bytes2 { val: 2 } }).span())
+        if !allowed { revert_error(Unauthorized {}) }
+    }
+    pub fn validate_currency(self, _ currency: Address, _ hook: Address, _ owner: Address) -> bool uses (ctx: Ctx) {
+        if self.verified_token(currency).inner == 0 {
+            let created: Address = staticcall_decode(addr: self.factory, gas: ctx.gas(), args: encode_msg_calldata(PermissionMsg::Created { adapter: currency }).span())
+            if created.inner != 0 { revert_error(NoVerifiedAdapter {}) }
+            if currency.inner != 0 && ctx.extcodesize(currency) == 0 { revert_error(NonContractCurrency {}) }
+            return false
+        }
+        let allowed: bool = staticcall_decode(addr: currency, gas: ctx.gas(), args: encode_msg_calldata(PermissionMsg::Hook { hook }).span())
+        if !allowed { revert_error(InvalidHook {}) }
+        self.require_liquidity(currency, owner)
+        true
+    }
+}
+impl TokenPayer for PermissionedPositionPolicy {
+    fn pay(self, _ manager: Address, _ currency: Address, _ payer: Address, _ amount: u256)
+    uses (ctx: Ctx, call: mut Call, mem: mut RawMem) {
+        let token = self.verified_token(currency)
+        let payment = Permit2Payment { permit2: self.permit2 }
+        if token.inner == 0 {
+            payment.pay(manager, currency, payer, amount)
+            return
+        }
+        self.require_liquidity(currency, self.actor)
+        payment.pay(currency, token, payer, amount)
+        wrap(currency, amount)
+    }
+    fn map_settle(self, _ manager: Address, _ amount: u256, _ currency: Address) -> u256
+    uses (ctx: Ctx, call: mut Call, mem: mut RawMem) {
+        let token = self.verified_token(currency)
+        if token.inner != 0 && amount == actions::CONTRACT_BALANCE {
+            Currency { address: token }.balance_of_self()
+        } else { delta_resolver::map_settle(manager, amount, currency) }
+    }
+}
+impl PositionPolicy for PermissionedPositionPolicy {
+    fn validate_mint(self, _ key: PoolKey, _ owner: Address)
+    uses (ctx: Ctx, storage: RawStorage, mem: mut RawMem) {
+        let verified0 = self.validate_currency(key.currency0, key.hooks, owner)
+        let verified1 = self.validate_currency(key.currency1, key.hooks, owner)
+        if !verified0 && !verified1 { revert_error(NoVerifiedAdapter {}) }
+    }
+    fn validate_increase(self, _ id: u256)
+    uses (ctx: Ctx, storage: RawStorage, mem: mut RawMem) {
+        let (key, _) = state::pool_and_info(id)
+        let owner = Tokens { slot: 0 }.owner_of(id)
+        let _ = self.validate_currency(key.currency0, key.hooks, owner)
+        let _ = self.validate_currency(key.currency1, key.hooks, owner)
+    }
+    fn sweep(self, _ token: Address, _ recipient: Address)
+    uses (ctx: Ctx, call: mut Call, mem: mut RawMem) {
+        let underlying = self.verified_token(token)
+        let currency = Currency { address: if underlying.inner == 0 { token } else { underlying } }
+        let amount = currency.balance_of_self()
+        if amount > 0 { currency.transfer(recipient, amount) }
+    }
+    fn extra_action(self, _ manager: Address, _ actor: Address, _ action: u256, _ params: View) -> bool
+    uses (ctx: Ctx, call: mut Call, storage: mut RawStorage, mem: mut RawMem, log: mut Log) {
+        if action == actions::MINT_6909 {
+            let currency = params.currency()
+            let amount = delta_resolver::full_credit(manager, currency)
+            if ctx.extcodesize(manager) == 0 { revert(()) }
+            call.call(addr: manager, gas: ctx.gas(), value: 0, message: ClaimMsg::Mint { to: ctx.address(), id: currency.inner, amount })
+            return true
+        }
+        if action == actions::UNWIND_WITH_FALLBACK || action == actions::BURN_6909 {
+            let (currency, account, amount) = params.currency_address_uint()
+            let delivering = action == actions::UNWIND_WITH_FALLBACK
+            if !delivering && account != actor { revert_error(Unauthorized {}) }
+            if ctx.extcodesize(manager) == 0 { revert(()) }
+            call.call(addr: manager, gas: ctx.gas(), value: 0, message: ClaimMsg::Burn { from: if delivering { ctx.address() } else { account }, id: currency.inner, amount })
+            if delivering {
+                // Direct take: no zero-amount shortcut or recipient remapping.
+                call.call(addr: manager, gas: ctx.gas(), value: 0, message: ClaimMsg::Take { currency, to: account, amount })
+            }
+            return true
+        }
+        false
+    }
+}

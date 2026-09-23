@@ -1,0 +1,73 @@
+// SPDX-License-Identifier: MIT
+// Pinned DeltaResolver amount mapping shared by the router and position manager.
+use std::evm::{Address, Ctx, RawMem, Call, revert_error}
+use super::{actions, currency::Currency, transient_state_library}
+
+#[error]
+pub struct DeltaNotPositive { pub currency: Address }
+#[error]
+pub struct DeltaNotNegative { pub currency: Address }
+#[error]
+pub struct InsufficientBalance {}
+
+pub fn full_debt(_ manager: Address, _ currency: Address) -> u256
+uses (ctx: Ctx, mem: mut RawMem)
+{
+    let amount = transient_state_library::currency_delta(manager, ctx.address(), currency)
+    if amount > 0 {
+        revert_error(DeltaNotNegative { currency })
+    }
+    // Checked negation preserves Panic(0x11) for a hostile MIN_INT256 response.
+    (-amount).downcast_truncate()
+}
+pub fn full_credit(_ manager: Address, _ currency: Address) -> u256
+uses (ctx: Ctx, mem: mut RawMem)
+{
+    let amount = transient_state_library::currency_delta(manager, ctx.address(), currency)
+    if amount < 0 {
+        revert_error(DeltaNotPositive { currency })
+    }
+    amount.downcast_truncate()
+}
+pub fn map_settle(_ manager: Address, _ amount: u256, _ currency: Address) -> u256
+uses (ctx: Ctx, mem: mut RawMem, call: mut Call)
+{
+    if amount == actions::CONTRACT_BALANCE {
+        Currency { address: currency }.balance_of_self()
+    } else if amount == 0 {
+        full_debt(manager, currency)
+    } else {
+        amount
+    }
+}
+pub fn map_take(_ manager: Address, _ amount: u256, _ currency: Address) -> u256
+uses (ctx: Ctx, mem: mut RawMem)
+{
+    if amount == 0 {
+        full_credit(manager, currency)
+    } else {
+        amount
+    }
+}
+pub fn map_wrap_unwrap(
+    _ manager: Address,
+    _ input: Address,
+    _ amount: u256,
+    _ output: Address,
+) -> u256
+uses (ctx: Ctx, mem: mut RawMem, call: mut Call)
+{
+    let balance = Currency { address: input }.balance_of(ctx.address())
+    if amount == actions::CONTRACT_BALANCE {
+        return balance
+    }
+    let resolved = if amount == 0 {
+        full_debt(manager, output)
+    } else {
+        amount
+    }
+    if resolved > balance {
+        revert_error(InsufficientBalance {})
+    }
+    resolved
+}

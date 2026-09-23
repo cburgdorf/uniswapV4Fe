@@ -1,0 +1,114 @@
+// SPDX-License-Identifier: MIT
+// Notifier's storage transitions and external callback policy. The parent must
+// enforce pool-lock and token-approval guards before subscribe/unsubscribe.
+use core::ptr::{MemBuffer, MemSpan}
+use std::abi::{Bytes, sol}
+use std::evm::{Address, Ctx, Call, RawMem, RawStorage, Log, encode_msg_calldata, revert_error}
+use std::evm::packed::keccak_packed
+use super::currency::wrap_last_error
+const MASK: u256 = 0xffffffffffffffffffffffffffffffffffffffff
+#[error]
+pub struct AlreadySubscribed { pub tokenId: u256, pub subscriber: Address }
+#[error]
+pub struct NotSubscribed {}
+#[error]
+pub struct NoCodeSubscriber {}
+#[error]
+pub struct GasLimitTooLow {}
+#[event]
+pub struct Subscription {
+    #[indexed]
+    pub tokenId: u256,
+    #[indexed]
+    pub subscriber: Address,
+}
+#[event]
+pub struct Unsubscription {
+    #[indexed]
+    pub tokenId: u256,
+    #[indexed]
+    pub subscriber: Address,
+}
+msg SubscriberMsg {
+    #[selector = sol("notifySubscribe(uint256,bytes)")]
+    Subscribe { tokenId: u256, data: Bytes },
+    #[selector = sol("notifyUnsubscribe(uint256)")]
+    Unsubscribe { tokenId: u256 },
+    #[selector = sol("notifyBurn(uint256,address,uint256,uint256,int256)")]
+    Burn { tokenId: u256, owner: Address, info: u256, liquidity: u256, feesAccrued: i256 },
+    #[selector = sol("notifyModifyLiquidity(uint256,int256,int256)")]
+    Modify { tokenId: u256, liquidityChange: i256, feesAccrued: i256 },
+}
+pub struct Notifications {
+    pub subscribers_slot: u256,
+    pub info_slot: u256,
+    pub gas_limit: u256,
+}
+impl Copy for Notifications {}
+impl Notifications {
+    fn slot(self, _ id: u256) -> u256 uses (mem: mut RawMem) { keccak_packed((id, self.subscribers_slot)) }
+    pub fn subscriber(self, _ id: u256) -> Address uses (storage: RawStorage, mem: mut RawMem) {
+        Address { inner: storage.sload(self.slot(id)) & MASK }
+    }
+    fn write(self, _ id: u256, _ who: Address) uses (storage: mut RawStorage, mem: mut RawMem) {
+        let slot = self.slot(id)
+        storage.sstore(slot: slot, value: (storage.sload(slot) & !MASK) | who.inner)
+    }
+    fn flag(self, _ id: u256, _ subscribed: bool) uses (storage: mut RawStorage, mem: mut RawMem) {
+        let slot = keccak_packed((id, self.info_slot))
+        let value = storage.sload(slot)
+        storage.sstore(slot: slot, value: if subscribed { value | 1 } else { value & !(0xff as u256) })
+    }
+    pub fn subscribe(self, _ id: u256, _ who: Address, _ data: own Bytes)
+    uses (ctx: Ctx, call: mut Call, storage: mut RawStorage, mem: mut RawMem, log: mut Log) {
+        let previous = self.subscriber(id)
+        if previous.inner != 0 { revert_error(AlreadySubscribed { tokenId: id, subscriber: previous }) }
+        self.flag(id, true)
+        self.write(id, who)
+        let args = encode_msg_calldata(SubscriberMsg::Subscribe { tokenId: id, data })
+        notify(who, args.span(), sol("notifySubscribe(uint256,bytes)"), sol("SubscriptionReverted(address,bytes)"))
+        log.emit(Subscription { tokenId: id, subscriber: who })
+    }
+    pub fn unsubscribe(self, _ id: u256)
+    uses (ctx: Ctx, call: mut Call, storage: mut RawStorage, mem: mut RawMem, log: mut Log) {
+        let previous = self.subscriber(id)
+        if previous.inner == 0 { revert_error(NotSubscribed {}) }
+        self.flag(id, false)
+        self.write(id, Address { inner: 0 })
+        if ctx.extcodesize(previous) != 0 {
+            if ctx.gas() < self.gas_limit { revert_error(GasLimitTooLow {}) }
+            let args = encode_msg_calldata(SubscriberMsg::Unsubscribe { tokenId: id })
+            let mut ret = MemBuffer::with_capacity(0)
+            let _ = call.raw_call(addr: previous, gas: self.gas_limit, value: 0, args: args.span(), ret: mut ret)
+        }
+        log.emit(Unsubscription { tokenId: id, subscriber: previous })
+    }
+    // Used after an unsubscribe callback reattaches during a forced exit.
+    // Clear state and emit the matching event without another external callback.
+    pub fn detach(self, _ id: u256)
+    uses (storage: mut RawStorage, mem: mut RawMem, log: mut Log) {
+        let previous = self.subscriber(id)
+        self.write(id, Address::zero())
+        self.flag(id, false)
+        log.emit(Unsubscription { tokenId: id, subscriber: previous })
+    }
+    pub fn burn(self, _ id: u256, _ owner: Address, _ info: u256, _ liquidity: u256, _ fees: i256)
+    uses (ctx: Ctx, call: mut Call, storage: mut RawStorage, mem: mut RawMem) {
+        let previous = self.subscriber(id)
+        self.write(id, Address { inner: 0 })
+        let args = encode_msg_calldata(SubscriberMsg::Burn { tokenId: id, owner, info, liquidity, feesAccrued: fees })
+        notify(previous, args.span(), sol("notifyBurn(uint256,address,uint256,uint256,int256)"), sol("BurnNotificationReverted(address,bytes)"))
+    }
+    pub fn modify(self, _ id: u256, _ change: i256, _ fees: i256)
+    uses (ctx: Ctx, call: mut Call, storage: RawStorage, mem: mut RawMem) {
+        let who = self.subscriber(id)
+        let args = encode_msg_calldata(SubscriberMsg::Modify { tokenId: id, liquidityChange: change, feesAccrued: fees })
+        notify(who, args.span(), sol("notifyModifyLiquidity(uint256,int256,int256)"), sol("ModifyLiquidityNotificationReverted(address,bytes)"))
+    }
+}
+fn notify(_ who: Address, _ args: MemSpan, _ selector: u32, _ context: u32) uses (ctx: Ctx, call: mut Call) {
+    if ctx.extcodesize(who) == 0 { revert_error(NoCodeSubscriber {}) }
+    let mut ret = MemBuffer::with_capacity(0)
+    let outcome = call.raw_call(addr: who, gas: ctx.gas(), value: 0, args: args, ret: mut ret)
+    if !outcome.success() { wrap_last_error(who, selector, context) }
+}

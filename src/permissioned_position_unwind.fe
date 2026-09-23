@@ -1,0 +1,126 @@
+// SPDX-License-Identifier: MIT
+// Claim-first forced exits, followed by independent gas-bounded deliveries.
+use core::abi::{AbiSize, Encode, store_word}
+use core::ptr::{self, MemBuffer}
+use std::abi::{Bytes, DynArray, Sol, sol}
+use std::evm::{Address, Ctx, Call, RawMem, RawStorage, Log, encode_abi_payload, encode_msg_calldata, staticcall_decode, revert_error}
+use super::{position_manager::UnlockMsg, position_manager_actions::Config, position_manager_state as state, erc721::Tokens, permissioned_position_policy::{PermissionedPositionPolicy, Unauthorized}, router}
+#[event]
+pub struct CurrencyUnwound {
+    #[indexed]
+    pub tokenId: u256,
+    #[indexed]
+    pub currency: Address,
+    #[indexed]
+    pub recipient: Address,
+    pub caller: Address,
+    pub lp: Address,
+    pub amount: u256,
+    pub asClaim: bool,
+}
+#[event]
+pub struct ClaimWithdrawn {
+    #[indexed]
+    pub currency: Address,
+    #[indexed]
+    pub from: Address,
+    #[indexed]
+    pub to: Address,
+    pub amount: u256,
+}
+msg ClaimMsg {
+    #[selector = sol("balanceOf(address,uint256)")]
+    Balance { owner: Address, id: u256 } -> u256,
+    #[selector = sol("transfer(address,uint256,uint256)")]
+    Transfer { to: Address, id: u256, amount: u256 } -> bool,
+}
+fn encoded<T: AbiSize + Encode<Sol>>(_ value: own T) -> Bytes {
+    Bytes::from_payload(source: encode_abi_payload(value).span())
+}
+// std currently provides a builder only for static ABI array elements.
+// Build the canonical bytes[] tail from already-encoded Bytes values.
+fn batch<const N: usize>(_ actions: Bytes, _ params: [Bytes; N]) -> Bytes {
+    let count = N as u256
+    let mut size = 32 + count * 32
+    let mut i: usize = 0
+    while i < N {
+        size += params[i].encoded_size()
+        i += 1
+    }
+    let output = ptr::alloc_bytes(size)
+    store_word(ptr: output, value: count)
+    let mut cursor = 32 + count * 32
+    i = 0
+    while i < N {
+        store_word(ptr: ptr::offset_bytes(output, 32 + (i as u256) * 32), value: cursor - 32)
+        ptr::copy(dest: ptr::offset_bytes(output, cursor), source: params[i].encoded_span())
+        cursor += params[i].encoded_size()
+        i += 1
+    }
+    let parameters: DynArray<Bytes> = DynArray::from_abi_tail(data: output, len: count, size)
+    encoded((actions, parameters))
+}
+pub struct Exit { pub config: Config, pub policy: PermissionedPositionPolicy, pub delivery_gas: u256 }
+impl Copy for Exit {}
+impl Exit {
+    pub fn unwind(self, _ id: u256, _ minimum0: u128, _ minimum1: u128, _ hook: Bytes)
+    uses (ctx: Ctx, call: mut Call, storage: mut RawStorage, mem: mut RawMem, log: mut Log) {
+        let (key, _) = state::pool_and_info(id)
+        let admin0 = self.policy.owner(key.currency0)
+        let admin1 = self.policy.owner(key.currency1)
+        if ctx.caller() != admin0 && ctx.caller() != admin1 { revert_error(Unauthorized {}) }
+        let tokens = Tokens { slot: 0 }
+        let lp = tokens.owner_of(id)
+        if state::info(id).has_subscriber() {
+            self.config.notifications().unsubscribe(id)
+            if state::info(id).has_subscriber() { self.config.notifications().detach(id) }
+        }
+        // Match the reference's direct approval assignment: no Approval event.
+        let slot = tokens.approved_slot(id)
+        let mask: u256 = 0xffffffffffffffffffffffffffffffffffffffff
+        storage.sstore(slot: slot, value: (storage.sload(slot) & !mask) | ctx.caller().inner)
+        let actions = Bytes::from_word_prefix(word: 0x031717 << 232, len: 3)
+        let data = batch(actions, [encoded((id, minimum0, minimum1, hook)), encoded(key.currency0), encoded(key.currency1)])
+        let _ = call.call(addr: self.config.manager, gas: ctx.gas(), value: 0, message: UnlockMsg::Unlock { data })
+        // Include all pre-existing claims, not merely the burn's proceeds.
+        let amount0 = self.claim_balance(key.currency0)
+        let amount1 = self.claim_balance(key.currency1)
+        self.deliver(key.currency0, lp, id, amount0)
+        self.deliver(key.currency1, lp, id, amount1)
+    }
+    pub fn withdraw(self, _ currency: Address, _ amount: u256, _ to: Address)
+    uses (ctx: Ctx, call: mut Call, log: mut Log) {
+        let recipient = router::map_recipient(to, ctx.caller())
+        let actions = Bytes::from_word_prefix(word: 0x180e << 240, len: 2)
+        let data = batch(actions, [encoded((currency, ctx.caller(), amount)), encoded((currency, recipient, amount))])
+        let _ = call.call(addr: self.config.manager, gas: ctx.gas(), value: 0, message: UnlockMsg::Unlock { data })
+        log.emit(ClaimWithdrawn { currency, from: ctx.caller(), to: recipient, amount })
+    }
+    fn claim_balance(self, _ currency: Address) -> u256 uses (ctx: Ctx) {
+        staticcall_decode(addr: self.config.manager, gas: ctx.gas(), args: encode_msg_calldata(ClaimMsg::Balance { owner: ctx.address(), id: currency.inner }).span())
+    }
+    fn try_deliver(self, _ currency: Address, _ to: Address, _ amount: u256) -> bool uses (ctx: Ctx, call: mut Call) {
+        let actions = Bytes::from_word_prefix(word: 0x19 << 248, len: 1)
+        let data = batch(actions, [encoded((currency, to, amount))])
+        let args = encode_msg_calldata(UnlockMsg::Unlock { data })
+        let mut ret = MemBuffer::with_capacity(0)
+        let outcome = call.raw_call(addr: self.config.manager, gas: self.delivery_gas, value: 0, args: args.span(), ret: mut ret)
+        outcome.success()
+    }
+    fn deliver(self, _ currency: Address, _ lp: Address, _ id: u256, _ amount: u256)
+    uses (ctx: Ctx, call: mut Call, log: mut Log) {
+        if amount == 0 { return }
+        if self.try_deliver(currency, lp, amount) {
+            log.emit(CurrencyUnwound { tokenId: id, currency, recipient: lp, caller: ctx.caller(), lp, amount, asClaim: false })
+            return
+        }
+        let admin = self.policy.owner(currency)
+        if admin.inner != 0 && self.try_deliver(currency, admin, amount) {
+            log.emit(CurrencyUnwound { tokenId: id, currency, recipient: admin, caller: ctx.caller(), lp, amount, asClaim: false })
+            return
+        }
+        let recipient = if admin.inner == 0 { lp } else { admin }
+        let _ = call.call(addr: self.config.manager, gas: ctx.gas(), value: 0, message: ClaimMsg::Transfer { to: recipient, id: currency.inner, amount })
+        log.emit(CurrencyUnwound { tokenId: id, currency, recipient, caller: ctx.caller(), lp, amount, asClaim: true })
+    }
+}

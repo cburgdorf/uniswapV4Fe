@@ -1,0 +1,43 @@
+// SPDX-License-Identifier: MIT
+// Solidity-compatible string storage for ERC721 constructor metadata.
+use core::abi::{ByteInput, store_word}
+use core::ptr
+use std::abi::{Bytes, DynString}
+use std::evm::{RawStorage, RawMem}
+use std::evm::packed::keccak_packed
+/// Initialize a fresh slot. This is not a general replacement/clearing operation.
+pub fn initialize(_ slot: u256, _ value: Bytes) uses (storage: mut RawStorage, mem: mut RawMem) {
+    let len = value.len()
+    if len < 32 {
+        let word = if len == 0 { 0 } else { value.view().word_at(0) }
+        storage.sstore(slot: slot, value: word | (len * 2))
+    } else {
+        storage.sstore(slot: slot, value: len * 2 + 1)
+        let base = keccak_packed(slot)
+        let mut offset: u256 = 0
+        while offset < len {
+            storage.sstore(slot: base + offset / 32, value: value.view().word_at(offset))
+            offset += 32
+        }
+    }
+}
+pub fn load(_ slot: u256) -> DynString uses (storage: RawStorage, mem: mut RawMem) {
+    let head = storage.sload(slot)
+    let short = head & 1 == 0
+    let len = if short { (head & 0xff) / 2 } else { head / 2 }
+    let size = 32 + ((len + 31) / 32) * 32
+    let p = ptr::alloc_bytes(size)
+    ptr::zero_bytes(p, size)
+    store_word(ptr: p, value: len)
+    if short {
+        if len != 0 { store_word(ptr: ptr::offset_bytes(p, 32), value: head & !(0xff as u256)) }
+    } else {
+        let base = keccak_packed(slot)
+        let mut offset: u256 = 0
+        while offset < len {
+            store_word(ptr: ptr::offset_bytes(p, 32 + offset), value: storage.sload(base + offset / 32))
+            offset += 32
+        }
+    }
+    DynString::from_abi_tail(data: p, len: len, size: size)
+}

@@ -1,0 +1,123 @@
+// SPDX-License-Identifier: MIT
+// v4-periphery PositionDescriptor: position/state reads and NFT metadata.
+use std::abi::{Bytes32, DynString, sol}
+use std::evm::{Address, Call, Ctx, RawMem, encode_msg_calldata, staticcall_decode, revert_error}
+use super::{
+    currency_ratio_sort_order as order,
+    descriptor::{self, ConstructTokenURIParams},
+    metadata_text,
+    pool_types::PoolKey,
+    position_info::PositionInfo,
+    safe_currency_metadata as metadata,
+    state_library,
+}
+
+#[error]
+pub struct InvalidTokenId { pub tokenId: u256 }
+
+msg PositionRead {
+    #[selector = sol("getPoolAndPositionInfo(uint256)")]
+    Get { tokenId: u256 } -> (PoolKey, u256),
+}
+
+msg PositionDescriptorMsg {
+    #[selector = sol("poolManager()")]
+    PoolManager {} -> Address,
+    #[selector = sol("wrappedNative()")]
+    WrappedNative {} -> Address,
+    #[selector = sol("nativeCurrencyLabel()")]
+    NativeCurrencyLabel {} -> DynString,
+    #[selector = sol("currencyRatioPriority(address)")]
+    CurrencyRatioPriority { currency: Address } -> i256,
+    #[selector = sol("flipRatio(address,address)")]
+    FlipRatio { currency0: Address, currency1: Address } -> bool,
+    #[selector = sol("tokenURI(address,uint256)")]
+    TokenUri { positionManager: Address, tokenId: u256 } -> DynString,
+}
+
+fn native_label(_ word: u256) -> DynString {
+    let mut length: u256 = 0
+    while length < 32 && ((word >> ((31 - length) * 8)) & 255) != 0 {
+        length += 1
+    }
+    metadata_text::word(word, length)
+}
+
+fn priority(_ currency: Address, _ wrapped_native: Address) -> i256 uses (ctx: Ctx) {
+    if currency.inner == 0 || currency.inner == wrapped_native.inner {
+        return order::DENOMINATOR
+    }
+    if ctx.chainid() == 1 {
+        match currency.inner {
+            0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48 => order::NUMERATOR_MOST,
+            0xdac17f958d2ee523a2206206994597c13d831ec7 => order::NUMERATOR_MORE,
+            0x6b175474e89094c44da98b954eedeac495271d0f => order::NUMERATOR,
+            0x8daebade922df735c38c80c7ebd708af50815faa => order::DENOMINATOR_MORE,
+            0x2260fac5e5542a773aa44fbcfedf7c193bc2c599 => order::DENOMINATOR_MOST,
+            _ => 0,
+        }
+    } else {
+        0
+    }
+}
+
+pub contract PositionDescriptor {
+    pool_manager: Address,
+    wrapped_native: Address,
+    label_bytes: Bytes32,
+
+    init(_poolManager: Address, _wrappedNative: Address, _nativeCurrencyLabelBytes: Bytes32)
+    uses (mut pool_manager, mut wrapped_native, mut label_bytes)
+    {
+        pool_manager = _poolManager
+        wrapped_native = _wrappedNative
+        label_bytes = _nativeCurrencyLabelBytes
+    }
+
+    recv PositionDescriptorMsg {
+        PoolManager {} -> Address uses (pool_manager) { pool_manager }
+        WrappedNative {} -> Address uses (wrapped_native) { wrapped_native }
+        NativeCurrencyLabel {} -> DynString uses (label_bytes) {
+            native_label(label_bytes.val)
+        }
+        CurrencyRatioPriority { currency } -> i256 uses (wrapped_native, ctx: Ctx) {
+            priority(currency, wrapped_native)
+        }
+        FlipRatio { currency0, currency1 } -> bool uses (wrapped_native, ctx: Ctx) {
+            priority(currency0, wrapped_native) > priority(currency1, wrapped_native)
+        }
+        TokenUri { positionManager, tokenId } -> DynString
+        uses (pool_manager, wrapped_native, label_bytes, ctx: Ctx, call: Call, mem: mut RawMem)
+        {
+            let args = encode_msg_calldata(PositionRead::Get { tokenId })
+            let (key, bits): (PoolKey, u256) = staticcall_decode(
+                addr: positionManager, gas: ctx.gas(), args: args.span(),
+            )
+            let info = PositionInfo { bits }
+            if info.pool_id().val == 0 {
+                revert_error(InvalidTokenId { tokenId })
+            }
+            let tick = state_library::slot0(pool_manager, key.to_id()).tick()
+            let flip = priority(key.currency0, wrapped_native) > priority(key.currency1, wrapped_native)
+            let quote = if flip { key.currency0 } else { key.currency1 }
+            let base = if flip { key.currency1 } else { key.currency0 }
+            descriptor::constructTokenURI(ConstructTokenURIParams {
+                tokenId,
+                quoteCurrency: quote,
+                baseCurrency: base,
+                quoteCurrencySymbol: metadata::symbol(quote, native_label(label_bytes.val)),
+                baseCurrencySymbol: metadata::symbol(base, native_label(label_bytes.val)),
+                quoteCurrencyDecimals: metadata::decimals(quote),
+                baseCurrencyDecimals: metadata::decimals(base),
+                flipRatio: flip,
+                tickLower: info.tick_lower(),
+                tickUpper: info.tick_upper(),
+                tickCurrent: tick,
+                tickSpacing: key.tickSpacing,
+                fee: key.fee,
+                poolManager: pool_manager,
+                hooks: key.hooks,
+            })
+        }
+    }
+}

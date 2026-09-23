@@ -1,0 +1,41 @@
+// SPDX-License-Identifier: MIT
+// v4-periphery PositionInfoLibrary: high 200 pool-id bits, two signed ticks,
+// and the low subscriber byte. The pool id is deliberately truncated.
+use std::abi::{Bytes32, sol::Int24}
+use std::evm::RawMem
+use super::pool_types::PoolKey
+const POOL_MASK: u256 = 0xffffffffffffffffffffffffffffffffffffffffffffffffff00000000000000
+const TICK_MASK: u256 = 0xffffff
+pub struct PositionInfo { pub bits: u256 }
+impl Copy for PositionInfo {}
+impl PositionInfo {
+    pub fn pool_id(self) -> Bytes32 {
+        Bytes32 { val: self.bits & POOL_MASK }
+    }
+    pub fn tick_lower(self) -> Int24 {
+        let signed: i32 = self.bits.downcast_truncate()
+        Int24 { val: signed >> 8 }
+    }
+    pub fn tick_upper(self) -> Int24 {
+        let signed: i32 = ((self.bits >> 32) << 8).downcast_truncate()
+        Int24 { val: signed >> 8 }
+    }
+    pub fn has_subscriber(self) -> bool {
+        self.bits & 255 != 0
+    }
+    pub fn subscribe(self) -> Self {
+        Self { bits: self.bits | 1 }
+    }
+    pub fn unsubscribe(self) -> Self {
+        Self { bits: self.bits & !(255 as u256) }
+    }
+}
+pub fn initialize(_ key: PoolKey, _ lower: Int24, _ upper: Int24) -> PositionInfo
+uses (mem: mut RawMem)
+{
+    let low: u256 = (lower.val as i256).downcast_truncate()
+    let high: u256 = (upper.val as i256).downcast_truncate()
+    PositionInfo {
+        bits: (key.to_id().val & POOL_MASK) | ((low & TICK_MASK) << 8) | ((high & TICK_MASK) << 32),
+    }
+}

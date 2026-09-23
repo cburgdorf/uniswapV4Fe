@@ -1,0 +1,37 @@
+running `fe test` for 4 inputs (jobs=8)
+
+COMPILING        abi_dynamic_payload  crates/fe/tests/fixtures/fe_test/abi_dynamic_payload.fe
+COMPILING        composed_abi_decoder crates/fe/tests/fixtures/fe_test/composed_abi_decoder.fe
+COMPILING        abi_unpadded_dynam.. crates/fe/tests/fixtures/fe_test/abi_unpadded_dynamic_payload.fe
+COMPILING        abi_nested_msg_dec.. crates/fe/tests/fixtures/fe_test/abi_nested_msg_decode_bounds.fe
+READY [2.5602s]  abi_nested_msg_dec.. running 3 tests
+PASS  [0.0002s]  abi_nested_msg_dec.. test_nested_msg_encoding_uses_single_dynamic_head_slot
+PASS  [0.0002s]  abi_nested_msg_dec.. test_nested_msg_decode_truncated_inner_head_reverts
+PASS  [0.0002s]  abi_nested_msg_dec.. test_nested_msg_decode_valid
+READY [2.6612s]  abi_unpadded_dynam.. running 10 tests
+PASS  [0.0001s]  abi_unpadded_dynam.. dirty_padding_is_cleared
+PASS  [0.0001s]  abi_unpadded_dynam.. unpadded_strings
+PASS  [0.0001s]  abi_unpadded_dynam.. missing_actual_bytes_rejected
+PASS  [0.0000s]  abi_unpadded_dynam.. aligned_and_empty_bytes
+PASS  [0.0001s]  abi_unpadded_dynam.. unpadded_bytes_all_decode_paths
+PASS  [0.0001s]  abi_unpadded_dynam.. missing_nested_bytes_rejected
+PASS  [0.0000s]  abi_unpadded_dynam.. overflowing_length_rejected
+PASS  [0.0000s]  abi_unpadded_dynam.. canonical_array_keeps_full_span
+PASS  [0.0000s]  abi_unpadded_dynam.. missing_length_word_rejected
+PASS  [0.0002s]  abi_unpadded_dynam.. unpadded_nested_bytes
+READY [3.2384s]  composed_abi_decoder running 3 tests
+PASS  [0.0001s]  composed_abi_decoder composed_addresses_roundtrip
+PASS  [0.0001s]  composed_abi_decoder composed_second_address_rejects_noncanonical_word
+PASS  [0.0001s]  composed_abi_decoder composed_first_address_rejects_noncanonical_word
+READY [7.6077s]  abi_dynamic_payload  running 9 tests
+PASS  [0.0001s]  abi_dynamic_payload  test_bytes_from_words_prefix_uses_canonical_tail_size
+PASS  [0.0001s]  abi_dynamic_payload  test_abi_dynamic_payload_tuple_encoding
+PASS  [0.0000s]  abi_dynamic_payload  test_error_dynamic_payload_tail_encoding
+PASS  [0.0000s]  abi_dynamic_payload  test_memory_prefix_zero_pads_short_spans
+PASS  [0.0001s]  abi_dynamic_payload  test_bytes_from_words_prefix_rejects_oversize_len
+PASS  [0.0001s]  abi_dynamic_payload  test_memory_and_calldata_bytes_views_reject_out_of_bounds_access
+PASS  [0.0001s]  abi_dynamic_payload  test_memory_bytes_view_masks_partial_words
+PASS  [0.0002s]  abi_dynamic_payload  test_owned_bytes_and_views_expose_explicit_spans
+PASS  [0.0003s]  abi_dynamic_payload  test_msg_dynamic_payload_tail_encoding
+
+test result: ok. 25 passed; 0 failed

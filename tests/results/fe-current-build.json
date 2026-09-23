@@ -1,0 +1,38 @@
+{
+  "timestamp_utc": "2026-09-23T19:47:38.383494+00:00",
+  "upstream_repository": "https://github.com/argotorg/fe.git",
+  "upstream_master": "fd5f11847143070e9ba8fda364a2d31caf3356e5",
+  "local_revision": "09385e70d781674171a91cf49ba083aad2a5f118",
+  "local_commits": [
+    "09385e70d781674171a91cf49ba083aad2a5f118 Fix verification of payable value-returning handlers",
+    "0f72c51c06e5bc5305cfd50b75dcfe90a121a042 Preserve ordinary mutable argument memory contracts in borrow summaries",
+    "8dd1e86491715bfe3616206e36275eae195c8015 Accept unpadded ABI dynamic payloads with bounded copies",
+    "eb16cb3745426c119f493835bb33b82d5e37d35a Fix implicit borrows of record literals during semantic lowering",
+    "932132f3cc6536af4de4025b53f045174e7ae7d3 Apply bounded read-only staticcall compatibility fix"
+  ],
+  "compiler_version": "fe 26.3.0 (09385e70d)",
+  "compiler_sha256": "8952b4fcb7d2f44ab817183f67b07a9948427ea334fa7fda5d1c4f09a03ed38c",
+  "patch": "tests/results/fe-current-local-fixes.patch",
+  "patch_sha256": "c4679938a07c56fc2c90bfb9fb88056ef20f435e44f996f447ed9b5786970119",
+  "source_worktree_clean": true,
+  "build_command": "cargo build --release -p fe",
+  "compiler_checkout": "/tmp/fe-uniswap-integrated",
+  "validation_status": "Compiler regression and complete project check results are recorded separately; this manifest alone is not a test result.",
+  "regression_results": {
+    "O1": {
+      "passed": 31,
+      "failed": 0,
+      "log": "tests/results/fe-current-regressions-o1.log"
+    },
+    "O2_historical_before_user_preference": {
+      "passed": 31,
+      "failed": 0,
+      "log": "tests/results/fe-current-regressions-o2.log"
+    }
+  },
+  "staticcall_abi": {
+    "file": "tests/results/fe-current-staticcall.abi.json",
+    "check_state_mutability": "view"
+  },
+  "validation_policy": "O1 only for all further validation"
+}

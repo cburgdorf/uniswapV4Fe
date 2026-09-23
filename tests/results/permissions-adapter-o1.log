@@ -1,0 +1,19 @@
+Compiling 41 files with Solc 0.8.26
+Solc 0.8.26 finished in 4.15s
+Compiler run successful!
+
+Ran 11 tests for test/PermissionsAdapterParity.t.sol:PermissionsAdapterParityTest
+[PASS] testFuzz_admin(uint8,bool,bool) (runs: 10000, μ: 13766764, ~: 13756456)
+[PASS] testFuzz_allowance(uint128,uint256,uint128,bool) (runs: 10000, μ: 16673586, ~: 16637742)
+[PASS] testFuzz_lifecycle(uint128,uint128,uint8) (runs: 10000, μ: 15763523, ~: 15747587)
+[PASS] testFuzz_metadata(bytes,uint256,bool) (runs: 10000, μ: 9602241, ~: 9546892)
+[PASS] testFuzz_permission(bytes2,bytes2,bool) (runs: 10000, μ: 1244145, ~: 1244406)
+[PASS] testFuzz_rawMetadata(bytes) (runs: 10000, μ: 9489627, ~: 9472078)
+[PASS] testFuzz_sequences(uint256) (runs: 10000, μ: 17590728, ~: 17581453)
+[PASS] test_constructorAndCheckerFailures() (gas: 24159603)
+[PASS] test_malformedAndDepositFailures() (gas: 14154031)
+[PASS] test_metadataAndReturndataBoundaries() (gas: 87525320)
+[PASS] test_ownerAndTransferBoundaries() (gas: 27191279)
+Suite result: ok. 11 passed; 0 failed; 0 skipped; finished in 148.36s (808.88s CPU time)
+
+Ran 1 test suite in 148.36s (148.36s CPU time): 11 tests passed, 0 failed, 0 skipped (11 total tests)

@@ -1,0 +1,19 @@
+Parity artifacts: /tmp/fe-permissions-factory-position-current-o1
+Compiler: fe 26.3.0 (702686c98); sha256=f3aaead7171e522c76b07fba14d25b70997fe3251a952686b0ad9c918aebac44
+Wrote /tmp/fe-permissions-factory-position-current-o1/fe/PermissionsAdapterFactory.bin
+Wrote /tmp/fe-permissions-factory-position-current-o1/fe/PermissionsAdapterFactory.runtime.bin
+Wrote /tmp/fe-permissions-factory-position-current-o1/fe/PermissionsAdapterFactory.abi.json
+Compiling 41 files with Solc 0.8.26
+Solc 0.8.26 finished in 2.70s
+Compiler run successful!
+
+Ran 5 tests for test/PermissionsFactoryParity.t.sol:PermissionsFactoryParityTest
+[PASS] testFuzz_constructorFailure(address,uint8) (runs: 10000, μ: 3011186, ~: 1918076)
+[PASS] testFuzz_createAndVerify(uint128,bool,bool) (runs: 10000, μ: 11901138, ~: 11711214)
+[PASS] testFuzz_pool(address) (runs: 10000, μ: 10474090, ~: 10474542)
+[PASS] testFuzz_unknown(address) (runs: 10000, μ: 3528520, ~: 3528520)
+[PASS] test_boundaries() (gas: 23737616)
+Suite result: ok. 5 passed; 0 failed; 0 skipped; finished in 17.44s (39.85s CPU time)
+
+Ran 1 test suite in 17.44s (17.44s CPU time): 5 tests passed, 0 failed, 0 skipped (5 total tests)
+Verified protocol ABI: /tmp/fe-permissions-factory-position-current-o1/fe/PermissionsAdapterFactory.protocol.abi.json

@@ -1,0 +1,221 @@
+// SPDX-License-Identifier: MIT
+// ReservesLens initialized-tick scan and continuation snapshot invariants.
+use std::abi::{Bytes32, sol::Int24}
+use std::evm::{Address, Ctx, RawMem, revert_error}
+use std::evm::packed::keccak_packed
+use core::abi::store_word
+use core::num::IntWord
+use core::ptr::{self, MemBuffer}
+use super::{state_library as state, tick_math, bit_math, sqrt_price_math, reserves_errors as error}
+use super::pool_types::PoolKey
+use super::reserves_types::{ScanState, PoolTVL, PopulatedTick}
+
+pub fn context_hash(_ manager: Address, _ id: Bytes32) -> Bytes32 uses (ctx: Ctx, mem: mut RawMem) {
+    Bytes32 { val: keccak_packed((ctx.chainid(), manager.inner, id.val)) }
+}
+pub fn initialize(_ manager: Address, _ spacing: Int24, _ id: Bytes32) -> ScanState
+uses (ctx: Ctx, mem: mut RawMem)
+{
+    if spacing.val < 1 || spacing.val > 32767 {
+        revert_error(error::InvalidTickSpacing { tickSpacing: spacing })
+    }
+    let slot = state::slot0(manager, id)
+    if slot.sqrt_price_x96().val == 0 { revert_error(error::PoolNotInitialized { poolId: id }) }
+    let active = state::liquidity(manager, id)
+    let min_compressed = tick_math::min_usable_tick(spacing).val / spacing.val
+    let mut s = ScanState::empty()
+    s.version = 1
+    s.blockNumber = ctx.block_number()
+    s.contextHash = context_hash(manager, id)
+    s.sqrtPriceX96 = slot.sqrt_price_x96()
+    s.currentTick = slot.tick()
+    s.activeLiquidity = active
+    s.wordPos = (min_compressed >> 8).downcast_truncate()
+    s
+}
+pub fn verify_snapshot(_ manager: Address, _ id: Bytes32, _ s: ScanState)
+uses (ctx: Ctx, mem: mut RawMem)
+{
+    let slot = state::slot0(manager, id)
+    if slot.sqrt_price_x96().val == 0 { revert_error(error::PoolNotInitialized { poolId: id }) }
+    if slot.sqrt_price_x96().val != s.sqrtPriceX96.val || slot.tick().val != s.currentTick.val || state::liquidity(manager, id) != s.activeLiquidity {
+        revert_error(error::CursorStateMismatch {})
+    }
+}
+pub fn max_word(_ spacing: Int24) -> i16 {
+    (tick_math::max_usable_tick(spacing).val / spacing.val >> 8).downcast_truncate()
+}
+pub fn validate_complete(_ id: Bytes32, _ s: ScanState) {
+    let reconstructed = if s.observedCurrentLiquidity { s.currentLiquidity } else { 0 }
+    if s.runningLiquidity != 0 || reconstructed != s.activeLiquidity {
+        revert_error(error::LiquidityInvariantFailed { poolId: id })
+    }
+}
+pub fn populated_tick(_ manager: Address, _ id: Bytes32, _ spacing: Int24, _ word: i16, _ bit: u8) -> PopulatedTick
+uses (ctx: Ctx, mem: mut RawMem)
+{
+    let value = (word as i256 * 256 + bit as i256) * spacing.val as i256
+    if value < tick_math::min_usable_tick(spacing).val as i256 || value > tick_math::max_usable_tick(spacing).val as i256 {
+        revert_error(error::TickInvariantFailed { poolId: id, tick: value })
+    }
+    let tick = Int24 { val: value.downcast_truncate() }
+    let (gross, net) = state::tick_liquidity(manager, id, tick)
+    if gross == 0 { revert_error(error::TickInvariantFailed { poolId: id, tick: value }) }
+    PopulatedTick { tick, liquidityNet: net, liquidityGross: gross }
+}
+fn accumulate(_ s: ScanState, _ lower: Int24, _ upper: Int24) -> ScanState {
+    let mut next = s
+    if s.currentTick.val >= lower.val && s.currentTick.val < upper.val {
+        next.currentLiquidity = s.runningLiquidity
+        next.observedCurrentLiquidity = true
+    }
+    if s.runningLiquidity == 0 { return next }
+    let a = tick_math::get_sqrt_price_at_tick(lower)
+    let b = tick_math::get_sqrt_price_at_tick(upper)
+    if s.currentTick.val < lower.val {
+        next.amount0 += sqrt_price_math::amount0_delta(a, b, s.runningLiquidity, false)
+    } else if s.currentTick.val < upper.val {
+        next.amount0 += sqrt_price_math::amount0_delta(s.sqrtPriceX96, b, s.runningLiquidity, false)
+        next.amount1 += sqrt_price_math::amount1_delta(a, s.sqrtPriceX96, s.runningLiquidity, false)
+    } else {
+        next.amount1 += sqrt_price_math::amount1_delta(a, b, s.runningLiquidity, false)
+    }
+    next
+}
+fn process_tick(_ manager: Address, _ spacing: Int24, _ id: Bytes32, _ s: ScanState, _ bit: u8) -> ScanState
+uses (ctx: Ctx, mem: mut RawMem)
+{
+    let tick = populated_tick(manager, id, spacing, s.wordPos, bit)
+    if tick.liquidityNet == 0 { return s }
+    let mut next = if s.hasPreviousTick { accumulate(s, s.previousTick, tick.tick) } else { s }
+    let value = next.runningLiquidity as i256 + tick.liquidityNet as i256
+    if value < 0 || value > 0xffffffffffffffffffffffffffffffff {
+        revert_error(error::LiquidityInvariantFailed { poolId: id })
+    }
+    next.runningLiquidity = value.downcast_truncate()
+    next.previousTick = tick.tick
+    next.hasPreviousTick = true
+    next
+}
+pub fn process_word(_ manager: Address, _ spacing: Int24, _ id: Bytes32, _ s: ScanState, _ bitmap: u256, _ reads: u32, _ max_reads: u32) -> (ScanState, u32, bool)
+uses (ctx: Ctx, mem: mut RawMem)
+{
+    let mut next = s
+    let mut count = reads
+    let mut remaining = bitmap
+    while remaining != 0 {
+        let bit = bit_math::least_significant_bit(remaining)
+        if count >= max_reads {
+            next.bitPos = bit as u16
+            return (next, count, false)
+        }
+        next = process_tick(manager, spacing, id, next, bit)
+        count += 1
+        remaining &= remaining - 1
+        next.bitPos = bit as u16 + 1
+    }
+    (next, count, true)
+}
+// Bitmap reads reuse one call buffer and one hash buffer per scan, so long
+// scans do not grow memory with the number of words read.
+struct BitmapReader { call: MemBuffer, hash: MemBuffer }
+impl Copy for BitmapReader {}
+fn bitmap_reader(_ id: Bytes32) -> BitmapReader uses (mem: mut RawMem) {
+    let call = MemBuffer::alloc(36)
+    store_word(ptr: call.ptr(), value: (std::abi::sol("extsload(bytes32)") as u256) << 224)
+    let hash = MemBuffer::alloc(64)
+    store_word(ptr: ptr::offset_bytes(hash.ptr(), 32), value: state::pool_slot(id) + 5)
+    BitmapReader { call, hash }
+}
+fn bitmap_slot(_ r: BitmapReader, _ word: i16) -> u256 {
+    store_word(ptr: r.hash.ptr(), value: IntWord::to_word(word))
+    std::evm::keccak256(r.hash.span())
+}
+fn read_bitmap(_ manager: Address, _ r: BitmapReader, _ word: i16) -> u256 uses (ctx: Ctx) {
+    store_word(ptr: ptr::offset_bytes(r.call.ptr(), 4), value: bitmap_slot(r, word))
+    std::evm::staticcall_decode<Bytes32>(addr: manager, gas: ctx.gas(), args: r.call.span()).val
+}
+pub fn paged(_ manager: Address, _ spacing: Int24, _ id: Bytes32, _ s: ScanState, _ budget: u32) -> (ScanState, bool)
+uses (ctx: Ctx, mem: mut RawMem)
+{
+    let mut next = s
+    let max = max_word(spacing)
+    let mut reads: u32 = 0
+    let reader = bitmap_reader(id)
+    while next.wordPos <= max {
+        if reads >= budget { return (next, false) }
+        let mut bitmap = read_bitmap(manager, reader, next.wordPos)
+        reads += 1
+        if next.bitPos != 0 { bitmap &= !(0 as u256) << next.bitPos as u256 }
+        if bitmap != 0 {
+            let (updated, count, done) = process_word(manager, spacing, id, next, bitmap, reads, budget)
+            next = updated
+            reads = count
+            if !done { return (next, false) }
+        }
+        next.wordPos = (next.wordPos as i256 + 1).downcast_truncate()
+        next.bitPos = 0
+    }
+    validate_complete(id, next)
+    (next, true)
+}
+pub fn result(_ s: ScanState, _ key: PoolKey) -> PoolTVL {
+    let mut out = PoolTVL::empty()
+    out.coreAmount0 = s.amount0
+    out.coreAmount1 = s.amount1
+    out.sqrtPriceX96 = s.sqrtPriceX96
+    out.tick = s.currentTick
+    out.activeLiquidity = s.activeLiquidity
+    out.blockNumber = s.blockNumber
+    out.hookPermissions = (key.hooks.inner & 16383).downcast_truncate()
+    out.hasCustomAccounting = out.hookPermissions & 15 != 0
+    out.statsStatus = if key.hooks.inner == 0 { 0 } else { 1 }
+    out
+}
+
+// Complete scans batch the same bitmap slots as the reference (up to 256).
+// This preserves the external manager-call boundary as well as scan order.
+pub fn complete(_ manager: Address, _ spacing: Int24, _ id: Bytes32, _ s: ScanState) -> ScanState
+uses (ctx: Ctx, mem: mut RawMem)
+{
+    let mut next = s
+    let max = max_word(spacing) as i256
+    let mut word = s.wordPos as i256
+    let reader = bitmap_reader(id)
+    while word <= max {
+        let remaining: u256 = (max - word + 1).downcast_truncate()
+        let count = if remaining < 256 { remaining } else { 256 }
+        let mut slots = std::abi::MemVec<Bytes32>::zeroed(count)
+        let mut i: u256 = 0
+        while i < count {
+            let position: i16 = (word + i.downcast_truncate()).downcast_truncate()
+            slots.set(index: i, value: Bytes32 { val: bitmap_slot(reader, position) })
+            i += 1
+        }
+        let args = std::evm::encode_msg_calldata(BatchMsg::Read { slots: slots.to_dyn_array() })
+        let bitmaps = std::evm::staticcall_decode<std::abi::DynArray<Bytes32>>(addr: manager, gas: ctx.gas(), args: args.span())
+        if bitmaps.len() != count {
+            revert_error(error::ManagerBatchReadFailed { manager, firstSlot: slots.get(0), lastSlot: slots.get(count - 1), count })
+        }
+        i = 0
+        while i < count {
+            let bitmap = bitmaps.get(i).val
+            if bitmap != 0 {
+                next.wordPos = (word + i.downcast_truncate()).downcast_truncate()
+                let (updated, _, _) = process_word(manager, spacing, id, next, bitmap, 0, 0xffffffff)
+                next = updated
+            }
+            i += 1
+        }
+        let signed_count: i256 = count.downcast_truncate()
+        word += signed_count
+    }
+    next.wordPos = (max + 1).downcast_truncate()
+    next.bitPos = 0
+    validate_complete(id, next)
+    next
+}
+msg BatchMsg {
+    #[selector = std::abi::sol("extsload(bytes32[])")]
+    Read { slots: std::abi::DynArray<Bytes32> } -> std::abi::DynArray<Bytes32>,
+}

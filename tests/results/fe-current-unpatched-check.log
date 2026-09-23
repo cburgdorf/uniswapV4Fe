@@ -1,0 +1,36 @@
+error[8-0066]: mutable borrow requires a mutable place
+   ┌─ src/reserves_hooks.fe:24:19
+   │
+18 │ fn probe(_ provider: Address, _ id: u32) -> bool uses (call: Call, mem: RawMem) {
+   │                                                        ---- `call` does not provide mutable access
+   ·
+24 │     let outcome = call.raw_staticcall(addr: provider, gas: 30000, args: args.span(), ret: mut ret)
+   │                   ^^^^ cannot borrow as `mut`
+
+error[8-0066]: mutable borrow requires a mutable place
+   ┌─ src/reserves_hooks.fe:37:19
+   │
+32 │ uses (ctx: Ctx, call: Call, mem: RawMem)
+   │                 ---- `call` does not provide mutable access
+   ·
+37 │     let outcome = call.raw_staticcall(addr: target, gas: STIPEND, args, ret: mut ret)
+   │                   ^^^^ cannot borrow as `mut`
+
+error[8-0066]: mutable borrow requires a mutable place
+   ┌─ src/safe_currency_metadata.fe:12:19
+   │
+ 9 │ fn response(_ token: Address, _ selector: u32) -> (bool, MemBuffer) uses (ctx: Ctx, call: Call) {
+   │                                                                                     ---- `call` does not provide mutable access
+   ·
+12 │     let outcome = call.raw_staticcall(addr: token, gas: ctx.gas(), args: args.payload_span(), ret: mut ret)
+   │                   ^^^^ cannot borrow as `mut`
+
+error[8-0066]: mutable borrow requires a mutable place
+   ┌─ src/signature_verification.fe:53:23
+   │
+22 │ uses (ctx: Ctx, call: Call, mem: RawMem)
+   │                 ---- `call` does not provide mutable access
+   ·
+53 │         let outcome = call.raw_staticcall(addr: owner, gas: ctx.gas(), args: args.span(), ret: mut ret)
+   │                       ^^^^ cannot borrow as `mut`
+

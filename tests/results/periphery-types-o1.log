@@ -1,0 +1,12 @@
+Compiling 20 files with Solc 0.8.30
+Solc 0.8.30 finished in 108.40ms
+Compiler run successful!
+
+Ran 4 tests for test/PeripheryTypesParity.t.sol:PeripheryTypesParityTest
+[PASS] testFuzz_info(uint256) (runs: 10000, μ: 12232, ~: 12225)
+[PASS] testFuzz_initialize(address,address,uint24,int24,address,int24,int24) (runs: 10000, μ: 17075, ~: 17073)
+[PASS] testFuzz_path(address,address,uint24,int24,address,bytes) (runs: 10000, μ: 18420, ~: 18414)
+[PASS] test_boundaries() (gas: 30013)
+Suite result: ok. 4 passed; 0 failed; 0 skipped; finished in 292.30ms (644.03ms CPU time)
+
+Ran 1 test suite in 292.98ms (292.30ms CPU time): 4 tests passed, 0 failed, 0 skipped (4 total tests)

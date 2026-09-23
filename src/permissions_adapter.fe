@@ -1,0 +1,207 @@
+// SPDX-License-Identifier: MIT
+// Pinned PermissionsAdapter. The pool manager is the only wrapper-token holder.
+use std::abi::{Bytes, Bytes2, DynString, sol}
+use std::evm::{Address, Ctx, Call, RawStorage, RawMem, Log, encode_msg_calldata, staticcall_decode, revert_error}
+use super::{permissions_adapter_state as state, permissions_adapter_io as io, storage_string, permission_flags}
+use super::allowlist_checker::AllowlistMsg
+#[error]
+pub struct InvalidAllowListChecker { pub newAllowListChecker: Address }
+#[error]
+pub struct InvalidTransfer { pub from: Address, pub to: Address }
+#[error]
+pub struct UnauthorizedWrapper { pub wrapper: Address }
+#[error]
+pub struct InsufficientBalance { pub amount: u256, pub availableBalance: u256 }
+#[error]
+pub struct RenounceDisabled {}
+#[event]
+pub struct AllowListCheckerUpdated {
+    #[indexed]
+    pub newAllowListChecker: Address,
+}
+#[event]
+pub struct AllowedWrapperUpdated {
+    #[indexed]
+    pub wrapper: Address,
+    pub allowed: bool,
+}
+#[event]
+pub struct AllowedHookUpdated {
+    #[indexed]
+    pub hook: Address,
+    pub allowed: bool,
+}
+#[event]
+pub struct SwappingEnabledUpdated { pub enabled: bool }
+#[event]
+pub struct VerificationDeposit {
+    #[indexed]
+    pub depositor: Address,
+    pub amount: u256,
+}
+msg AdapterMsg {
+    #[selector = sol("POOL_MANAGER()")]
+    PoolManager {} -> Address,
+    #[selector = sol("PERMISSIONED_TOKEN()")]
+    Token {} -> Address,
+    #[selector = sol("name()")]
+    Name {} -> DynString,
+    #[selector = sol("symbol()")]
+    Symbol {} -> DynString,
+    #[selector = sol("decimals()")]
+    Decimals {} -> u8,
+    #[selector = sol("totalSupply()")]
+    TotalSupply {} -> u256,
+    #[selector = sol("balanceOf(address)")]
+    Balance { account: Address } -> u256,
+    #[selector = sol("allowance(address,address)")]
+    Allowance { owner: Address, spender: Address } -> u256,
+    #[selector = sol("approve(address,uint256)")]
+    Approve { spender: Address, amount: u256 } -> bool,
+    #[selector = sol("transfer(address,uint256)")]
+    Transfer { to: Address, amount: u256 } -> bool,
+    #[selector = sol("transferFrom(address,address,uint256)")]
+    TransferFrom { from: Address, to: Address, amount: u256 } -> bool,
+    #[selector = sol("owner()")]
+    Owner {} -> Address,
+    #[selector = sol("pendingOwner()")]
+    PendingOwner {} -> Address,
+    #[selector = sol("transferOwnership(address)")]
+    TransferOwnership { next: Address },
+    #[selector = sol("acceptOwnership()")]
+    AcceptOwnership {},
+    #[selector = sol("renounceOwnership()")]
+    RenounceOwnership {},
+    #[selector = sol("allowListChecker()")]
+    Checker {} -> Address,
+    #[selector = sol("swappingEnabled()")]
+    Swapping {} -> bool,
+    #[selector = sol("allowedWrappers(address)")]
+    Wrapper { account: Address } -> bool,
+    #[selector = sol("allowedHooks(address)")]
+    Hook { account: Address } -> bool,
+    #[selector = sol("wrapToPoolManager(uint256)")]
+    Wrap { amount: u256 },
+    #[selector = sol("depositForVerification(uint256)")]
+    Deposit { amount: u256 },
+    #[selector = sol("updateAllowListChecker(address)")]
+    UpdateChecker { checker: Address },
+    #[selector = sol("updateAllowedWrapper(address,bool)")]
+    UpdateWrapper { wrapper: Address, allowed: bool },
+    #[selector = sol("updateAllowedHook(address,bool)")]
+    UpdateHook { hook: Address, allowed: bool },
+    #[selector = sol("updateSwappingEnabled(bool)")]
+    UpdateSwapping { enabled: bool },
+    #[selector = sol("isAllowed(address,bytes2)")]
+    IsAllowed { account: Address, permission: Bytes2 } -> bool,
+}
+fn update_checker(_ checker: Address) uses (storage: mut RawStorage, call: Call, mem: mut RawMem, log: mut Log) {
+    if !io::valid_checker(checker) { revert_error(InvalidAllowListChecker { newAllowListChecker: checker }) }
+    state::write_address(7, checker)
+    log.emit(AllowListCheckerUpdated { newAllowListChecker: checker })
+}
+fn transfer(_ pool: Address, _ token: Address, _ from: Address, _ to: Address, _ amount: u256)
+uses (ctx: Ctx, call: mut Call, storage: mut RawStorage, mem: mut RawMem, log: mut Log)
+{
+    if from.inner == 0 { revert_error(state::ERC20InvalidSender { sender: from }) }
+    if to.inner == 0 { revert_error(state::ERC20InvalidReceiver { receiver: to }) }
+    if from.inner != pool.inner || to.inner == pool.inner { revert_error(InvalidTransfer { from, to }) }
+    state::update(from, to, amount)
+    state::update(to, Address::zero(), amount)
+    io::transfer(token, to, amount)
+    assert!(state::balance(pool) == storage.sload(2))
+}
+pub contract PermissionsAdapter {
+    pool: Address,
+    token: Address,
+    init(permissionedToken: Address, poolManager: Address, initialOwner: Address, allowListChecker_: Address)
+    uses (mut pool, mut token, storage: mut RawStorage, ctx: Ctx, call: Call, mem: mut RawMem, log: mut Log)
+    {
+        // Both metadata reads precede Ownable initialization in the original.
+        let name = io::name(permissionedToken)
+        let symbol = io::symbol(permissionedToken)
+        storage_string::initialize(3, Bytes::from_payload(source: name.payload_span()))
+        storage_string::initialize(4, Bytes::from_payload(source: symbol.payload_span()))
+        if initialOwner.inner == 0 { revert_error(state::OwnableInvalidOwner { owner: initialOwner }) }
+        state::transfer_owner(initialOwner)
+        token = permissionedToken
+        pool = poolManager
+        update_checker(allowListChecker_)
+    }
+    recv AdapterMsg {
+        PoolManager {} -> Address uses (pool) { pool }
+        Token {} -> Address uses (token) { token }
+        Name {} -> DynString uses (storage: RawStorage, mem: mut RawMem) { storage_string::load(3) }
+        Symbol {} -> DynString uses (storage: RawStorage, mem: mut RawMem) { storage_string::load(4) }
+        Decimals {} -> u8 uses (token, ctx: Ctx, call: Call) { io::decimals(token) }
+        TotalSupply {} -> u256 uses (storage: RawStorage) { storage.sload(2) }
+        Balance { account } -> u256 uses (storage: RawStorage, mem: mut RawMem) { state::balance(account) }
+        Allowance { owner, spender } -> u256 uses (storage: RawStorage, mem: mut RawMem) { state::allowance(owner, spender) }
+        Approve { spender, amount } -> bool uses (storage: mut RawStorage, mem: mut RawMem, log: mut Log, ctx: Ctx) {
+            state::approve(ctx.caller(), spender, amount, true)
+            true
+        }
+        Transfer { to, amount } -> bool uses (pool, token, ctx: Ctx, call: mut Call, storage: mut RawStorage, mem: mut RawMem, log: mut Log) {
+            transfer(pool, token, ctx.caller(), to, amount)
+            true
+        }
+        TransferFrom { from, to, amount } -> bool uses (pool, token, ctx: Ctx, call: mut Call, storage: mut RawStorage, mem: mut RawMem, log: mut Log) {
+            state::spend(from, ctx.caller(), amount)
+            transfer(pool, token, from, to, amount)
+            true
+        }
+        Owner {} -> Address uses (storage: RawStorage) { state::address_at(5) }
+        PendingOwner {} -> Address uses (storage: RawStorage) { state::address_at(6) }
+        TransferOwnership { next } uses (storage: mut RawStorage, ctx: Ctx, log: mut Log) {
+            state::check_owner()
+            state::write_address(6, next)
+            log.emit(state::OwnershipTransferStarted { previousOwner: state::address_at(5), newOwner: next })
+        }
+        AcceptOwnership {} uses (storage: mut RawStorage, ctx: Ctx, log: mut Log) {
+            if ctx.caller().inner != state::address_at(6).inner { revert_error(state::OwnableUnauthorizedAccount { account: ctx.caller() }) }
+            state::transfer_owner(ctx.caller())
+        }
+        RenounceOwnership {} { revert_error(RenounceDisabled {}) }
+        Checker {} -> Address uses (storage: RawStorage) { state::address_at(7) }
+        Swapping {} -> bool uses (storage: RawStorage) { (storage.sload(7) >> 160) & 255 != 0 }
+        Wrapper { account } -> bool uses (storage: RawStorage, mem: mut RawMem) { state::flag(8, account) }
+        Hook { account } -> bool uses (storage: RawStorage, mem: mut RawMem) { state::flag(9, account) }
+        Wrap { amount } uses (pool, token, ctx: Ctx, call: Call, storage: mut RawStorage, mem: mut RawMem, log: mut Log) {
+            if !state::flag(8, ctx.caller()) { revert_error(UnauthorizedWrapper { wrapper: ctx.caller() }) }
+            let available = io::balance(token, ctx.address()) - storage.sload(2)
+            if amount > available { revert_error(InsufficientBalance { amount, availableBalance: available }) }
+            if pool.inner == 0 { revert_error(state::ERC20InvalidReceiver { receiver: pool }) }
+            state::update(Address::zero(), pool, amount)
+        }
+        Deposit { amount } uses (token, ctx: Ctx, call: mut Call, mem: mut RawMem, log: mut Log) {
+            io::transfer_from(token, ctx.caller(), ctx.address(), amount)
+            log.emit(VerificationDeposit { depositor: ctx.caller(), amount })
+        }
+        UpdateChecker { checker } uses (storage: mut RawStorage, ctx: Ctx, call: Call, mem: mut RawMem, log: mut Log) {
+            state::check_owner()
+            update_checker(checker)
+        }
+        UpdateWrapper { wrapper, allowed } uses (storage: mut RawStorage, ctx: Ctx, mem: mut RawMem, log: mut Log) {
+            state::check_owner()
+            state::set_flag(8, wrapper, allowed)
+            log.emit(AllowedWrapperUpdated { wrapper, allowed })
+        }
+        UpdateHook { hook, allowed } uses (storage: mut RawStorage, ctx: Ctx, mem: mut RawMem, log: mut Log) {
+            state::check_owner()
+            if state::flag(9, hook) != allowed {
+                state::set_flag(9, hook, allowed)
+                log.emit(AllowedHookUpdated { hook, allowed })
+            }
+        }
+        UpdateSwapping { enabled } uses (storage: mut RawStorage, ctx: Ctx, log: mut Log) {
+            state::check_owner()
+            storage.sstore(slot: 7, value: (storage.sload(7) & !((255 as u256) << 160)) | ((if enabled { 1 } else { 0 }) << 160))
+            log.emit(SwappingEnabledUpdated { enabled })
+        }
+        IsAllowed { account, permission } -> bool uses (token, storage: RawStorage, call: Call, ctx: Ctx) {
+            let result: Bytes2 = staticcall_decode(addr: state::address_at(7), gas: ctx.gas(), args: encode_msg_calldata(AllowlistMsg::CheckAllowlist { account, tokenAddress: token }).span())
+            let required = permission_flags::from_abi(permission)
+            (permission_flags::from_abi(result) & required) == required
+        }
+    }
+}

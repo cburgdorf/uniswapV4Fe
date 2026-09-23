@@ -1,0 +1,31 @@
+diff --git a/test/utils/Deployers.sol b/test/utils/Deployers.sol
+index c0ddadd0..c7db13b6 100644
+--- a/test/utils/Deployers.sol
++++ b/test/utils/Deployers.sol
+@@ -85,7 +85,25 @@ contract Deployers is Test {
+     }
+ 
+     function deployFreshManager() internal virtual {
+-        manager = new PoolManager(address(this));
++        manager = deployPoolManager(address(this));
++    }
++
++    /// @dev Fe port conformance: uses Fe creation bytecode from $FE_ARTIFACTS/<Contract>.bin when present.
++    function feCode(string memory name) internal returns (bytes memory code) {
++        string memory dir = vm.envOr("FE_ARTIFACTS", string(""));
++        if (bytes(dir).length == 0) return code;
++        string memory path = string.concat(dir, "/", name, ".bin");
++        if (vm.exists(path)) code = vm.parseBytes(vm.readFile(path));
++    }
++
++    function deployPoolManager(address initialOwner) internal returns (IPoolManager deployed) {
++        bytes memory code = feCode("PoolManager");
++        if (code.length == 0) return new PoolManager(initialOwner);
++        code = bytes.concat(code, abi.encode(initialOwner));
++        assembly ("memory-safe") {
++            deployed := create(0, add(code, 32), mload(code))
++        }
++        require(address(deployed) != address(0), "Fe PoolManager deployment failed");
+     }
+ 
+     function deployFreshManagerAndRouters() internal {

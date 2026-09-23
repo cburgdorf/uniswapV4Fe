@@ -1,0 +1,15 @@
+Compiling 8 files with Solc 0.8.30
+Solc 0.8.30 finished in 118.89ms
+Compiler run successful!
+
+Ran 7 tests for test/StateParity.t.sol:StateParityTest
+[PASS] testFuzz_alignedFlipAndSearch(int16,uint16,uint256) (runs: 10000, μ: 79639, ~: 79540)
+[PASS] testFuzz_bitmapSearch(int24,int24,uint256) (runs: 10000, μ: 79747, ~: 74870)
+[PASS] testFuzz_compressAndPosition(int24,int24) (runs: 10000, μ: 14530, ~: 14533)
+[PASS] testFuzz_flip(int24,int24) (runs: 10000, μ: 34578, ~: 29281)
+[PASS] testFuzz_position((address,int24,int24,bytes32,uint256,uint256,uint256,int128,uint256,uint256)) (runs: 10000, μ: 47332, ~: 46190)
+[PASS] test_bitmapBoundaries() (gas: 5351420)
+[PASS] test_positionLifecycle() (gas: 144721)
+Suite result: ok. 7 passed; 0 failed; 0 skipped; finished in 879.40ms (3.11s CPU time)
+
+Ran 1 test suite in 879.93ms (879.40ms CPU time): 7 tests passed, 0 failed, 0 skipped (7 total tests)

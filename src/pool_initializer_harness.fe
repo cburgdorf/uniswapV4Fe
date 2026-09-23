@@ -1,0 +1,21 @@
+// SPDX-License-Identifier: MIT
+use std::abi::sol::{self, Int24, Uint160}
+use std::evm::{Address, Ctx, Call}
+use super::{pool_types::PoolKey, pool_initializer}
+msg PoolInitializerMsg {
+    #[selector = sol("poolManager()")]
+    Manager {} -> Address,
+    #[selector = sol("initializePool((address,address,uint24,int24,address),uint160)")]
+    Initialize { key: PoolKey, sqrtPriceX96: Uint160 } -> Int24,
+}
+pub contract PoolInitializerHarness {
+    manager: Address,
+    init(_manager: Address) uses (mut manager) { manager = _manager }
+    recv PoolInitializerMsg {
+        Manager {} -> Address uses (manager) { manager }
+        #[payable]
+        Initialize { key, sqrtPriceX96 } -> Int24 uses (manager, ctx: Ctx, call: mut Call) {
+            pool_initializer::initialize(manager, key, sqrtPriceX96)
+        }
+    }
+}

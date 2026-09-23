@@ -1,0 +1,95 @@
+// SPDX-License-Identifier: BUSL-1.1
+// Differential harness for TickBitmap and Position storage operations.
+use std::abi::sol::{self, Int24}
+use std::abi::Bytes32
+use std::evm::{Address, StorageMap, RawStorage, RawMem}
+use super::{tick_bitmap, position}
+
+msg StateMsg {
+    #[selector = sol("compress(int24,int24)")]
+    Compress { tick: Int24, spacing: Int24 } -> Int24,
+    #[selector = sol("bitmapPosition(int24)")]
+    BitmapPosition { tick: Int24 } -> (i16, u8),
+    #[selector = sol("flip(int24,int24)")]
+    Flip { tick: Int24, spacing: Int24 },
+    #[selector = sol("nextTick(int24,int24,bool)")]
+    NextTick { tick: Int24, spacing: Int24, lte: bool } -> (Int24, bool),
+    #[selector = sol("word(int16)")]
+    Word { key: i16 } -> u256,
+    #[selector = sol("setWord(int16,uint256)")]
+    SetWord { key: i16, value: u256 },
+    #[selector = sol("positionKey(address,int24,int24,bytes32)")]
+    PositionKey { owner: Address, lower: Int24, upper: Int24, salt: Bytes32 } -> u256,
+    #[selector = sol(
+        "updatePosition(address,int24,int24,bytes32,int128,uint256,uint256)",
+    )]
+    UpdatePosition {
+        owner: Address,
+        lower: Int24,
+        upper: Int24,
+        salt: Bytes32,
+        delta: i128,
+        growth0: u256,
+        growth1: u256,
+    } -> (u256, u256),
+    #[selector = sol("readPosition(address,int24,int24,bytes32)")]
+    ReadPosition { owner: Address, lower: Int24, upper: Int24, salt: Bytes32 } -> (
+        u128,
+        u256,
+        u256,
+    ),
+}
+
+pub contract StateHarness uses (storage: mut RawStorage, mem: mut RawMem) {
+    mut bitmap: StorageMap<i32, u256>,
+    // Reserve slot 1 for the Solidity-compatible positions mapping.
+    mut positions_root: u256,
+
+    recv StateMsg {
+        Compress { tick, spacing } -> Int24 {
+            tick_bitmap::compress(tick, spacing)
+        }
+        BitmapPosition { tick } -> (i16, u8) {
+            tick_bitmap::position(tick)
+        }
+        Flip { tick, spacing } uses (mut bitmap) {
+            with (mut bitmap) {
+                tick_bitmap::flip_tick(tick, spacing)
+            }
+        }
+        NextTick { tick, spacing, lte } -> (Int24, bool)
+        uses (bitmap)
+        {
+            with (bitmap) {
+                tick_bitmap::next_initialized_tick_within_one_word(tick, spacing, lte)
+            }
+        }
+        Word { key } -> u256 uses (bitmap) {
+            bitmap.get(key as i32)
+        }
+        SetWord { key, value } uses (mut bitmap) {
+            bitmap.set(key: key as i32, value: value)
+        }
+        PositionKey { owner, lower, upper, salt } -> u256
+        uses (mut mem)
+        {
+            position::calculate_position_key(owner, lower, upper, salt.val)
+        }
+        UpdatePosition { owner, lower, upper, salt, delta, growth0, growth1 } -> (u256, u256)
+        uses (mut mem, mut storage)
+        {
+            let state = position::get(1, owner, lower, upper, salt.val)
+            state.update(delta, growth0, growth1)
+        }
+        ReadPosition { owner, lower, upper, salt } -> (u128, u256, u256)
+        uses (mut mem, storage)
+        {
+            let state = position::get(1, owner, lower, upper, salt.val).read()
+            (
+                state.liquidity,
+                state.fee_growth_inside0_last_x128,
+                state.fee_growth_inside1_last_x128,
+            )
+        }
+    }
+}
