@@ -20,7 +20,7 @@
 
 These are encountered porting obstacles, not confirmed compiler bugs:
 
-- Fe has no `u256::MAX` associated constant in the current standard library; the port defines an explicit maximum word constant.
+- ~~Fe has no `u256::MAX` associated constant in the current standard library; the port defines an explicit maximum word constant.~~ Correction (2026-09-24): this was wrong. `core::num::Bounded` (since `41e0c3aec`, 2026-05-25, already in `aad737010`) provides `u256::max()` / `min()` as `const fn` for every integer type. The port now uses `u256::max()`; see the correction at the end of this report.
 - `as` rejects narrowing `u256` to `u8`, even when the algorithm bounds the value to 128. BitMath uses `downcast_truncate()` after establishing that bound.
 - External file modules are discovered automatically; Rust-style `mod name` declarations without bodies are invalid.
 - Numeric `for` ranges default to `usize`; typed message arguments require explicit widening.
@@ -508,7 +508,7 @@ PoolManager's unlock/accounting authorization remains to be integrated.
 
 No new Fe compiler bug or PR merge was needed. Source/test adaptations:
 
-- Fe's maximum uint256 is expressed as `!(0 as u256)`, not `u256::MAX`.
+- Fe's maximum uint256 was expressed as `!(0 as u256)`. Corrected later: `u256::max()` from `core::num::Bounded` is the standard spelling and is used now.
 - Solidity reserves `reference`; the test variable was renamed.
 - The large Solidity state/log comparison needed viaIR stack spilling. Marking
   the read-only CREATE assembly block `memory-safe` enabled that transformation.
@@ -2385,3 +2385,17 @@ tests with 10,000 runs each plus the ABI audit (`reserves-lens-integrated-o1`).
 
 The remaining deviation is contract size, which was explicitly out of scope:
 five runtimes exceed EIP-170 (see README).
+
+### Correction: integer bounds are in the standard library
+
+The early adaptation note claiming Fe lacks `u256::MAX` was wrong.
+`core::num::Bounded` (commit `41e0c3aec`, 2026-05-25, already present at the
+port's starting revision `aad737010`) provides `min()`/`max()` as `const fn`
+for every integer type. The port's own `MAX_U256` constant and every
+`!(0 as u256)` were replaced with `u256::max()` (full_math, tick_math,
+tick_bitmap, claims, extload, permissions_adapter_state, quoter,
+reserves_scan, math_reverts). All 28 production creation/runtime artifacts
+built from the changed sources are byte-identical to those used by
+`upstream-conformance-o1`, so that evidence applies unchanged. The native run
+on the changed sources passes 1,948/1,948 (`native-integrated-o1`, updated).
+Parity harness bytecode was not rebuilt for this change.

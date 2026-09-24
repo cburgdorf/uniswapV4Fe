@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-use super::full_math::{mul_div, mul_div_rounding_up, MAX_U256}
+use super::full_math::{mul_div, mul_div_rounding_up}
 use super::bit_math::{most_significant_bit, least_significant_bit}
 use std::evm::Evm
 
@@ -61,9 +61,9 @@ fn math_reverts_have_empty_payload() uses (evm: mut Evm) {
             value: 0,
             message: MathProbeMsg::Compute {
                 operation: 1,
-                a: MAX_U256 - 1,
-                b: MAX_U256 - 1,
-                denominator: MAX_U256 - 2,
+                a: u256::max() - 1,
+                b: u256::max() - 1,
+                denominator: u256::max() - 2,
             },
         )
     assert!(!overflow.success())

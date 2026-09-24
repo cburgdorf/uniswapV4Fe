@@ -83,7 +83,7 @@ pub fn spend(_ owner: Address, _ spender: Address, _ value: u256)
 uses (storage: mut RawStorage, mem: mut RawMem, log: mut Log)
 {
     let available = allowance(owner, spender)
-    if available != !(0 as u256) {
+    if available != u256::max() {
         if available < value { revert_error(ERC20InsufficientAllowance { spender, allowance: available, needed: value }) }
         approve(owner, spender, available - value, false)
     }

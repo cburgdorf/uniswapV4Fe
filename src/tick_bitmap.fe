@@ -4,7 +4,6 @@ use std::abi::sol::Int24
 use std::evm::{StorageMap, RawMem, RawStorage, revert_error}
 use std::evm::packed::keccak_packed
 use super::bit_math::{most_significant_bit, least_significant_bit}
-use super::full_math::MAX_U256
 
 #[error]
 pub struct TickMisaligned { pub tick: Int24, pub tick_spacing: Int24 }
@@ -53,7 +52,7 @@ fn search_location(_ tick: Int24, _ spacing: Int24, _ lte: bool) -> (Int24, i32)
 fn search_word(_ compressed: Int24, _ spacing: Int24, _ lte: bool, _ word: u256) -> (Int24, bool) {
     let (_, bit) = position(compressed)
     let mask = if lte {
-        MAX_U256 >> (255 - (bit as u256))
+        u256::max() >> (255 - (bit as u256))
     } else {
         !(((1 as u256) << (bit as u256)) - 1)
     }

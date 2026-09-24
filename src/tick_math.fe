@@ -3,7 +3,6 @@
 use std::abi::sol::{Int24, Uint160}
 use std::evm::revert_error
 use super::bit_math::most_significant_bit
-use super::full_math::MAX_U256
 
 pub const MIN_TICK: i32 = -887272
 pub const MAX_TICK: i32 = 887272
@@ -101,7 +100,7 @@ pub fn get_sqrt_price_at_tick(_ tick: Int24) -> Uint160 {
         price = (price * 0x48a170391f7dc42444e8fa2) >> 128
     }
     if signed_tick > 0 {
-        price = MAX_U256 / price
+        price = u256::max() / price
     }
     Uint160 { val: (price + 0xffffffff) >> 32 }
 }

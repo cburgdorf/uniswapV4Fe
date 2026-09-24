@@ -4,13 +4,11 @@
 use std::evm::crypto::mulmod
 use super::require
 
-pub const MAX_U256: u256 = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-
 /// Full precision floor(a * b / denominator), including 512-bit products.
 #[arithmetic(unchecked)]
 pub fn mul_div(_ a: u256, _ b: u256, _ denominator: u256) -> u256 {
     let mut low = a * b
-    let mm = mulmod(a, b, MAX_U256)
+    let mm = mulmod(a, b, u256::max())
     let mut high = mm - low - (if mm < low { 1 } else { 0 })
     require(denominator > high)
     if high == 0 {
@@ -37,7 +35,7 @@ pub fn mul_div(_ a: u256, _ b: u256, _ denominator: u256) -> u256 {
 pub fn mul_div_rounding_up(_ a: u256, _ b: u256, _ denominator: u256) -> u256 {
     let result = mul_div(a, b, denominator)
     if mulmod(a, b, denominator) != 0 {
-        require(result < MAX_U256)
+        require(result < u256::max())
         return result + 1
     }
     result

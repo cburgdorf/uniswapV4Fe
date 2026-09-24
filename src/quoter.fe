@@ -45,7 +45,7 @@ pub fn parse_unlock_quote(_ reason: Bytes, _ encoded_len: u256) -> u256 uses (me
     // QuoteSwap payload (the word at call-buffer offset 36). Reproduce that
     // observable result explicitly, without depending on Fe's memory allocator.
     if data.len() < 36 {
-        let missing = !(0 as u256) >> ((data.len() - 4) * 8)
+        let missing = u256::max() >> ((data.len() - 4) * 8)
         return (amount & !missing) | (encoded_len & missing)
     }
     amount

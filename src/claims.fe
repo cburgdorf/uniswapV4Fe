@@ -115,7 +115,7 @@ impl Claims {
         }
         let slot = self.allowance_slot(owner, caller, id)
         let allowed = storage.sload(slot)
-        if allowed != !(0 as u256) {
+        if allowed != u256::max() {
             storage.sstore(slot: slot, value: allowed - amount)
         }
     }

@@ -146,7 +146,7 @@ uses (ctx: Ctx, mem: mut RawMem)
         if reads >= budget { return (next, false) }
         let mut bitmap = read_bitmap(manager, reader, next.wordPos)
         reads += 1
-        if next.bitPos != 0 { bitmap &= !(0 as u256) << next.bitPos as u256 }
+        if next.bitPos != 0 { bitmap &= u256::max() << next.bitPos as u256 }
         if bitmap != 0 {
             let (updated, count, done) = process_word(manager, spacing, id, next, bitmap, reads, budget)
             next = updated

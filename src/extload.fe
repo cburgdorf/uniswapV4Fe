@@ -41,7 +41,7 @@ pub fn return_sload_range(_ start: Bytes32, _ count: u256) -> ! uses (ops: RawOp
     let payload = count << 5
     let size = 64 + payload
     // These lengths cannot fit in EVM memory; avoid a checked allocator panic.
-    if size > (!(0 as u256) - 96) {
+    if size > (u256::max() - 96) {
         revert(())
     }
     let buffer = MemBuffer::alloc(size)
