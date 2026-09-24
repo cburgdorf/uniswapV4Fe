@@ -4,13 +4,13 @@
 // router tests exercise the Fe router; they are not production contracts.
 use core::abi::{ByteInput, Decode, checked_tail, store_word}
 use core::ptr::{self, MemBuffer}
-use std::abi::{Bytes, DynString, Sol, sol}
+use std::abi::{Bytes, Sol, sol}
 use std::evm::{Address, Ctx, Call, RawMem, RawOps, CallData, copy_returndata, revert, revert_error}
 use super::{router::{self, AnyPool}, payments::{TokenPayer, Permit2Payment}}
 use super::calldata_decoder::{View, SliceOutOfBounds, argument_bytes}
 use super::permissioned_router::{PermissionedPayment, PermissionedPools}
 use super::multicall::Calls
-use super::{currency::Currency, permissions_adapter_io, metadata_text}
+use super::{currency::Currency, permissions_adapter_io}
 
 // Locker.LOCKED_BY_SLOT
 const LOCKED_BY_SLOT: u256 = 0x0aedd6bde10e3aa2adec092b02a3e3e805795516cda41f27aa145b8f300af87a
@@ -18,8 +18,6 @@ const LOCKED_BY_SLOT: u256 = 0x0aedd6bde10e3aa2adec092b02a3e3e805795516cda41f27a
 pub struct ContractLocked {}
 #[error]
 pub struct NotPoolManager {}
-#[error]
-pub struct Error { pub reason: DynString }
 
 // MockV4Router._pay: own funds are transferred, others use solmate safeTransferFrom.
 pub struct DirectPayment {}
@@ -85,9 +83,7 @@ pub contract MockV4Router {
                 let mut ret = MemBuffer::empty()
                 let args = MemBuffer::empty()
                 let result = call.raw_call(addr: ctx.caller(), gas: ctx.gas(), value: balance, args: args.span(), ret: mut ret)
-                if !result.success() {
-                    revert_error(Error { reason: metadata_text::word((eth_transfer_failed() as u256) << 104, 19) })
-                }
+                assert!(result.success(), "ETH_TRANSFER_FAILED")
             }
         }
         MockRouterMsg::Callback { data } -> Bytes uses (
@@ -122,10 +118,6 @@ pub contract MockV4Router {
             }
         }
     }
-}
-
-fn eth_transfer_failed() -> String<19> {
-    "ETH_TRANSFER_FAILED"
 }
 
 // test/mocks/MockPermissionedRouter.sol: Universal Router style commands around

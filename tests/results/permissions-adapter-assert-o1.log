@@ -1,0 +1,25 @@
+Parity artifacts: /tmp/uniswap-upstream/pa-assert-o1
+Compiler: fe 26.3.0 (9e2213a79); sha256=62a348861753829883fa71f9ed9af4e5c94e7e0b97b6cdf71f3ba2028c03b4c0
+Wrote /tmp/uniswap-upstream/pa-assert-o1/fe/PermissionsAdapter.bin
+Wrote /tmp/uniswap-upstream/pa-assert-o1/fe/PermissionsAdapter.runtime.bin
+Wrote /tmp/uniswap-upstream/pa-assert-o1/fe/PermissionsAdapter.abi.json
+Compiling 41 files with Solc 0.8.26
+Solc 0.8.26 finished in 8.17s
+Compiler run successful!
+
+Ran 11 tests for test/PermissionsAdapterParity.t.sol:PermissionsAdapterParityTest
+[PASS] testFuzz_admin(uint8,bool,bool) (runs: 10000, μ: 13314019, ~: 13303603)
+[PASS] testFuzz_allowance(uint128,uint256,uint128,bool) (runs: 10000, μ: 16135491, ~: 16099927)
+[PASS] testFuzz_lifecycle(uint128,uint128,uint8) (runs: 10000, μ: 15253916, ~: 15238122)
+[PASS] testFuzz_metadata(bytes,uint256,bool) (runs: 10000, μ: 9423902, ~: 9368603)
+[PASS] testFuzz_permission(bytes2,bytes2,bool) (runs: 10000, μ: 1215820, ~: 1216102)
+[PASS] testFuzz_rawMetadata(bytes) (runs: 10000, μ: 9311340, ~: 9293792)
+[PASS] testFuzz_sequences(uint256) (runs: 10000, μ: 17023328, ~: 17013126)
+[PASS] test_constructorAndCheckerFailures() (gas: 23645704)
+[PASS] test_malformedAndDepositFailures() (gas: 13698117)
+[PASS] test_metadataAndReturndataBoundaries() (gas: 86473254)
+[PASS] test_ownerAndTransferBoundaries() (gas: 26359719)
+Suite result: ok. 11 passed; 0 failed; 0 skipped; finished in 147.20s (744.02s CPU time)
+
+Ran 1 test suite in 147.20s (147.20s CPU time): 11 tests passed, 0 failed, 0 skipped (11 total tests)
+Verified protocol ABI: /tmp/uniswap-upstream/pa-assert-o1/fe/PermissionsAdapter.protocol.abi.json

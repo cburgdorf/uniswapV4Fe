@@ -2399,3 +2399,23 @@ built from the changed sources are byte-identical to those used by
 `upstream-conformance-o1`, so that evidence applies unchanged. The native run
 on the changed sources passes 1,948/1,948 (`native-integrated-o1`, updated).
 Parity harness bytecode was not rebuilt for this change.
+
+### Literal `Error(string)` reverts via `assert!`
+
+`permissions_adapter_io.fe` (solmate-compatible `TRANSFER_FAILED` /
+`TRANSFER_FROM_FAILED`) and the Fe `MockV4Router` (`ETH_TRANSFER_FAILED`)
+built `Error(string)` from a `DynString` custom error, assembled at runtime
+from a packed literal word. They now use `assert!(ok, "...")`, which the
+compiler lowers to a constant Solidity `Error(string)` payload. A probe
+measured identical bytes and about 500 gas less than an `#[error]` struct
+revert. Only PermissionsAdapter, PermissionsAdapterFactory and MockV4Router
+bytecode changed. PermissionsAdapter (11 tests, 10,000 runs) and the
+factory (5 tests) pass with protocol ABI audits
+(`permissions-{adapter,factory}-assert-o1`), and the upstream suites
+again match Solidity for every test (`upstream-conformance-o1`, updated).
+The native run was not repeated for this change.
+
+Caveat: this relies on `assert!` with a message producing `Error(string)`.
+Open issue argotorg/fe#516 proposes `Panic` for assertion failures, which
+would change these revert bytes. `owned.fe` and `erc721.fe` keep their
+`#[error] struct Error { reason: String<N> }`, which does not depend on it.

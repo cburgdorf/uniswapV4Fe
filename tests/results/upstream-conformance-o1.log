@@ -1,56 +1,56 @@
-+ /tmp/fe-uniswap-final/target/release/fe build /tmp/uniswap-upstream/final-run-2/fe-production -O 1 --out-dir /tmp/uniswap-upstream/final-run-2/fe-out
-Wrote /tmp/uniswap-upstream/final-run-2/fe-out/MockPermissionedRouter.bin
-Wrote /tmp/uniswap-upstream/final-run-2/fe-out/MockPermissionedRouter.runtime.bin
-Wrote /tmp/uniswap-upstream/final-run-2/fe-out/MockV4Router.bin
-Wrote /tmp/uniswap-upstream/final-run-2/fe-out/MockV4Router.runtime.bin
-Wrote /tmp/uniswap-upstream/final-run-2/fe-out/PermissionedPositionManager.bin
-Wrote /tmp/uniswap-upstream/final-run-2/fe-out/PermissionedPositionManager.runtime.bin
-Wrote /tmp/uniswap-upstream/final-run-2/fe-out/PermissionedV4Router.bin
-Wrote /tmp/uniswap-upstream/final-run-2/fe-out/PermissionedV4Router.runtime.bin
-Wrote /tmp/uniswap-upstream/final-run-2/fe-out/PermissionsAdapter.bin
-Wrote /tmp/uniswap-upstream/final-run-2/fe-out/PermissionsAdapter.runtime.bin
-Wrote /tmp/uniswap-upstream/final-run-2/fe-out/PermissionsAdapterFactory.bin
-Wrote /tmp/uniswap-upstream/final-run-2/fe-out/PermissionsAdapterFactory.runtime.bin
-Wrote /tmp/uniswap-upstream/final-run-2/fe-out/PoolManager.bin
-Wrote /tmp/uniswap-upstream/final-run-2/fe-out/PoolManager.runtime.bin
-Wrote /tmp/uniswap-upstream/final-run-2/fe-out/PositionDescriptor.bin
-Wrote /tmp/uniswap-upstream/final-run-2/fe-out/PositionDescriptor.runtime.bin
-Wrote /tmp/uniswap-upstream/final-run-2/fe-out/PositionManager.bin
-Wrote /tmp/uniswap-upstream/final-run-2/fe-out/PositionManager.runtime.bin
-Wrote /tmp/uniswap-upstream/final-run-2/fe-out/ReservesLens.bin
-Wrote /tmp/uniswap-upstream/final-run-2/fe-out/ReservesLens.runtime.bin
-Wrote /tmp/uniswap-upstream/final-run-2/fe-out/StateView.bin
-Wrote /tmp/uniswap-upstream/final-run-2/fe-out/StateView.runtime.bin
-Wrote /tmp/uniswap-upstream/final-run-2/fe-out/UniswapV4DeployerCompetition.bin
-Wrote /tmp/uniswap-upstream/final-run-2/fe-out/UniswapV4DeployerCompetition.runtime.bin
-Wrote /tmp/uniswap-upstream/final-run-2/fe-out/V4Quoter.bin
-Wrote /tmp/uniswap-upstream/final-run-2/fe-out/V4Quoter.runtime.bin
-Wrote /tmp/uniswap-upstream/final-run-2/fe-out/V4Router.bin
-Wrote /tmp/uniswap-upstream/final-run-2/fe-out/V4Router.runtime.bin
-Wrote /tmp/uniswap-upstream/final-run-2/fe-out/UniswapV4DeployerCompetition.abi.json
++ /tmp/fe-uniswap-final/target/release/fe build /tmp/uniswap-upstream/final-run-3/fe-production -O 1 --out-dir /tmp/uniswap-upstream/final-run-3/fe-out
+Wrote /tmp/uniswap-upstream/final-run-3/fe-out/MockPermissionedRouter.bin
+Wrote /tmp/uniswap-upstream/final-run-3/fe-out/MockPermissionedRouter.runtime.bin
+Wrote /tmp/uniswap-upstream/final-run-3/fe-out/MockV4Router.bin
+Wrote /tmp/uniswap-upstream/final-run-3/fe-out/MockV4Router.runtime.bin
+Wrote /tmp/uniswap-upstream/final-run-3/fe-out/PermissionedPositionManager.bin
+Wrote /tmp/uniswap-upstream/final-run-3/fe-out/PermissionedPositionManager.runtime.bin
+Wrote /tmp/uniswap-upstream/final-run-3/fe-out/PermissionedV4Router.bin
+Wrote /tmp/uniswap-upstream/final-run-3/fe-out/PermissionedV4Router.runtime.bin
+Wrote /tmp/uniswap-upstream/final-run-3/fe-out/PermissionsAdapter.bin
+Wrote /tmp/uniswap-upstream/final-run-3/fe-out/PermissionsAdapter.runtime.bin
+Wrote /tmp/uniswap-upstream/final-run-3/fe-out/PermissionsAdapterFactory.bin
+Wrote /tmp/uniswap-upstream/final-run-3/fe-out/PermissionsAdapterFactory.runtime.bin
+Wrote /tmp/uniswap-upstream/final-run-3/fe-out/PoolManager.bin
+Wrote /tmp/uniswap-upstream/final-run-3/fe-out/PoolManager.runtime.bin
+Wrote /tmp/uniswap-upstream/final-run-3/fe-out/PositionDescriptor.bin
+Wrote /tmp/uniswap-upstream/final-run-3/fe-out/PositionDescriptor.runtime.bin
+Wrote /tmp/uniswap-upstream/final-run-3/fe-out/PositionManager.bin
+Wrote /tmp/uniswap-upstream/final-run-3/fe-out/PositionManager.runtime.bin
+Wrote /tmp/uniswap-upstream/final-run-3/fe-out/ReservesLens.bin
+Wrote /tmp/uniswap-upstream/final-run-3/fe-out/ReservesLens.runtime.bin
+Wrote /tmp/uniswap-upstream/final-run-3/fe-out/StateView.bin
+Wrote /tmp/uniswap-upstream/final-run-3/fe-out/StateView.runtime.bin
+Wrote /tmp/uniswap-upstream/final-run-3/fe-out/UniswapV4DeployerCompetition.bin
+Wrote /tmp/uniswap-upstream/final-run-3/fe-out/UniswapV4DeployerCompetition.runtime.bin
+Wrote /tmp/uniswap-upstream/final-run-3/fe-out/V4Quoter.bin
+Wrote /tmp/uniswap-upstream/final-run-3/fe-out/V4Quoter.runtime.bin
+Wrote /tmp/uniswap-upstream/final-run-3/fe-out/V4Router.bin
+Wrote /tmp/uniswap-upstream/final-run-3/fe-out/V4Router.runtime.bin
+Wrote /tmp/uniswap-upstream/final-run-3/fe-out/UniswapV4DeployerCompetition.abi.json
 Warning: skipping recv arm `multicall`: selector signature is unknown; use `#[selector = sol("name(types)")]` to include it in the ABI
-Wrote /tmp/uniswap-upstream/final-run-2/fe-out/PermissionedPositionManager.abi.json
-Wrote /tmp/uniswap-upstream/final-run-2/fe-out/PermissionedV4Router.abi.json
-Wrote /tmp/uniswap-upstream/final-run-2/fe-out/PermissionsAdapter.abi.json
-Wrote /tmp/uniswap-upstream/final-run-2/fe-out/PermissionsAdapterFactory.abi.json
-Wrote /tmp/uniswap-upstream/final-run-2/fe-out/PoolManager.abi.json
-Wrote /tmp/uniswap-upstream/final-run-2/fe-out/PositionDescriptor.abi.json
+Wrote /tmp/uniswap-upstream/final-run-3/fe-out/PermissionedPositionManager.abi.json
+Wrote /tmp/uniswap-upstream/final-run-3/fe-out/PermissionedV4Router.abi.json
+Wrote /tmp/uniswap-upstream/final-run-3/fe-out/PermissionsAdapter.abi.json
+Wrote /tmp/uniswap-upstream/final-run-3/fe-out/PermissionsAdapterFactory.abi.json
+Wrote /tmp/uniswap-upstream/final-run-3/fe-out/PoolManager.abi.json
+Wrote /tmp/uniswap-upstream/final-run-3/fe-out/PositionDescriptor.abi.json
 Warning: skipping recv arm `multicall`: selector signature is unknown; use `#[selector = sol("name(types)")]` to include it in the ABI
-Wrote /tmp/uniswap-upstream/final-run-2/fe-out/PositionManager.abi.json
-Wrote /tmp/uniswap-upstream/final-run-2/fe-out/ReservesLens.abi.json
-Wrote /tmp/uniswap-upstream/final-run-2/fe-out/StateView.abi.json
+Wrote /tmp/uniswap-upstream/final-run-3/fe-out/PositionManager.abi.json
+Wrote /tmp/uniswap-upstream/final-run-3/fe-out/ReservesLens.abi.json
+Wrote /tmp/uniswap-upstream/final-run-3/fe-out/StateView.abi.json
 Warning: skipping recv arm `ExecuteDeadline`: selector signature is unknown; use `#[selector = sol("name(types)")]` to include it in the ABI
 Warning: skipping recv arm `Execute`: selector signature is unknown; use `#[selector = sol("name(types)")]` to include it in the ABI
-Wrote /tmp/uniswap-upstream/final-run-2/fe-out/MockPermissionedRouter.abi.json
-Wrote /tmp/uniswap-upstream/final-run-2/fe-out/MockV4Router.abi.json
-Wrote /tmp/uniswap-upstream/final-run-2/fe-out/V4Quoter.abi.json
-Wrote /tmp/uniswap-upstream/final-run-2/fe-out/V4Router.abi.json
-+ git clone -q https://github.com/Uniswap/v4-core.git /tmp/uniswap-upstream/final-run-2/v4-core
+Wrote /tmp/uniswap-upstream/final-run-3/fe-out/MockPermissionedRouter.abi.json
+Wrote /tmp/uniswap-upstream/final-run-3/fe-out/MockV4Router.abi.json
+Wrote /tmp/uniswap-upstream/final-run-3/fe-out/V4Quoter.abi.json
+Wrote /tmp/uniswap-upstream/final-run-3/fe-out/V4Router.abi.json
++ git clone -q https://github.com/Uniswap/v4-core.git /tmp/uniswap-upstream/final-run-3/v4-core
 + git checkout -q 46c6834698c48bc4a463a86d8420f4eb1d7f3b75
 + git submodule update --init --recursive -q
 + git apply --check /home/cburgdorf/Documents/hacking/fe/uniswap_v4_demo/tests/upstream/v4-core.patch
 + git apply /home/cburgdorf/Documents/hacking/fe/uniswap_v4_demo/tests/upstream/v4-core.patch
-+ git clone -q https://github.com/Uniswap/v4-periphery.git /tmp/uniswap-upstream/final-run-2/v4-periphery
++ git clone -q https://github.com/Uniswap/v4-periphery.git /tmp/uniswap-upstream/final-run-3/v4-periphery
 + git checkout -q 9969eec44cfdf07e24b41de47f40276a58401976
 + git submodule update --init --recursive -q
 + git apply --check /home/cburgdorf/Documents/hacking/fe/uniswap_v4_demo/tests/upstream/v4-periphery.patch
@@ -63,4 +63,4 @@ v4-core: solidity={'passed': 597, 'failed': 1, 'skipped': 0} fe={'passed': 597, 
 + forge test --fuzz-runs 1000 --json --no-match-path test/ReservesLens.fork.t.sol --no-match-contract FeArtifactProbeTest (solidity)
 + forge test --fuzz-runs 1000 --json --no-match-path test/ReservesLens.fork.t.sol (fe)
 v4-periphery: solidity={'passed': 942, 'failed': 0, 'skipped': 0} fe={'passed': 942, 'failed': 0, 'skipped': 0} mismatches=0 probe=True
-Result: passed (/tmp/uniswap-upstream/final-run-2/validation.json)
+Result: passed (/tmp/uniswap-upstream/final-run-3/validation.json)
